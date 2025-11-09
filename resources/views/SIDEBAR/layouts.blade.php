@@ -7,6 +7,8 @@
     <title>@yield('title', 'Dashboard')</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
 
+    <script src="https://cdn.tailwindcss.com"></script>
+
     {{-- Tailwind & Vite --}}
     @vite('resources/css/app.css')
     @vite('resources/js/app.js')
@@ -126,7 +128,6 @@
             width: 1.25rem;
             height: 1.25rem;
             margin-right: 0.75rem;
-            color: #e5e7eb;
             /* Icon color to match text */
         }
 
@@ -233,6 +234,15 @@
                 </div>
             </details>
 
+            {{-- STAFF FOR CREATE AND MANAGE ACCOUNT --}}
+            <a href="{{ route('staff') }}" class="sidebar-item">
+                <svg class="icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M10.8 19.916q1.106-1.949 2.789-2.682Q15.27 16.5 16.5 16.5q.517 0 .98.071q.464.071.912.202q.658-.854 1.133-2.098T20 12q0-3.35-2.325-5.675T12 4T6.325 6.325T4 12q0 1.298.384 2.448q.383 1.15 1.035 2.102q.948-.558 1.904-.804t2.004-.246q.627 0 1.22.099q.594.099.972.209q-.286.184-.52.373q-.233.188-.472.427q-.185-.05-.532-.08q-.347-.028-.668-.028q-.858 0-1.703.214q-.845.213-1.57.64q.935 1.05 2.162 1.693q1.228.643 2.584.868M12.003 21q-1.866 0-3.51-.708q-1.643-.709-2.859-1.924t-1.925-2.856T3 12.003t.709-3.51Q4.417 6.85 5.63 5.634t2.857-1.925T11.997 3t3.51.709q1.643.708 2.859 1.922t1.925 2.857t.709 3.509t-.708 3.51t-1.924 2.859t-2.856 1.925t-3.509.709M9.5 13q-1.258 0-2.129-.871T6.5 10t.871-2.129T9.5 7t2.129.871T12.5 10t-.871 2.129T9.5 13m0-1q.817 0 1.409-.591q.591-.592.591-1.409t-.591-1.409Q10.317 8 9.5 8t-1.409.591Q7.5 9.183 7.5 10t.591 1.409Q8.683 12 9.5 12m7 2.385q-1.001 0-1.693-.692T14.116 12t.691-1.693t1.693-.691t1.693.691t.691 1.693t-.691 1.693t-1.693.692M12 12" />
+                </svg>
+                Staff
+            </a>
+
             <!-- Logout -->
             <button id="logout-btn" class="sidebar-item w-full text-left">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,8 +254,9 @@
             </button>
         </nav>
     </div>
+
     <div id="overlay" class="overlay hidden"></div>
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col gap-2">
         <nav class="navbar">
             <div class="flex items-center">
                 <button id="menu-toggle" class="menu-toggle">
@@ -257,19 +268,54 @@
                 @yield('btn')
                 <h1 class="ml-4 text-xl font-semibold">@yield('name')</h1>
             </div>
-            <div class="flex justify-center mt-8">
-                <a href="{{ route('pos.items') }}"
-                    class="flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:scale-105 hover:shadow-xl transition transform duration-200 ease-in-out focus:ring-4 focus:ring-green-300">
-            
-                    <!-- Cashier / POS icon (Shopping Cart) -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9M9 21h6">
-                        </path>
-                    </svg>
-            
-                    <span class="text-lg">POINT OF SALE</span>
-                </a>
+
+            {{-- TOPBAR --}}
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 py-2">
+                <!-- Add Customer Button -->
+                <div class="relative group">
+                    <a href=""
+                        class="sidebar-item flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                    </a>
+                    <div
+                        class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
+                        Add Customer
+                    </div>
+                </div>
+
+                <!-- POS Button -->
+                <div class="relative group">
+                    <a href=""
+                        class="sidebar-item flex items-center justify-center w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9M9 21h6">
+                            </path>
+                        </svg>
+                    </a>
+                    <div
+                        class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
+                        Point of Sale
+                    </div>
+                </div>
+
+                <!-- Upcoming Feature Button -->
+                <div class="relative group">
+                    <a href=""
+                        class="sidebar-item flex items-center justify-center w-10 h-10 bg-purple-500 hover:bg-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </a>
+                    <div
+                        class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
+                        Coming Soon
+                    </div>
+                </div>
             </div>
         </nav>
 
@@ -319,7 +365,7 @@
                         'You have been successfully logged out.',
                         'success'
                     ).then(() => {
-                        window.location.href = '/login'; // Adjust to your login route
+                        window.location.href = '/LOGIN_FORM'; // Adjust to your login route
                     });
                 }
             });

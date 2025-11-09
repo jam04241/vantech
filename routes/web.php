@@ -43,6 +43,11 @@ Route::get('/Suppliers/List', function () {
     return view('DASHBOARD.suppliers_list');
 })->name('suppliers.list');
 
+
+Route::get('/staff', function () {
+    return view('DASHBOARD/staff');
+})->name('staff');
+
 Route::get('/tester', function () {
     return view('tester.testscanner');
 })->name('tester.testscanner');
@@ -50,3 +55,10 @@ Route::get('/tester', function () {
 Route::get('/POS/Items', function () {
     return view('POS_SYSTEM.item_list');
 })->name('pos.items');
+
+// LOGIN FORM
+Route::get('/LOGIN_FORM', function () {
+    return view('LOGIN_FORM.login');
+})->name('login');
+
+// Route::post('/login', [AuthController::class, 'login']);
