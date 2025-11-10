@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Http\Requests\ProductRequest;
+use App\Models\Suppliers;
+use Illuminate\Support\Facades\Storage;
+use App\Models\Category;
+use App\Models\Brand;
 
 class ProductController extends Controller
 {
@@ -14,28 +19,31 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //
+        
+
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        //
+        $categories = Category::orderBy('category_name')->get();
+        $brands = Brand::orderBy('brand_name')->get();
+        $suppliers = Suppliers::orderBy('supplier_name')->get();
+        return view('PRODUCT.add_product', compact('categories', 'brands', 'suppliers'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    
+    public function store(ProductRequest $request)
     {
-        //
+        $data = $request->validated();
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            $data['image_path'] = $path;
+        }
+
+        Product::create($data);
+
+        return redirect()->route('product.add')->with('success', 'Product created successfully.');
+
     }
 
     /**

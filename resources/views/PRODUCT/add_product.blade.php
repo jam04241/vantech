@@ -13,79 +13,81 @@
 @section('name', 'Add Product')
 
 @section('content')
-    {{-- Action buttons --}}
-    <div class="flex items-center gap-3 mb-6">
-        <button id="openBrandModal"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-black rounded-lg shadow-sm bg-white text-black hover:bg-gray-100 focus:ring-2 focus:ring-black transition duration-200 ease-in-out">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add Brand
-        </button>
+                {{-- Action buttons --}}
+                <div class="flex items-center gap-3 mb-6">
+                    <button id="openBrandModal"
+                        class="inline-flex items-center gap-2 px-4 py-2 border border-black rounded-lg shadow-sm bg-white text-black hover:bg-gray-100 focus:ring-2 focus:ring-black transition duration-200 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add Brand
+                    </button>
 
-        <button id="openCategoryModal"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-black rounded-lg shadow-sm bg-white text-black hover:bg-gray-100 focus:ring-2 focus:ring-black transition duration-200 ease-in-out">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add Category
-        </button>
+                    <button id="openCategoryModal"
+                        class="inline-flex items-center gap-2 px-4 py-2 border border-black rounded-lg shadow-sm bg-white text-black hover:bg-gray-100 focus:ring-2 focus:ring-black transition duration-200 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add Category
+                    </button>
 
-        <!-- Push camera button to the far right -->
-        <div class="ml-auto">
-            <button id="openCamera"
-                class="inline-flex items-center gap-2 px-4 py-2 border border-black rounded-lg shadow-sm bg-white text-black hover:bg-gray-100 focus:ring-2 focus:ring-black transition duration-200 ease-in-out">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                    <path fill="currentColor"
-                        d="M1 21v-5h2v3h3v2zm17 0v-2h3v-3h2v5zM4 18V6h2v12zm3 0V6h1v12zm3 0V6h2v12zm3 0V6h3v12zm4 0V6h1v12zm2 0V6h1v12zM1 8V3h5v2H3v3zm20 0V5h-3V3h5v5z" />
-                </svg>
-                Scan Barcode
-            </button>
-        </div>
-    </div>
-
-    {{-- Main Product Form --}}
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full border border-gray-200">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-200 pb-3 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            Add New Product
-        </h2>
-
-        <form action="" method="POST" enctype="multipart/form-data" class="space-y-8">
-            @csrf
-
-            {{-- PRODUCT INFORMATION --}}
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Product Information
-                </h3>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Product Name <span
-                                class="text-red-500">*</span></label>
-                        <input type="text" id="name" name="name"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                            placeholder="Enter product name" required>
-                    </div>
-
-                    <div>
-                        <label for="serial_number" class="block text-sm font-medium text-gray-700 mb-2">Serial
-                            Number</label>
-                        <input type="text" id="serial_number" name="serial_number"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                            placeholder="Enter serial number (optional)">
+                    <!-- Push camera button to the far right -->
+                    <div class="ml-auto">
+                        <button id="openCamera"
+                            class="inline-flex items-center gap-2 px-4 py-2 border border-black rounded-lg shadow-sm bg-white text-black hover:bg-gray-100 focus:ring-2 focus:ring-black transition duration-200 ease-in-out">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M1 21v-5h2v3h3v2zm17 0v-2h3v-3h2v5zM4 18V6h2v12zm3 0V6h1v12zm3 0V6h2v12zm3 0V6h3v12zm4 0V6h1v12zm2 0V6h1v12zM1 8V3h5v2H3v3zm20 0V5h-3V3h5v5z" />
+                            </svg>
+                            Scan Barcode
+                        </button>
                     </div>
                 </div>
-            </div>
+
+                {{-- Main Product Form --}}
+                <div class="bg-white p-8 rounded-xl shadow-lg w-full border border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-200 pb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        Add New Product
+                    </h2>
+
+                    <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+                        @csrf
+
+                        {{-- PRODUCT INFORMATION --}}
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Product Information
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Product Name <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" id="name" name="product_name"
+                                        value="{{ old('product_name') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                                        placeholder="Enter product name" required>
+                                </div>
+
+                                <div>
+                                    <label for="serial_number" class="block text-sm font-medium text-gray-700 mb-2">Serial
+                                        Number</label>
+                                    <input type="text" id="serial_number" name="serial_number"
+                                        value="{{ old('serial_number') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                                        placeholder="Enter serial number (optional)">
+                                </div>
+                            </div>
+                        </div>
 
             {{-- RELATIONAL FIELDS --}}
             <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
@@ -97,7 +99,7 @@
                     </svg>
                     Relations
                 </h3>
-                <div class="grid md:grid-cols-3 gap-6">
+                        <div class="grid md:grid-cols-3 gap-6">
                     <div>
                         <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">Category <span
                                 class="text-red-500">*</span></label>
@@ -105,7 +107,9 @@
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
                             required>
                             <option value="">Select Category</option>
-                            {{-- Options populated dynamically --}}
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->category_name }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -114,368 +118,378 @@
                         <select id="brand_id" name="brand_id"
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
                             <option value="">Select Brand</option>
-                            {{-- Options populated dynamically --}}
+                            @foreach($brands as $brand)
+                                <option value="{{ $brand->id }}" {{ old('brand_id') == $brand->id ? 'selected' : '' }}>{{ $brand->brand_name }}</option>
+                            @endforeach
                         </select>
                     </div>
-
                     <div>
-                        <label for="supplier_id" class="block text-sm font-medium text-gray-700 mb-2">Supplier</label>
-                        <select id="supplier_id" name="supplier_id"
+                     <label for="supplier_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            Supplier <span class="text-red-500">*</span>
+                        </label>
+                        <select id="supplier_id" name="supplier_id" required
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
                             <option value="">Select Supplier</option>
-                            {{-- Options populated dynamically --}}
+                            @foreach($suppliers as $supplier)
+                                <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                    {{ $supplier->supplier_name }} - {{ $supplier->company_name }}
+                             </option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
             </div>
 
-            {{-- STOCK INFO --}}
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24"
+                        {{-- STOCK INFO --}}
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                Stock Information
+                            </h3>
+                            <div class="grid md:grid-cols-3 gap-6">
+
+                                <div>
+                                    <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price (₱) <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="number" id="price" name="price" step="0.01"
+                                        value="{{ old('price') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                                        placeholder="Enter price" required>
+                                </div>
+
+                                <div>
+                                    <label for="warranty" class="block text-sm font-medium text-gray-700 mb-2">Warranty</label>
+                                    <input type="text" id="warranty" name="warranty_period"
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                                        placeholder="e.g. 1 year">
+                                </div>
+                                <div>
+                                    <label for="image" class="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+                                    <div class="relative">
+                                        <input type="file" id="image" name="image" accept="image/*"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- SUBMIT --}}
+                        <div class="flex justify-end pt-6 border-t border-gray-200">
+                            <button type="submit"
+                                class="inline-flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-200 shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Save Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+
+                {{-- ================= MODALS ================= --}}
+
+        {{-- Brand Modal --}}
+        <div id="brandModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 transition-opacity duration-300">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative transform scale-95 transition-transform duration-300"
+                id="brandModalContent">
+                <button id="closeBrandModal"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Stock Information
-                </h3>
-                <div class="grid md:grid-cols-3 gap-6">
-
+                </button>
+                <div class="flex items-center gap-3 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Add New Brand</h3>
+                </div>
+                <form id="brandForm" action="{{ route('brands.store') }}" method="POST" class="space-y-6">
+                    @csrf
                     <div>
-                        <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price (₱) <span
+                        <label for="brand_name" class="block text-sm font-medium text-gray-700 mb-2">Brand Name <span
                                 class="text-red-500">*</span></label>
-                        <input type="number" id="price" name="price" step="0.01"
+                        <input type="text" name="brand_name" id="brand_name"
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                            placeholder="Enter price" required>
+                            placeholder="Enter brand name" required>
                     </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" id="cancelBrandModal"
+                            class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 transition duration-200">Cancel</button>
+                        <button type="submit"
+                            class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-200 shadow-lg">Save
+                            Brand</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
+        {{-- Category Modal --}}
+        <div id="categoryModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 transition-opacity duration-300">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative transform scale-95 transition-transform duration-300"
+                id="categoryModalContent">
+                <button id="closeCategoryModal"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <div class="flex items-center gap-3 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Add New Category</h3>
+                </div>
+                <form id="categoryForm" action="{{ route('categories.store') }}" method="POST" class="space-y-6">
+                    @csrf
                     <div>
-                        <label for="warranty" class="block text-sm font-medium text-gray-700 mb-2">Warranty</label>
-                        <input type="text" id="warranty" name="warranty"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                            placeholder="e.g. 1 year">
+                        <label for="category_name" class="block text-sm font-medium text-gray-700 mb-2">Category Name <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="category_name" id="category_name"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200"
+                            placeholder="Enter category name" required>
                     </div>
-                    <div>
-                        <label for="image" class="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-                        <div class="relative">
-                            <input type="file" id="image" name="image" accept="image/*"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" id="cancelCategoryModal"
+                            class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 transition duration-200">Cancel</button>
+                        <button type="submit"
+                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200 shadow-lg">Save
+                            Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+                {{-- QR Scanner Modal --}}
+                <div id="qrScannerModal"
+                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 transition-opacity duration-300">
+                    <div
+                        class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 relative transform scale-95 transition-transform duration-300">
+                        <button id="closeQrModal"
+                            class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <div class="flex items-center gap-3 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M1 21v-5h2v3h3v2zm17 0v-2h3v-3h2v5zM4 18V6h2v12zm3 0V6h1v12zm3 0V6h2v12zm3 0V6h3v12zm4 0V6h1v12zm2 0V6h1v12zM1 8V3h5v2H3v3zm20 0V5h-3V3h5v5z" />
+                            </svg>
+                            <h3 class="text-xl font-bold text-gray-800">Scan Barcode</h3>
+                        </div>
+
+                        <div id="reader" class="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg mb-4"></div>
+
+                        <div id="qrResult" class="text-center text-sm text-gray-600 mb-4"></div>
+
+                        <div class="flex justify-between gap-3">
+                            <button id="switchCamera"
+                                class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 transition duration-200">
+                                Switch Camera
+                            </button>
+                            <button id="stopScanner"
+                                class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-500 transition duration-200">
+                                Stop Scanner
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- SUBMIT --}}
-            <div class="flex justify-end pt-6 border-t border-gray-200">
-                <button type="submit"
-                    class="inline-flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-200 shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Save Product
-                </button>
-            </div>
-        </form>
-    </div>
-
-    {{-- ================= MODALS ================= --}}
-
-    {{-- Brand Modal --}}
-    <div id="brandModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 transition-opacity duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative transform scale-95 transition-transform duration-300"
-            id="brandModalContent">
-            <button id="closeBrandModal"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <div class="flex items-center gap-3 mb-6">
-                <h3 class="text-xl font-bold text-gray-800">Add New Brand</h3>
-            </div>
-            <form action="" method="POST" class="space-y-6">
-                @csrf
-                <div>
-                    <label for="brand_name" class="block text-sm font-medium text-gray-700 mb-2">Brand Name <span
-                            class="text-red-500">*</span></label>
-                    <input type="text" name="brand_name" id="brand_name"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                        placeholder="Enter brand name" required>
-                </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" id="cancelBrandModal"
-                        class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 transition duration-200">Cancel</button>
-                    <button type="submit"
-                        class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-200 shadow-lg">Save
-                        Brand</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Category Modal --}}
-    <div id="categoryModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 transition-opacity duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative transform scale-95 transition-transform duration-300"
-            id="categoryModalContent">
-            <button id="closeCategoryModal"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <div class="flex items-center gap-3 mb-6">
-                <h3 class="text-xl font-bold text-gray-800">Add New Category</h3>
-            </div>
-            <form action="" method="POST" class="space-y-6">
-                @csrf
-                <div>
-                    <label for="category_name" class="block text-sm font-medium text-gray-700 mb-2">Category Name <span
-                            class="text-red-500">*</span></label>
-                    <input type="text" name="category_name" id="category_name"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200"
-                        placeholder="Enter category name" required>
-                </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" id="cancelCategoryModal"
-                        class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 transition duration-200">Cancel</button>
-                    <button type="submit"
-                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200 shadow-lg">Save
-                        Category</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- QR Scanner Modal --}}
-    <div id="qrScannerModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 transition-opacity duration-300">
-        <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 relative transform scale-95 transition-transform duration-300">
-            <button id="closeQrModal"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <div class="flex items-center gap-3 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                    <path fill="currentColor"
-                        d="M1 21v-5h2v3h3v2zm17 0v-2h3v-3h2v5zM4 18V6h2v12zm3 0V6h1v12zm3 0V6h2v12zm3 0V6h3v12zm4 0V6h1v12zm2 0V6h1v12zM1 8V3h5v2H3v3zm20 0V5h-3V3h5v5z" />
-                </svg>
-                <h3 class="text-xl font-bold text-gray-800">Scan Barcode</h3>
-            </div>
-
-            <div id="reader" class="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg mb-4"></div>
-
-            <div id="qrResult" class="text-center text-sm text-gray-600 mb-4"></div>
-
-            <div class="flex justify-between gap-3">
-                <button id="switchCamera"
-                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 transition duration-200">
-                    Switch Camera
-                </button>
-                <button id="stopScanner"
-                    class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-500 transition duration-200">
-                    Stop Scanner
-                </button>
-            </div>
-        </div>
-    </div>
-
-    {{-- Include the QR code scanner library --}}
+                {{-- Include the QR code scanner library --}}
 
     <script>
 
-        let html5QrCode;
-        let currentCameraId = null;
-        let cameras = [];
+            let html5QrCode;
+            let currentCameraId = null;
+            let cameras = [];
 
-        function initializeQrScanner() {
-            const qrResult = document.getElementById('qrResult');
-            qrResult.textContent = 'Initializing scanner...';
+                    function initializeQrScanner() {
+                        const qrResult = document.getElementById('qrResult');
+                        qrResult.textContent = 'Initializing scanner...';
 
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length) {
-                    cameras = devices;
-                    currentCameraId = devices[0].id;
-                    startScanner(currentCameraId);
-                } else {
-                    qrResult.textContent = 'No cameras found on your device.';
-                }
-            }).catch(err => {
-                console.error('Error getting cameras:', err);
-                qrResult.textContent = 'Error accessing camera. Please check permissions.';
-            });
-        }
+                        Html5Qrcode.getCameras().then(devices => {
+                            if (devices && devices.length) {
+                                cameras = devices;
+                                currentCameraId = devices[0].id;
+                                startScanner(currentCameraId);
+                            } else {
+                                qrResult.textContent = 'No cameras found on your device.';
+                            }
+                        }).catch(err => {
+                            console.error('Error getting cameras:', err);
+                            qrResult.textContent = 'Error accessing camera. Please check permissions.';
+                        });
+                    }
 
-        function startScanner(cameraId) {
-            const qrResult = document.getElementById('qrResult');
-            qrResult.textContent = 'Starting scanner with autofocus...';
+                    function startScanner(cameraId) {
+                        const qrResult = document.getElementById('qrResult');
+                        qrResult.textContent = 'Starting scanner with autofocus...';
 
-            html5QrCode = new Html5Qrcode("reader");
+                        html5QrCode = new Html5Qrcode("reader");
 
-            // Enhanced configuration with autofocus
-            const config = {
-                fps: 10,
-                qrbox: { width: 500, height: 500 },
-                // Video constraints for better focus and quality
-                videoConstraints: {
-                    focusMode: "continuous", // Enable continuous autofocus
-                    width: { ideal: 3840 },  // Higher resolution for clarity
-                    height: { ideal: 2160 },
-                    facingMode: "environment", // Prefer rear camera (usually better)
-                    // Additional focus enhancement
-                    advanced: [
-                        { focusMode: "continuous" },
-                        { focusDistance: { ideal: 0.1 } } // Focus at closer range for QR codes
-                    ]
-                }
+                        // Enhanced configuration with autofocus
+                        const config = {
+                            fps: 10,
+                            qrbox: { width: 500, height: 500 },
+                            // Video constraints for better focus and quality
+                            videoConstraints: {
+                                focusMode: "continuous", // Enable continuous autofocus
+                                width: { ideal: 3840 },  // Higher resolution for clarity
+                                height: { ideal: 2160 },
+                                facingMode: "environment", // Prefer rear camera (usually better)
+                                // Additional focus enhancement
+                                advanced: [
+                                    { focusMode: "continuous" },
+                                    { focusDistance: { ideal: 0.1 } } // Focus at closer range for QR codes
+                                ]
+                            }
 
-            };
+                        };
 
-            html5QrCode.start(
-                cameraId,
-                config,
-                (decodedText, decodedResult) => {
-                    onScanSuccess(decodedText, decodedResult);
-                },
-                (error) => {
-                    // Ignore frequent scan failures - this is normal
-                }
-            ).then(() => {
-                qrResult.textContent = 'Scanner started. Move camera to focus on QR code.';
+                        html5QrCode.start(
+                            cameraId,
+                            config,
+                            (decodedText, decodedResult) => {
+                                onScanSuccess(decodedText, decodedResult);
+                            },
+                            (error) => {
+                                // Ignore frequent scan failures - this is normal
+                            }
+                        ).then(() => {
+                            qrResult.textContent = 'Scanner started. Move camera to focus on QR code.';
 
-                // Additional focus trigger after camera is active
-                setTimeout(() => {
-                    enhanceFocus();
-                }, 1500);
-            }).catch(err => {
-                console.error('Error with autofocus config:', err);
-                qrResult.textContent = 'Retrying with basic settings...';
-                // Fallback to basic configuration
-                startScannerBasic(cameraId);
-            });
-        }
+                            // Additional focus trigger after camera is active
+                            setTimeout(() => {
+                                enhanceFocus();
+                            }, 1500);
+                        }).catch(err => {
+                            console.error('Error with autofocus config:', err);
+                            qrResult.textContent = 'Retrying with basic settings...';
+                            // Fallback to basic configuration
+                            startScannerBasic(cameraId);
+                        });
+                    }
 
-        // Fallback function without advanced focus constraints
-        function startScannerBasic(cameraId) {
-            const basicConfig = {
-                fps: 10,
-                qrbox: { width: 250, height: 250 }
-                // No videoConstraints - let browser handle it
-            };
+                    // Fallback function without advanced focus constraints
+                    function startScannerBasic(cameraId) {
+                        const basicConfig = {
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 }
+                            // No videoConstraints - let browser handle it
+                        };
 
-            html5QrCode.start(
-                cameraId,
-                basicConfig,
-                (decodedText, decodedResult) => {
-                    onScanSuccess(decodedText, decodedResult);
-                },
-                (error) => {
-                    // Ignore scan failures
-                }
-            ).then(() => {
-                document.getElementById('qrResult').textContent = 'Scanner started (basic mode).';
-            }).catch(err => {
-                console.error('Error in basic scanner:', err);
-                document.getElementById('qrResult').textContent = 'Scanner error: ' + err.message;
-            });
-        }
+                        html5QrCode.start(
+                            cameraId,
+                            basicConfig,
+                            (decodedText, decodedResult) => {
+                                onScanSuccess(decodedText, decodedResult);
+                            },
+                            (error) => {
+                                // Ignore scan failures
+                            }
+                        ).then(() => {
+                            document.getElementById('qrResult').textContent = 'Scanner started (basic mode).';
+                        }).catch(err => {
+                            console.error('Error in basic scanner:', err);
+                            document.getElementById('qrResult').textContent = 'Scanner error: ' + err.message;
+                        });
+                    }
 
-        // Function to enhance focus after camera starts
-        function enhanceFocus() {
-            if (!html5QrCode) return;
+                    // Function to enhance focus after camera starts
+                    function enhanceFocus() {
+                        if (!html5QrCode) return;
 
-            try {
-                // Try to re-apply focus constraints
-                html5QrCode.applyVideoConstraints({
-                    advanced: [{ focusMode: "continuous" }]
-                });
-            } catch (err) {
-                console.log('Focus enhancement not supported');
-            }
-        }
+                        try {
+                            // Try to re-apply focus constraints
+                            html5QrCode.applyVideoConstraints({
+                                advanced: [{ focusMode: "continuous" }]
+                            });
+                        } catch (err) {
+                            console.log('Focus enhancement not supported');
+                        }
+                    }
 
-        function stopQrScanner() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    console.log('QR Scanner stopped');
-                    document.getElementById('qrResult').textContent = 'Scanner stopped';
-                }).catch(err => {
-                    console.error('Error stopping scanner:', err);
-                });
-            }
-        }
+                    function stopQrScanner() {
+                        if (html5QrCode && html5QrCode.isScanning) {
+                            html5QrCode.stop().then(() => {
+                                console.log('QR Scanner stopped');
+                                document.getElementById('qrResult').textContent = 'Scanner stopped';
+                            }).catch(err => {
+                                console.error('Error stopping scanner:', err);
+                            });
+                        }
+                    }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            const qrResult = document.getElementById('qrResult');
-            qrResult.innerHTML = `<span class="text-green-600 font-medium">✅ Scanned: ${decodedText}</span>`;
+                    function onScanSuccess(decodedText, decodedResult) {
+                        const qrResult = document.getElementById('qrResult');
+                        qrResult.innerHTML = `<span class="text-green-600 font-medium">✅ Scanned: ${decodedText}</span>`;
 
-            // Auto-fill the serial number field with scanned data
-            document.getElementById('serial_number').value = decodedText;
+                        // Auto-fill the serial number field with scanned data
+                        document.getElementById('serial_number').value = decodedText;
 
-            console.log('Scanned QR Code:', decodedText);
+                        console.log('Scanned QR Code:', decodedText);
 
-            // Auto-close modal after successful scan
-            setTimeout(() => {
-                qrScannerModal.classList.add('hidden');
-                stopQrScanner();
-            }, 1500);
-        }
+                        // Auto-close modal after successful scan
+                        setTimeout(() => {
+                            qrScannerModal.classList.add('hidden');
+                            stopQrScanner();
+                        }, 1500);
+                    }
 
-        // Switch camera function
-        function switchCamera() {
-            if (cameras.length < 2) {
-                document.getElementById('qrResult').textContent = 'Only one camera available';
-                return;
-            }
+                    // Switch camera function
+                    function switchCamera() {
+                        if (cameras.length < 2) {
+                            document.getElementById('qrResult').textContent = 'Only one camera available';
+                            return;
+                        }
 
-            stopQrScanner();
+                        stopQrScanner();
 
-            let currentIndex = cameras.findIndex(camera => camera.id === currentCameraId);
-            let nextIndex = (currentIndex + 1) % cameras.length;
-            currentCameraId = cameras[nextIndex].id;
+                        let currentIndex = cameras.findIndex(camera => camera.id === currentCameraId);
+                        let nextIndex = (currentIndex + 1) % cameras.length;
+                        currentCameraId = cameras[nextIndex].id;
 
-            // Restart with new camera
-            startScanner(currentCameraId);
-            document.getElementById('qrResult').textContent = `Switched to ${cameras[nextIndex].label || 'Camera ' + (nextIndex + 1)}`;
-        }
+                        // Restart with new camera
+                        startScanner(currentCameraId);
+                        document.getElementById('qrResult').textContent = `Switched to ${cameras[nextIndex].label || 'Camera ' + (nextIndex + 1)}`;
+                    }
 
-        // Event listeners for QR scanner buttons
-        document.getElementById('switchCamera').addEventListener('click', switchCamera);
-        document.getElementById('stopScanner').addEventListener('click', () => {
-            stopQrScanner();
-            qrScannerModal.classList.add('hidden');
-        });
+                    // Event listeners for QR scanner buttons
+                    document.getElementById('switchCamera').addEventListener('click', switchCamera);
+                    document.getElementById('stopScanner').addEventListener('click', () => {
+                        stopQrScanner();
+                        qrScannerModal.classList.add('hidden');
+                    });
 
-        // When opening the modal, initialize the scanner
-        document.getElementById('openCamera').addEventListener('click', () => {
-            qrScannerModal.classList.remove('hidden');
-            // Use a slight delay to ensure the modal is visible before starting the scanner
-            setTimeout(initializeQrScanner, 300);
-        });
+                    // When opening the modal, initialize the scanner
+                    document.getElementById('openCamera').addEventListener('click', () => {
+                        qrScannerModal.classList.remove('hidden');
+                        // Use a slight delay to ensure the modal is visible before starting the scanner
+                        setTimeout(initializeQrScanner, 300);
+                    });
 
-        // When closing the modal, stop the scanner
-        document.getElementById('closeQrModal').addEventListener('click', () => {
-            qrScannerModal.classList.add('hidden');
-            stopQrScanner();
-        });
+                    // When closing the modal, stop the scanner
+                    document.getElementById('closeQrModal').addEventListener('click', () => {
+                        qrScannerModal.classList.add('hidden');
+                        stopQrScanner();
+                    });
 
-        // Close modal by clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target === qrScannerModal) {
-                qrScannerModal.classList.add('hidden');
-                stopQrScanner();
-            }
-        });
+                    // Close modal by clicking outside
+                    window.addEventListener('click', (e) => {
+                        if (e.target === qrScannerModal) {
+                            qrScannerModal.classList.add('hidden');
+                            stopQrScanner();
+                        }
+                    });
 
-         const brandModal = document.getElementById('brandModal');
+            // Brand Modal
+            const brandModal = document.getElementById('brandModal');
             document.getElementById('openBrandModal').addEventListener('click', () => {
                 brandModal.classList.remove('hidden');
                 brandModal.classList.add('flex');
@@ -484,8 +498,12 @@
                 brandModal.classList.add('hidden');
                 brandModal.classList.remove('flex');
             });
+            document.getElementById('cancelBrandModal').addEventListener('click', () => {
+                brandModal.classList.add('hidden');
+                brandModal.classList.remove('flex');
+            });
 
-            // Category modal
+            // Category Modal
             const categoryModal = document.getElementById('categoryModal');
             document.getElementById('openCategoryModal').addEventListener('click', () => {
                 categoryModal.classList.remove('hidden');
@@ -495,5 +513,69 @@
                 categoryModal.classList.add('hidden');
                 categoryModal.classList.remove('flex');
             });
-    </script>
+            document.getElementById('cancelCategoryModal').addEventListener('click', () => {
+                categoryModal.classList.add('hidden');
+                categoryModal.classList.remove('flex');
+            });
+
+            // SweetAlert messages after form submission
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: '{{ session('success') }}',
+                    confirmButtonColor: '#4F46E5'
+                });
+            @endif
+
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: '{{ session('error') }}',
+                    confirmButtonColor: '#E11D48'
+                });
+            @endif
+
+            @if($errors->any())
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    html: '{!! implode("<br>", $errors->all()) !!}',
+                    confirmButtonColor: '#E11D48'
+                });
+            @endif
+
+
+                        @if(session('success'))
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: '{{ session('success') }}',
+                                confirmButtonColor: '#4F46E5'
+                            });
+                        @endif
+
+                            @if(session('error'))
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Oops...',
+                                    text: '{{ session('error') }}',
+                                    confirmButtonColor: '#E11D48'
+                                });
+                            @endif
+
+                            @if($errors->any())
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Validation Error',
+                                    html: '{!! implode("<br>", $errors->all()) !!}',
+                                    confirmButtonColor: '#E11D48'
+                                });
+                            @endif
+
+
+
+
+                </script>
 @endsection
