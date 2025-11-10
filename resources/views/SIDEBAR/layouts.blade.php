@@ -139,6 +139,8 @@
             padding: 1rem;
             background-color: white;
             border-bottom: 1px solid #e5e7eb;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .menu-toggle {
@@ -158,6 +160,65 @@
                 display: block;
             }
         }
+
+        /* Prevent horizontal scrolling */
+        body {
+            overflow-x: hidden;
+        }
+
+        /* Topbar specific styles */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-sizing: border-box;
+        }
+
+        .topbar-nav {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: 0.25rem 0;
+        }
+
+        .topbar-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .topbar-nav {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .topbar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-left: 1rem;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .topbar-nav {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .topbar-title {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 
@@ -170,7 +231,7 @@
             <img src="{{ asset('images/logo.svg') }}" alt="Logo" class="w-32 mx-auto mb-6">
         </div>
 
-        <nav class="space-y-2">
+        <nav class="space-y-4">
             <!-- Dashboard -->
             <a href="{{ route('dashboard') }}" class="sidebar-item">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,8 +317,8 @@
     </div>
 
     <div id="overlay" class="overlay hidden"></div>
-    <div class="flex-1 flex flex-col gap-2">
-        <nav class="navbar">
+    <div class="flex-1 flex flex-col">
+        <div class="topbar">
             <div class="flex items-center">
                 <button id="menu-toggle" class="menu-toggle">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,16 +327,15 @@
                     </svg>
                 </button>
                 @yield('btn')
-                <h1 class="ml-4 text-xl font-semibold">@yield('name')</h1>
+                <h1 class="topbar-title">@yield('name')</h1>
             </div>
-
-            {{-- TOPBAR --}}
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 py-2">
+            {{-- TOPBAR NAVIGATION --}}
+            <div class="topbar-nav">
                 <!-- Add Customer Button -->
                 <div class="relative group">
                     <a href=""
-                        class="sidebar-item flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="sidebar-item flex items-center justify-center w-8 h-8 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                         </svg>
@@ -289,8 +349,8 @@
                 <!-- POS Button -->
                 <div class="relative group">
                     <a href="{{ route("pos.items") }}"
-                        class="sidebar-item flex items-center justify-center w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="sidebar-item flex items-center justify-center w-8 h-8 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9M9 21h6">
                             </path>
@@ -305,8 +365,8 @@
                 <!-- Upcoming Feature Button -->
                 <div class="relative group">
                     <a href=""
-                        class="sidebar-item flex items-center justify-center w-10 h-10 bg-purple-500 hover:bg-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="sidebar-item flex items-center justify-center w-8 h-8 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
@@ -317,9 +377,10 @@
                     </div>
                 </div>
             </div>
-        </nav>
 
-        <main class="content-area flex-1 p-4 lg:p-6">
+        </div>
+
+        <main class="content-area flex-1 p-4 lg:p-6 overflow-auto">
             @yield('content')
         </main>
     </div>
