@@ -61,10 +61,11 @@
                 <!-- Product 1 -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
                     <div class="p-4">
-                        <img src="https://via.placeholder.com/250" alt="Product 1"
-                            class="w-full h-40 object-cover rounded-lg mb-3">
-                        <h3 class="text-lg font-semibold text-gray-800">Gaming Mouse</h3>
-                        <p class="text-gray-600 text-sm mt-1">High-performance with RGB lighting.</p>
+                        <img src="{{ asset('images/CPU.jpg') }}" alt="Product 1"
+                            class="w-50 h-50 object-cover rounded-lg mb-3">
+                        <h3 class="text-lg font-semibold text-gray-800">AMD Ryzen 5 5600g</h3>
+                        <p class="text-gray-600 text-sm mt-1"><b>Type:</b> CPU</p>
+                        <p class="text-gray-600 text-sm mt-1"><b>Serial #:</b> 5436547646</p>
                         <div class="mt-3 flex justify-between items-center">
                             <span class="text-indigo-600 font-bold text-base">₱2,500</span>
                             <button
@@ -76,10 +77,11 @@
                 <!-- Product 2 -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
                     <div class="p-4">
-                        <img src="https://via.placeholder.com/250" alt="Product 2"
-                            class="w-full h-40 object-cover rounded-lg mb-3">
-                        <h3 class="text-lg font-semibold text-gray-800">Mechanical Keyboard</h3>
-                        <p class="text-gray-600 text-sm mt-1">Cherry MX Blue switches.</p>
+                        <img src="{{ asset('images/GPU.jpg') }}" alt="Product 2"
+                            class="w-50 h-30 object-cover rounded-lg mb-3">
+                        <h3 class="text-lg font-semibold text-gray-800">ASUS RTX 3060 8GB</h3>
+                        <p class="text-gray-600 text-sm mt-1"><b>Type:</b> GPU</p>
+                        <p class="text-gray-600 text-sm mt-1"><b>Serial #:</b> 5436547646</p>
                         <div class="mt-3 flex justify-between items-center">
                             <span class="text-indigo-600 font-bold text-base">₱4,999</span>
                             <button
@@ -91,10 +93,11 @@
                 <!-- Product 3 -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
                     <div class="p-4">
-                        <img src="https://via.placeholder.com/250" alt="Product 3"
-                            class="w-full h-40 object-cover rounded-lg mb-3">
-                        <h3 class="text-lg font-semibold text-gray-800">Gaming Headset</h3>
-                        <p class="text-gray-600 text-sm mt-1">7.1 Surround Sound headset.</p>
+                        <img src="{{ asset('images/mouse.jpeg') }}" alt="Product 3"
+                            class="w-full h-50 object-cover rounded-lg mb-3">
+                        <h3 class="text-lg font-semibold text-gray-800">Logitech G102</h3>
+                        <p class="text-gray-600 text-sm mt-1"><b>Type:</b> Peripheral</p>
+                        <p class="text-gray-600 text-sm mt-1"><b>Serial #:</b> 5436547646</p>
                         <div class="mt-3 flex justify-between items-center">
                             <span class="text-indigo-600 font-bold text-base">₱3,750</span>
                             <button
@@ -106,10 +109,11 @@
                 <!-- Product 4 -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
                     <div class="p-4">
-                        <img src="https://via.placeholder.com/250" alt="Product 4"
+                        <img src="{{ asset('images/monitor.png') }}" alt="Product 4"
                             class="w-full h-40 object-cover rounded-lg mb-3">
-                        <h3 class="text-lg font-semibold text-gray-800">Gaming Monitor</h3>
-                        <p class="text-gray-600 text-sm mt-1">27" 144Hz IPS Display.</p>
+                        <h3 class="text-lg font-semibold text-gray-800">Dell 144Hz 27-Inch Gaming Monitor</h3>
+                        <p class="text-gray-600 text-sm mt-1"><b>Type:</b> Monitor</p>
+                        <p class="text-gray-600 text-sm mt-1"><b>Serial #:</b> 5436547646</p>
                         <div class="mt-3 flex justify-between items-center">
                             <span class="text-indigo-600 font-bold text-base">₱15,999</span>
                             <button
