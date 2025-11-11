@@ -14,9 +14,6 @@
     {{-- SweetAlert --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    {{-- Heroicons (assuming it's included via Vite or CDN for icons) --}}
-    <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
-
     <style>
         .sidebar {
             transition: all 0.3s ease;
@@ -229,7 +226,7 @@
                 </summary>
                 <div class="dropdown-content space-y-1">
                     <a href="{{ route('suppliers') }}" class="dropdown-item">Supplier Manage</a>
-                    <a href="{{ route('suppliers.list') }}" class="dropdown-item">Supplier List</a>
+                    <a href="{{ route('suppliers.list') }}" class="dropdown-item">Purchase Orders</a>
                 </div>
             </details>
 

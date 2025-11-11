@@ -4,7 +4,7 @@
     <div class="flex items-center gap-2 w-full sm:w-auto flex-1">
     <input type="text" placeholder="Search inventory..."
         class="w-1/3 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-    
+
     <select
         class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
         <option value="">All Categories</option>
@@ -21,14 +21,12 @@
                 <tr class="bg-gray-200">
                     <th class="px-4 py-2 text-left">Product Name</th>
                     <th class="px-4 py-2 text-left">Brand</th>
-                    <th class="px-4 py-2 text-left">Quantity</th>
-                    <th class="px-4 py-2 text-left">Price</th>
                     <th class="px-4 py-2 text-left">Category</th>
+                    <th class="px-4 py-2 text-left">Price</th>
                     <th class="px-4 py-2 text-left">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Inventory items will be dynamically inserted here -->
             </tbody>
         </table>
     </div>

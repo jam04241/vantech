@@ -18,6 +18,11 @@ use Illuminate\Support\Facades\DB;
 |
 */
 
+// Redirect root URL to Dashboard
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+});
+
 Route::get('/Dashboard', function () {
     return view('DASHBOARD.homepage');
 })->name('dashboard');
@@ -43,7 +48,7 @@ Route::get('/Suppliers', function () {
 })->name('suppliers');
 
 Route::get('/Suppliers/List', function () {
-    return view('DASHBOARD.suppliers_list');
+    return view('DASHBOARD.suppliers_orders');
 })->name('suppliers.list');
 
 Route::get('/tester', function () {
