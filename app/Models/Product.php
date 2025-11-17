@@ -17,7 +17,6 @@ class Product extends Model
         'supplier_id',
         'warranty_period',
         'serial_number',
-        'image_path',
         // Define fillable attributes here
     ];
     public function category()
@@ -34,6 +33,4 @@ class Product extends Model
     {
         return $this->belongsTo(Suppliers::class);
     }
-
-
 }

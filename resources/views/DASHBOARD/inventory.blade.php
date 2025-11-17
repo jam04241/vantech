@@ -1,32 +1,50 @@
 @extends('SIDEBAR.layouts')
+@section('title', 'Inventory')
 @section('name', 'Inventory')
 @section('content')
 
-    <div class="flex items-center gap-3 mb-4">
-
+    {{-- <div class="flex items-center gap-3 mb-4">
         <a href="#" class="px-4 py-2 rounded-lg bg-gray-600 text-white font-medium shadow ">
             Brand History
         </a>
-
         <a href="#" class="px-4 py-2 rounded-lg bg-gray-600 text-white font-medium shadow">
             Categories History
         </a>
-
-    </div>
+    </div> --}}
 
     <div class="py-6 rounded-xl">
         <div class="flex flex-col sm:flex-row justify-between gap-3">
-            <div class="flex items-center gap-2 w-full sm:w-auto flex-1">
-                <input type="text" placeholder="Search inventory..."
+            <div class="flex items-center gap-2 w-full sm:w-auto flex-1" id="filter-container">
+                {{-- SEARCH BAR --}}
+                <input type="text" name="search" placeholder="Search inventory..." value="{{ request('search') }}"
+                    hx-get="{{ route('inventory') }}" hx-trigger="input changed delay:300ms, search"
+                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
                     class="w-1/2 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                <select
+
+                <select name="category" hx-get="{{ route('inventory') }}" hx-trigger="change"
+                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
                     class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
-                    <option value="">All Categories</option>
-                    <option value="processors">Processors (CPU)</option>
-                    <option value="motherboards">Motherboards</option>
-                    <option value="graphics-cards">Graphics Cards (GPU)</option>
-                    <option value="memory">Memory (RAM)</option>
-                    <option value="storage">Storage (SSD/HDD)</option>
+                    <option value="" {{ request('category') == '' ? 'selected' : '' }}>All Categories</option>
+                    @isset($categories)
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                {{ $category->category_name }}
+                            </option>
+                        @endforeach
+                    @endisset
+                </select>
+
+                <select name="brand" hx-get="{{ route('inventory') }}" hx-trigger="change"
+                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
+                    class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
+                    <option value="" {{ request('brand') == '' ? 'selected' : '' }}>All Brands</option>
+                    @isset($brands)
+                        @foreach ($brands as $brand)
+                            <option value="{{ $brand->id }}" {{ request('brand') == $brand->id ? 'selected' : '' }}>
+                                {{ $brand->brand_name }}
+                            </option>
+                        @endforeach
+                    @endisset
                 </select>
             </div>
             <div>
@@ -38,44 +56,9 @@
         </div>
     </div>
 
-
     {{-- TABLE --}}
-    <div class="bg-white rounded-2xl shadow-lg border overflow-x-auto mt-4">
-        <table class="w-full text-left">
-            <thead class="bg-gray-100 text-gray-700 text-base">
-                <tr>
-                    <th class="p-4 font-semibold">ID</th>
-                    <th class="p-4 font-semibold">Product</th>
-                    <th class="p-4 font-semibold">Serial Number</th>
-                    <th class="p-4 font-semibold">Warranty</th>
-                    <th class="p-4 font-semibold">Brand</th>
-                    <th class="p-4 font-semibold">Categories</th>
-                    <th class="p-4 font-semibold">Stocks</th>
-                    <th class="p-4 font-semibold"></th>
-                    <th class="p-4">Status</th>
-                </tr>
-            </thead>
-
-            <tbody class="text-base">
-                <tr class="border-t hover:bg-gray-50 transition">
-                    <td class="p-4 text-blue-600 font-semibold"></td>
-                    <td class="p-4"></td>
-                    <td class="p-4"></td>
-                    <td class="p-4"></td>
-
-                    <td class="p-4">
-
-                    </td>
-
-                    <td class="p-4"></td>
-
-                    <td class="p-4">
-                    </td>
-                </tr>
-
-            </tbody>
-        </table>
+    <div id="product-table-container">
+        @include('partials.productTable_Inventory')
     </div>
-
 
 @endsection

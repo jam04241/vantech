@@ -30,14 +30,15 @@
         </div>
 
         <div class="flex flex-wrap items-center  justify-between gap-3 mb-4">
-            <div class="flex gap-2" >
+            <div class="flex gap-2">
                 <button class="px-4 py-2 rounded-lg border bg-gray-900 text-white">All</button>
                 <button class="px-4 py-2 rounded-lg border bg-white text-gray-600">Pending</button>
                 <button class="px-4 py-2 rounded-lg border bg-white text-gray-600">Unpaid</button>
             </div>
 
             <div>
-                <a href="{{ route('suppliers.purchase-orders') }}" class="px-4 py-2 border rounded-lg bg-white">Purchase Orders</a>
+                <a href="{{ route('suppliers.purchase-orders') }}" class="px-4 py-2 border rounded-lg bg-white">Purchase
+                    Orders</a>
             </div>
 
         </div>
@@ -45,8 +46,9 @@
         {{-- SEARCH + SORT + FILTER --}}
         <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
 
-            <input type="text" placeholder="Find order" class="px-4 py-2 border rounded-lg w-1/2 mt-4 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 shadow-sm"
-                        aria-label="Search suppliers">
+            <input type="text" placeholder="Find order"
+                class="px-4 py-2 border rounded-lg w-1/2 mt-4 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 shadow-sm"
+                aria-label="Search suppliers">
 
             <div class="flex gap-2">
                 <select class="px-4 py-2 border rounded-lg bg-white">Sort
@@ -57,7 +59,8 @@
                     <option value="">Today</option>
                 </select>
                 <button class="px-4 py-2 border rounded-lg bg-white flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-12 0h12v4H6v-4z" />
                     </svg>

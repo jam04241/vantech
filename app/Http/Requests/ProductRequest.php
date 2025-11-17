@@ -27,7 +27,6 @@ class ProductRequest extends FormRequest
             'product_name' => 'required|string|max:255',
             'warranty_period' => 'required|string|max:100',
             'serial_number' => 'required|string|max:100|unique:products,serial_number',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
             'supplier_id' => 'required|exists:suppliers,id',

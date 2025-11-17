@@ -1,13 +1,16 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Category;
+
 use App\Http\Requests\CategoryRequest;
+use App\Models\Category;
 use Illuminate\Http\Request;
+use App\Traits\LoadsCategoryData;
 
 class CategoryController extends Controller
-{   
-    
+{
+    use LoadsCategoryData;
+
     public function index()
     {
         $categories = Category::all();
@@ -20,6 +23,26 @@ class CategoryController extends Controller
         Category::create($validated);
         return redirect()->route('product.add')->with('success', 'Category created successfully.');
     }
+    public function posCategories()
+    {
+        return view('POS_SYSTEM.sidebar.app', $this->loadCategories());
+    }
+
+    public function inventorygetCategories()
+    {
+        return response()->json($this->loadCategories()['categories']);
+    }
+
+    public function inventoryListgetCategories()
+    {
+        return response()->json($this->loadCategories()['categories']);
+    }
+
+    public function categoryHistory()
+    {
+        return view('INVENTORY.brandcategoryHistory', $this->loadCategories());
+    }
+
 
     public function show($id)
     {

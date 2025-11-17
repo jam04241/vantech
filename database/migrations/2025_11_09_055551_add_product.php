@@ -22,7 +22,6 @@ return new class extends Migration
             $table->decimal('price', 10, 2);
             $table->string('warranty_period');
             $table->string('serial_number');
-            $table->string('image_path')->nullable();
             $table->timestamps();
         });
         //
