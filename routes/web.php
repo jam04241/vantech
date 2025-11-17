@@ -111,6 +111,11 @@
     // POS CATEGORIES DROPDOWN (JSON API)
     Route::get('/PointOfSale/categories', [CategoryController::class, 'posCategories'])->name('pos.categories');
 
+    //Suppliers Purchase Orders Route
+    Route::get('/suppliers/purchase-orders', function () {
+        return view('SUPPLIERS.suppliers_purchase');
+    })->name('suppliers.purchase-orders');
+
     // LOGIN FORM
     Route::get('/LOGIN_FORM', function () {
         return view('LOGIN_FORM.login');
