@@ -11,6 +11,14 @@ class Bundles extends Model
 
     protected $fillable = [
         'bundle_name',
+        'quantity_bundles',
         'bundle_type',
     ];
+
+
+    public function purchaseDetails()
+    {
+        return $this->hasMany(Purchase_Details::class);
+    }
+
 }

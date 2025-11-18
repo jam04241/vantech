@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('bundles', function (Blueprint $table) {
             $table->id();
             $table->string('bundle_name');
+            $table->integer('quantity_bundles');
             $table->enum('bundle_type', ['Product', 'Pack','Bundle']);
             $table->timestamps();
         });

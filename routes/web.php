@@ -5,6 +5,7 @@
     use App\Http\Controllers\CategoryController;
     use App\Http\Controllers\ProductController;
     use App\Http\Controllers\SuppliersController;
+    use App\Http\Controllers\PurchaseDetailsController;
     use Illuminate\Support\Facades\DB;
 
     /*
@@ -111,10 +112,14 @@
     // POS CATEGORIES DROPDOWN (JSON API)
     Route::get('/PointOfSale/categories', [CategoryController::class, 'posCategories'])->name('pos.categories');
 
-    //Suppliers Purchase Orders Route
-    Route::get('/suppliers/purchase-orders', function () {
-        return view('SUPPLIERS.suppliers_purchase');
-    })->name('suppliers.purchase-orders');
+    //Suppliers Purchase Orders Route - use controller so view has required data
+    Route::get('/suppliers/purchase-orders', [PurchaseDetailsController::class, 'create'])
+        ->name('suppliers.purchase-orders');
+
+    // Store purchase order
+    Route::get('/purchase/create', [PurchaseDetailsController::class, 'create'])->name('purchase.create');
+    Route::post('/purchase/store', [PurchaseDetailsController::class, 'store'])->name('purchase.store');
+    
 
     // LOGIN FORM
     Route::get('/LOGIN_FORM', function () {
