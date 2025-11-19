@@ -48,7 +48,6 @@ trait LoadsProductData
                 'price' => $first->price, // Use first product's price
                 'serial_number' => $first->serial_number,
                 'warranty_period' => $first->warranty_period,
-                'image_path' => $first->image_path,
             ];
         })->values();
 

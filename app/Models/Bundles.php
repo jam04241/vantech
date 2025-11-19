@@ -15,10 +15,8 @@ class Bundles extends Model
         'bundle_type',
     ];
 
-
     public function purchaseDetails()
     {
         return $this->hasMany(Purchase_Details::class);
     }
-
 }

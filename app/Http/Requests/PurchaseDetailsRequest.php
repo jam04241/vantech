@@ -24,16 +24,16 @@ class PurchaseDetailsRequest extends FormRequest
     public function rules()
     {
          return [
-
-            'product_id' => 'nullable|exists:products,id',
             'supplier_id' => 'required|exists:suppliers,id',
-            'bundle_id' => 'nullable|exists:bundles,id',
-            'quantity_ordered' => 'required|integer|min:1',
-            'unit_price' => 'required|numeric|min:0',
-            'total_price' => 'required|numeric|min:0',
             'order_date' => 'required|date',
-            'status' => ['required', 'in:pending,received,cancelled'],
-            
+            'items' => 'required|array|min:1',
+            'items.*.item_id' => 'nullable|integer|min:1',
+            'items.*.item_type' => 'required|in:product,bundle,pack',
+            'items.*.item_name' => 'required|string|max:255',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.total' => 'required|numeric|min:0',
+            'status' => 'required|in:Cancelled,Received,Pending',
         ];
     }
 }
