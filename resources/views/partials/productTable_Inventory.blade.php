@@ -7,8 +7,8 @@
                 <th class="p-4 font-semibold">Serial Number</th>
                 <th class="p-4 font-semibold">Warranty</th>
                 <th class="p-4 font-semibold">Brand</th>
-                <th class="p-4 font-semibold">Categories</th>
-                <th class="p-4 font-semibold">Date Added</th>
+                <th class="p-4 font-semibold">Category</th>
+                <th class="p-4 font-semibold">Condition</th>
                 <th class="p-4">Actions</th>
             </tr>
         </thead>
@@ -21,7 +21,7 @@
                             <span>{{ $product->product_name }}</span>
                         </div>
                     </td>
-                    <td class="p-4 font-mono text-sm">{{ $product->serial_number }}</td>
+                    <td class="p-4 font-mono text-sm">{{ $product->serial_number ?? 'N/A' }}</td>
                     <td class="p-4">
                         <span class="text-green-800 text-xs px-2 py-1 font-bold rounded-full">
                             {{ $product->warranty_period }}
@@ -37,21 +37,25 @@
                             {{ $product->category?->category_name ?? 'N/A' }}
                         </span>
                     </td>
-                    <td class="p-4 text-gray-600">
-                        {{ \Carbon\Carbon::parse($product->created_at)->format('M d, Y') }}
-                    </td>
                     <td class="p-4">
-                        <div class="flex space-x-2">
-                            <!-- Edit Icon -->
-                            <a href=""
-                                class="text-blue-600 hover:text-blue-900 transition-colors duration-200 p-1 rounded hover:bg-blue-50"
-                                title="Edit Product">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                            </a>
-                        </div>
+                        @php
+                            $payload = [
+                                'id' => $product->id,
+                                'product_name' => $product->product_name,
+                                'serial_number' => $product->serial_number,
+                                'warranty_period' => $product->warranty_period,
+                                'brand_id' => $product->brand_id,
+                                'category_id' => $product->category_id,
+                                'condition' => $product->condition,
+                                'supplier_id' => $product->supplier_id,
+                                'price' => $product->stock?->price,
+                            ];
+                        @endphp
+                        <button type="button" data-product-modal data-product='@json($payload)'
+                            data-action="{{ route('products.update', $product->id) }}"
+                            class="text-blue-600 hover:text-blue-900 transition-colors duration-200 px-3 py-1 rounded-lg border border-blue-200 hover:bg-blue-50 text-sm font-semibold">
+                            Edit
+                        </button>
                     </td>
                 </tr>
             @empty

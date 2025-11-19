@@ -76,9 +76,11 @@ class BrandController extends Controller
         //
     }
 
-    public function update(Request $request, $id)
+    public function update(BrandRequest $request, Brand $brand)
     {
-        //
+        $brand->update($request->validated());
+
+        return redirect()->route('inventory')->with('success', 'Brand updated successfully.');
     }
 
     public function destroy($id)

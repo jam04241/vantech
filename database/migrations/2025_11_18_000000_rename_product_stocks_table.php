@@ -13,13 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('product_stocks', function (Blueprint $table) {
-            $table->id();
-            $table->string('stock_quantity');
-            $table->decimal('price', 10, 2);
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
-            $table->timestamps();
-        });
+        if (Schema::hasTable('product__stocks') && !Schema::hasTable('product_stocks')) {
+            Schema::rename('product__stocks', 'product_stocks');
+        }
     }
 
     /**
@@ -29,6 +25,9 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('product_stocks');
+        if (Schema::hasTable('product_stocks') && !Schema::hasTable('product__stocks')) {
+            Schema::rename('product_stocks', 'product__stocks');
+        }
     }
 };
+

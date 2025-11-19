@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProductRequest;
 use App\Models\Product;
 use App\Models\Suppliers;
+use App\Models\Product_Stocks;
 use App\Traits\LoadsBrandData;
 use App\Traits\LoadsProductData;
 use App\Traits\LoadsCategoryData;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -37,8 +39,19 @@ class ProductController extends Controller
     public function store(ProductRequest $request)
     {
         $data = $request->validated();
-        Product::create($data);
-        return redirect()->route('product.add')->with('success', 'Product created successfully.');
+
+        DB::transaction(function () use ($data) {
+            $productData = collect($data)->except(['price'])->toArray();
+            $product = Product::create($productData);
+
+            Product_Stocks::create([
+                'product_id' => $product->id,
+                'price' => $data['price'],
+                'stock_quantity' => 1,
+            ]);
+        });
+
+        return redirect()->route('product.add')->with('success', 'Product saved and stock updated successfully.');
     }
 
     /**
@@ -66,59 +79,88 @@ class ProductController extends Controller
     /**
      * Apply search functionality across multiple product fields.
      *
-     * @param  \Illuminate\Support\Collection  $products
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  string  $search
-     * @return \Illuminate\Support\Collection
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    protected function applyProductSearch($products, $search)
+    protected function applyProductSearch($query, $search)
     {
         if (empty($search)) {
-            return $products;
+            return $query;
         }
 
         $search = strtolower($search);
+        $like = '%' . $search . '%';
 
-        return $products->filter(function ($product) use ($search) {
-            // Search in product name
-            if (stripos($product->product_name ?? '', $search) !== false) {
-                return true;
-            }
-
-            // Search in serial number
-            if (stripos($product->serial_number ?? '', $search) !== false) {
-                return true;
-            }
-
-            // Search in warranty period
-            if (stripos($product->warranty_period ?? '', $search) !== false) {
-                return true;
-            }
-
-            // Search in brand name
-            if ($product->brand && stripos($product->brand->brand_name ?? '', $search) !== false) {
-                return true;
-            }
-
-            // Search in category name
-            if ($product->category && stripos($product->category->category_name ?? '', $search) !== false) {
-                return true;
-            }
-
-            // Search in date added (formatted)
-            if ($product->created_at) {
-                $formattedDate = \Carbon\Carbon::parse($product->created_at)->format('M d, Y');
-                if (stripos($formattedDate, $search) !== false) {
-                    return true;
-                }
-                // Also search in raw date format
-                if (stripos($product->created_at->format('Y-m-d'), $search) !== false) {
-                    return true;
-                }
-            }
-
-            return false;
+        return $query->where(function ($q) use ($search, $like) {
+            $q->whereRaw('LOWER(products.product_name) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(products.serial_number) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(products.warranty_period) LIKE ?', [$like])
+                ->orWhereHas('brand', function ($brand) use ($like) {
+                    $brand->whereRaw('LOWER(brand_name) LIKE ?', [$like]);
+                })
+                ->orWhereHas('category', function ($category) use ($like) {
+                    $category->whereRaw('LOWER(category_name) LIKE ?', [$like]);
+                })
+                ->orWhereHas('stock', function ($stock) use ($like) {
+                    $stock->whereRaw('LOWER(CAST(stock_quantity AS VARCHAR(50))) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(CAST(price AS VARCHAR(50))) LIKE ?', [$like]);
+                });
         });
     }
+
+    /**
+     * Apply ordering logic for common sort options.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function applySorting($query, Request $request)
+    {
+        $sort = $request->get('sort', 'name_asc');
+
+        switch ($sort) {
+            case 'name_desc':
+                $query->orderBy('products.product_name', 'desc');
+                break;
+            case 'qty_desc':
+                $query->orderBy(
+                    Product_Stocks::select('stock_quantity')
+                        ->whereColumn('product_id', 'products.id'),
+                    'desc'
+                );
+                break;
+            case 'qty_asc':
+                $query->orderBy(
+                    Product_Stocks::select('stock_quantity')
+                        ->whereColumn('product_id', 'products.id'),
+                    'asc'
+                );
+                break;
+            case 'price_desc':
+                $query->orderBy(
+                    Product_Stocks::select('price')
+                        ->whereColumn('product_id', 'products.id'),
+                    'desc'
+                );
+                break;
+            case 'price_asc':
+                $query->orderBy(
+                    Product_Stocks::select('price')
+                        ->whereColumn('product_id', 'products.id'),
+                    'asc'
+                );
+                break;
+            case 'name_asc':
+            default:
+                $query->orderBy('products.product_name', 'asc');
+                break;
+        }
+
+        return $query;
+    }
+
 
     /**
      * Display the specified resource.
@@ -128,23 +170,28 @@ class ProductController extends Controller
      */
     public function show(Request $request): View
     {
-        $query = Product::with('brand', 'category', 'supplier');
+        $query = Product::with('brand', 'category', 'supplier', 'stock');
 
         // Apply filters
         $query = $this->applyProductFilters($query, $request);
 
+        // Apply search
+        if ($request->filled('search')) {
+            $query = $this->applyProductSearch($query, $request->search);
+        }
+
+        $query = $this->applySorting($query, $request);
+
         // Get products
         $products = $query->get();
 
-        // Apply search
-        if ($request->filled('search')) {
-            $products = $this->applyProductSearch($products, $request->search);
-        }
+        $suppliers = Suppliers::orderBy('supplier_name')->get();
 
         $data = array_merge(
             $this->loadBrands(),
             $this->loadCategories(),
-            compact('products')
+            compact('products', 'suppliers'),
+            ['currentSort' => $request->get('sort', 'name_asc')]
         );
 
         // If HTMX request, return only the table partial
@@ -165,77 +212,53 @@ class ProductController extends Controller
     // FOR INVENTORY LIST FOR QUANTITY SUMMING AT invetory_list.blade.php
     public function inventoryList(Request $request)
     {
-        $query = Product::with('brand', 'category', 'supplier');
+        $query = Product::with('brand', 'category', 'supplier', 'stock');
 
         // Apply reusable filters
         $query = $this->applyProductFilters($query, $request);
 
-        // Get all products for grouping
-        $allProducts = $query->get();
+        // Apply search
+        if ($request->filled('search')) {
+            $query = $this->applyProductSearch($query, $request->search);
+        }
 
-        // Group by product_name and calculate total quantity
-        $grouped = $allProducts->groupBy('product_name')->map(function ($group) {
+        $productsCollection = $query->get();
+
+        $grouped = $productsCollection->groupBy(function ($product) {
+            return implode('|', [
+                $product->product_name,
+                $product->brand_id ?? 'null',
+                $product->category_id ?? 'null',
+            ]);
+        })->map(function ($group) {
             $first = $group->first();
-            $quantity = $group->count();
-
             return (object) [
                 'id' => $first->id,
                 'product_name' => $first->product_name,
                 'brand' => $first->brand,
                 'category' => $first->category,
-                'supplier' => $first->supplier,
-                'quantity' => $quantity,
-                'price' => $first->price,
-                'serial_number' => $first->serial_number,
-                'warranty_period' => $first->warranty_period,
+                'brand_id' => $first->brand_id,
+                'category_id' => $first->category_id,
+                'quantity' => $group->count(),
+                'price' => $first->stock?->price ?? 0,
             ];
         })->values();
 
-        // Search functionality - search across all table columns (except actions)
-        if ($request->filled('search')) {
-            $search = strtolower($request->search);
-            $grouped = $grouped->filter(function ($item) use ($search) {
-                // Search in product name
-                if (stripos($item->product_name, $search) !== false) {
-                    return true;
-                }
-
-                // Search in brand name
-                if ($item->brand && stripos($item->brand->brand_name, $search) !== false) {
-                    return true;
-                }
-
-                // Search in category name
-                if ($item->category && stripos($item->category->category_name, $search) !== false) {
-                    return true;
-                }
-
-                // Search in quantity (as string)
-                if (stripos((string)$item->quantity, $search) !== false) {
-                    return true;
-                }
-
-                // Search in price (as formatted string)
-                $formattedPrice = number_format($item->price ?? 0, 2);
-                if (stripos($formattedPrice, $search) !== false) {
-                    return true;
-                }
-
-                // Search in raw price value
-                if (stripos((string)($item->price ?? 0), $search) !== false) {
-                    return true;
-                }
-
-                return false;
-            });
-        }
-
-        $products = $grouped->values();
+        $sort = $request->get('sort', 'name_asc');
+        $products = match ($sort) {
+            'name_desc' => $grouped->sortByDesc('product_name')->values(),
+            'qty_desc' => $grouped->sortByDesc('quantity')->values(),
+            'qty_asc' => $grouped->sortBy('quantity')->values(),
+            'price_desc' => $grouped->sortByDesc('price')->values(),
+            'price_asc' => $grouped->sortBy('price')->values(),
+            default => $grouped->sortBy('product_name')->values(),
+        };
 
         $data = array_merge(
             $this->loadBrands(),
             $this->loadCategories(),
-            compact('products')
+            compact('products'),
+            ['currentSort' => $sort]
         );
 
         // If HTMX request, return only the table partial
@@ -262,9 +285,23 @@ class ProductController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Product $product)
+    public function update(ProductRequest $request, Product $product)
     {
-        //
+        $data = $request->validated();
+
+        DB::transaction(function () use ($product, $data) {
+        $productData = collect($data)->except(['price'])->toArray();
+        $productData['serial_number'] = $productData['serial_number'] ?? ($product->serial_number ?? 'N/A');
+
+            $product->update($productData);
+
+            $stock = Product_Stocks::firstOrNew(['product_id' => $product->id]);
+            $stock->price = $data['price'];
+        $stock->stock_quantity = $stock->stock_quantity ?? 1;
+            $stock->save();
+        });
+
+        return redirect()->route('inventory')->with('success', 'Product updated successfully.');
     }
 
     /**

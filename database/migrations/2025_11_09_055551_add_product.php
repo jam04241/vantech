@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('categories', 'id')->onDelete('cascade');
             $table->foreignId('supplier_id')->constrained('suppliers', 'id')->onDelete('cascade');
             $table->string('warranty_period');
+            $table->enum('condition', ['new', 'used'])->default('new');
             $table->string('serial_number');
             $table->timestamps();
         });

@@ -6,6 +6,7 @@
     use App\Http\Controllers\ProductController;
     use App\Http\Controllers\SuppliersController;
     use App\Http\Controllers\PurchaseDetailsController;
+    use App\Http\Controllers\ProductStocksController;
     use Illuminate\Support\Facades\DB;
 
     /*
@@ -74,17 +75,21 @@
 
     Route::get('/brands', [BrandController::class, 'index'])->name('brands');
     Route::post('/brands', [BrandController::class, 'store'])->name('brands.store');
+    Route::put('/brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
 
 
     // Category routes
 
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
 
     // Product routes
     Route::get('/product/add', [ProductController::class, 'create'])->name('product.add');
     Route::get('/products', [ProductController::class, 'index'])->name('products');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+    Route::put('/products/{product}/price', [ProductStocksController::class, 'updatePrice'])->name('products.update_price');
 
     Route::get('/Suppliers', [SuppliersController::class, 'index'])->name('suppliers');
     Route::post('/suppliers', [SuppliersController::class, 'store'])->name('suppliers.store');

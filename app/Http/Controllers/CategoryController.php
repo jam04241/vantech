@@ -53,9 +53,11 @@ class CategoryController extends Controller
     {
         //
     }
-    public function update(Request $request, $id)
+    public function update(CategoryRequest $request, Category $category)
     {
-        //
+        $category->update($request->validated());
+
+        return redirect()->route('inventory')->with('success', 'Category updated successfully.');
     }
 
     public function destroy($id)

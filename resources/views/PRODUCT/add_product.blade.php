@@ -164,15 +164,9 @@
                                 <div>
                                     <label for="warranty" class="block text-sm font-medium text-gray-700 mb-2">Warranty</label>
                                     <input type="text" id="warranty" name="warranty_period"
+                                        value="{{ old('warranty_period') }}"
                                         class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
                                         placeholder="e.g. 1 year">
-                                </div>
-                                <div>
-                                    <label for="image" class="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-                                    <div class="relative">
-                                        <input type="file" id="image" name="image" accept="image/*"
-                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                    </div>
                                 </div>
                             </div>
                         </div>
