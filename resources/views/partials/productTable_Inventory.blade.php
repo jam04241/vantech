@@ -29,16 +29,13 @@
                             {{ $product->warranty_period }}
                         </span>
                     </td>
-                    <td class="p-4">
-                        @php
-                            // Determine condition based on supplier
-                            $condition = $product->supplier_id ? 'Brand New' : 'Second Hand';
-                            $conditionClass = $product->supplier_id ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-                        @endphp
-                        <span class="text-xs px-2 py-1 font-bold rounded-full {{ $conditionClass }}">
-                            {{ $condition }}
-                        </span>
-                    </td>
+                {{-- In your productTable_Inventory.blade.php --}}
+                <td class="p-4">
+                    <span
+                        class="text-xs px-2 py-1 font-bold rounded-full {{ $product->product_condition === 'Second Hand' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' }}">
+                        {{ $product->product_condition }}
+                    </span>
+                </td>
                     <td class="p-4">
                         <span class="text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
                             {{ $product->brand?->brand_name ?? 'N/A' }}
@@ -51,7 +48,7 @@
                     </td>
                     <td class="p-4">
                         <span class="text-gray-800 text-xs font-bold px-2 py-1 rounded-full">
-                            {{ $product->supplier?->supplier_name ?? 'N/A' }}
+                            {{ $product->supplier ? $product->supplier->supplier_name . ' - ' . $product->supplier->company_name : 'N/A' }}
                         </span>
                     </td>
                     <td class="p-4 text-gray-600">

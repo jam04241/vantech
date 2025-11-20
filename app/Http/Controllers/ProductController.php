@@ -35,18 +35,24 @@ class ProductController extends Controller
     }
 
 
- public function store(ProductRequest $request)
-    {
-        $data = $request->validated();
-        
-        // If product is used (checkbox checked), set supplier_id to null
-        if ($request->has('is_used')) {
-            $data['supplier_id'] = null;
-        }
-        
-        Product::create($data);
-        return redirect()->route('product.add')->with('success', 'Product created successfully.');
+   public function store(ProductRequest $request)
+{
+    $data = $request->validated();
+    
+    // Determine product condition based on checkbox
+    $productCondition = $request->has('is_used') ? 'Second Hand' : 'Brand New';
+    
+    // If product is Second Hand, set supplier_id to null
+    if ($request->has('is_used')) {
+        $data['supplier_id'] = null;
     }
+    
+    // Add product condition to data
+    $data['product_condition'] = $productCondition;
+    
+    Product::create($data);
+    return redirect()->route('product.add')->with('success', 'Product created successfully.');
+}
 
 
     /**

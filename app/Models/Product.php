@@ -17,9 +17,10 @@ class Product extends Model
         'supplier_id',
         'warranty_period',
         'serial_number',
-        'product_condition',
+        'product_condition', //KINI JOSH
         // Define fillable attributes here
     ];
+    
     public function category()
     {
         return $this->belongsTo(Category::class);
