@@ -13,7 +13,7 @@ trait LoadsProductData
      */
     protected function loadProducts(): array
     {
-        $products = Product::with('brand', 'category', 'supplier')->get();
+        $products = Product::with('brand', 'category', 'supplier', 'stock')->get();
 
         return compact('products');
     }
@@ -26,31 +26,23 @@ trait LoadsProductData
      */
     protected function loadGroupedProducts(): array
     {
-        $products = Product::with('brand', 'category', 'supplier')->get();
+        $products = Product::with('brand', 'category', 'supplier', 'stock')->get();
 
-        // Group by product_name and calculate total quantity
-        // Each database entry with same product_name = 1 quantity, so we count them
-        // If you have a quantity column, change this to: $quantity = $group->sum('quantity');
-        $grouped = $products->groupBy('product_name')->map(function ($group) {
-            $first = $group->first();
-            
-            // Count entries with same product_name (each entry = 1 unit)
-            // If you add a quantity column later, change to: $quantity = $group->sum('quantity');
-            $quantity = $group->count();
-            
+        $projected = $products->map(function ($product) {
             return (object) [
-                'id' => $first->id,
-                'product_name' => $first->product_name,
-                'brand' => $first->brand,
-                'category' => $first->category,
-                'supplier' => $first->supplier,
-                'quantity' => $quantity,
-                'price' => $first->price, // Use first product's price
-                'serial_number' => $first->serial_number,
-                'warranty_period' => $first->warranty_period,
+                'id' => $product->id,
+                'product_name' => $product->product_name,
+                'brand' => $product->brand,
+                'category' => $product->category,
+                'supplier' => $product->supplier,
+                'quantity' => $product->stock?->stock_quantity ?? 0,
+                'price' => $product->stock?->price ?? 0,
+                'serial_number' => $product->serial_number,
+                'warranty_period' => $product->warranty_period,
+                'image_path' => $product->image_path ?? null,
             ];
-        })->values();
+        });
 
-        return ['products' => $grouped];
+        return ['products' => $projected];
     }
 }

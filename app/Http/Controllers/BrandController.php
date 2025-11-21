@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\BrandRequest;
 use App\Models\Brand;
+use App\Models\Product;
 use App\Traits\LoadsBrandData;
 use App\Traits\LoadsProductData;
 use App\Traits\LoadsCategoryData;
@@ -23,10 +24,31 @@ class BrandController extends Controller
 
     public function posBrand()
     {
+        // Get all products with their stock relationships
+        $productsCollection = Product::with('brand', 'category', 'stock')->get();
+
+        // Map individual products with their serial numbers
+        // Each product is displayed individually so any serial can be scanned
+        $grouped = $productsCollection->map(function ($product) {
+            return (object) [
+                'id' => $product->id,
+                'product_name' => $product->product_name,
+                'serial_number' => $product->serial_number, // Each product has its own serial
+                'brand' => $product->brand,
+                'category' => $product->category,
+                'brand_id' => $product->brand_id,
+                'category_id' => $product->category_id,
+                'product_condition' => $product->product_condition,
+                'image_path' => $product->image_path,
+                'stock' => 1, // Each individual product = 1 unit
+                'price' => $product->stock?->price ?? 0,
+            ];
+        })->values();
+
         $data = array_merge(
             $this->loadBrands(),
             $this->loadCategories(),
-            $this->loadProducts(),
+            compact('grouped'),
         );
 
         return view('POS_SYSTEM.item_list',  $data);
@@ -76,9 +98,11 @@ class BrandController extends Controller
         //
     }
 
-    public function update(Request $request, $id)
+    public function update(BrandRequest $request, Brand $brand)
     {
-        //
+        $brand->update($request->validated());
+
+        return redirect()->route('inventory')->with('success', 'Brand updated successfully.');
     }
 
     public function destroy($id)

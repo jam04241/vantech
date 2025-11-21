@@ -241,12 +241,11 @@
                 Dashboard
             </a>
 
-            <a href="{{ route('POS') }}" class="sidebar-item">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2 9m13-9l2 9M9 21h6" />
-            </svg>
-
+            <a href="{{ route('Sales') }}" class="sidebar-item">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
                 Sales
             </a>
 
@@ -332,21 +331,6 @@
             </div>
             {{-- TOPBAR NAVIGATION --}}
             <div class="topbar-nav">
-                <!-- Add Customer Button -->
-                <div class="relative group">
-                    <a href=""
-                        class="sidebar-item flex items-center justify-center w-8 h-8 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                    </a>
-                    <div
-                        class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
-                        Add Customer
-                    </div>
-                </div>
-
                 <!-- POS Button -->
                 <div class="relative group">
                     <a href="{{ route("pos.brands") }}"
@@ -360,23 +344,6 @@
                     <div
                         class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
                         Point of Sale
-                    </div>
-                </div>
-
-                <!-- Upcoming Feature Button -->
-                <div class="relative group">
-                    <a href="{{ route("inventory.brandcategory") }}"
-                        class="sidebar-item flex items-center justify-center w-8 h-8 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
-                        <svg class="w-4 h-4 text-white-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 7h4l2 2h12v11H3z" />
-                        </svg>
-                        {{-- <!-- ICON SAVE -->
-                        <x-far-save /> --}}
-                    </a>
-                    <div
-                        class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
-                        Coming Soon
                     </div>
                 </div>
             </div>

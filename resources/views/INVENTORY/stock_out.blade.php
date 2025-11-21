@@ -126,7 +126,7 @@
     <!-- Stock-Out Table -->
     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div id="stockout-table">
-            @include('INVENTORY.stockout_table')
+            @include('partials.stockout_table')
         </div>
     </div>
 @endsection

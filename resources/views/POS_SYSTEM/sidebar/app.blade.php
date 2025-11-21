@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@yield('name', 'Default Title')</title>
+
     {{-- Tailwind & Vite --}}
     @vite('resources/css/app.css')
     @vite('resources/js/app.js')
@@ -47,7 +48,7 @@
             </svg>
             Back
         </button>
-
+        {{--
         <ul class="navbar w-full space-y-4 mt-10 overflow-y-auto scrollbar-hide">
             <li value="ALL">
                 <button type="button"
@@ -63,63 +64,67 @@
                 </button>
             </li>
             @isset($categories)
-                @if($categories->count() > 0)
-                    @foreach ($categories as $category)
-                        @if(!empty($category->category_name))
-                            @php
-                                $categoryName = strtoupper(trim($category->category_name));
-                                $icon = '';
+            @if($categories->count() > 0)
+            @foreach ($categories as $category)
+            @if(!empty($category->category_name))
+            @php
+            $categoryName = strtoupper(trim($category->category_name));
+            $icon = '';
 
-                                // Determine icon based on category name
-                                if ($categoryName === 'CPU') {
-                                    $icon = '<i class="fas fa-microchip text-2xl mb-2"></i>';
-                                } elseif ($categoryName === 'MOBO' || $categoryName === 'MOTHERBOARD') {
-                                    $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>';
-                                } elseif ($categoryName === 'GPU' || $categoryName === 'GRAPHICS CARD') {
-                                    $icon = '<i class="bi bi-gpu-card text-2xl mb-2"></i>';
-                                } elseif ($categoryName === 'RAM' || $categoryName === 'MEMORY') {
-                                    $icon = '<i class="fas fa-memory text-2xl mb-2"></i>';
-                                } elseif ($categoryName === 'CPU COOLER' || $categoryName === 'COOLER') {
-                                    $icon = '<i class="fas fa-fan text-2xl mb-2"></i>';
-                                } elseif ($categoryName === 'MONITOR' || $categoryName === 'DISPLAY') {
-                                    $icon = '<i class="fas fa-desktop text-2xl mb-2"></i>';
-                                } elseif ($categoryName === 'PC CASE' || $categoryName === 'CASE') {
-                                    $icon = '<i class="fas fa-server text-2xl mb-2"></i>';
-                                } elseif ($categoryName === 'STORAGE' || $categoryName === 'SSD' || $categoryName === 'HDD') {
-                                    $icon = '<i class="fas fa-hdd text-2xl mb-2"></i>';
-                                } elseif ($categoryName === 'PSU' || $categoryName === 'POWER SUPPLY') {
-                                    $icon = '<i class="fas fa-plug text-2xl mb-2"></i>';
-                                } elseif (str_contains($categoryName, 'PC BUILD')) {
-                                    $icon = '<i class="fa-solid fa-computer text-2xl mb-2"></i>';
-                                } elseif (str_contains($categoryName, 'PERIPHERAL')) {
-                                    $icon = '<i class="fas fa-keyboard text-2xl mb-2"></i>';
-                                } else {
-                                    // Others/Default icon
-                                    $icon = '<i class="fas fa-keyboard text-2xl mb-2"></i>';
-                                }
-                            @endphp
+            // Determine icon based on category name
+            if ($categoryName === 'CPU') {
+            $icon = '<i class="fas fa-microchip text-2xl mb-2"></i>';
+            } elseif ($categoryName === 'MOBO' || $categoryName === 'MOTHERBOARD') {
+            $icon = '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>';
+            } elseif ($categoryName === 'GPU' || $categoryName === 'GRAPHICS CARD') {
+            $icon = '<i class="bi bi-gpu-card text-2xl mb-2"></i>';
+            } elseif ($categoryName === 'RAM' || $categoryName === 'MEMORY') {
+            $icon = '<i class="fas fa-memory text-2xl mb-2"></i>';
+            } elseif ($categoryName === 'CPU COOLER' || $categoryName === 'COOLER') {
+            $icon = '<i class="fas fa-fan text-2xl mb-2"></i>';
+            } elseif ($categoryName === 'MONITOR' || $categoryName === 'DISPLAY') {
+            $icon = '<i class="fas fa-desktop text-2xl mb-2"></i>';
+            } elseif ($categoryName === 'PC CASE' || $categoryName === 'CASE') {
+            $icon = '<i class="fas fa-server text-2xl mb-2"></i>';
+            } elseif ($categoryName === 'STORAGE' || $categoryName === 'SSD' || $categoryName === 'HDD') {
+            $icon = '<i class="fas fa-hdd text-2xl mb-2"></i>';
+            } elseif ($categoryName === 'PSU' || $categoryName === 'POWER SUPPLY') {
+            $icon = '<i class="fas fa-plug text-2xl mb-2"></i>';
+            } elseif (str_contains($categoryName, 'PC BUILD')) {
+            $icon = '<i class="fa-solid fa-computer text-2xl mb-2"></i>';
+            } elseif (str_contains($categoryName, 'PERIPHERAL')) {
+            $icon = '<i class="fas fa-keyboard text-2xl mb-2"></i>';
+            } else {
+            // Others/Default icon
+            $icon = '<i class="fas fa-keyboard text-2xl mb-2"></i>';
+            }
+            @endphp
 
-                            <li value="{{ $category->id }}">
-                                <button type="button" data-category-id="{{ $category->id }}"
-                                    class="category-btn w-full flex flex-col items-center p-4 border-2 border-[#3B4A5A] rounded-lg shadow-md text-[#3B4A5A] bg-white hover:bg-[#3B4A5A] hover:text-white transition-all duration-150 ease-in-out"
-                                    aria-current="false">
-                                    {!! $icon !!}
-                                    <span class="text-sm font-semibold">{{ $category->category_name }}</span>
-                                </button>
-                            </li>
-                        @endif
-                    @endforeach
-                @else
-                    <li class="w-full p-4 text-center">
-                        <p class="text-sm text-gray-500">No categories available</p>
-                    </li>
-                @endif
+            <li value="{{ $category->id }}">
+                <button type="button" data-category-id="{{ $category->id }}"
+                    class="category-btn w-full flex flex-col items-center p-4 border-2 border-[#3B4A5A] rounded-lg shadow-md text-[#3B4A5A] bg-white hover:bg-[#3B4A5A] hover:text-white transition-all duration-150 ease-in-out"
+                    aria-current="false">
+                    {!! $icon !!}
+                    <span class="text-sm font-semibold">{{ $category->category_name }}</span>
+                </button>
+            </li>
+            @endif
+            @endforeach
             @else
-                <li class="w-full p-4 text-center">
-                    <p class="text-sm text-gray-500">Categories not loaded</p>
-                </li>
+            <li class="w-full p-4 text-center">
+                <p class="text-sm text-gray-500">No categories available</p>
+            </li>
+            @endif
+            @else
+            <li class="w-full p-4 text-center">
+                <p class="text-sm text-gray-500">Categories not loaded</p>
+            </li>
             @endisset
-        </ul>
+        </ul> --}}
 
 
     </div>

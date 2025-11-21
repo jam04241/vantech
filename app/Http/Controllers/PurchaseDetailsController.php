@@ -17,7 +17,7 @@ class PurchaseDetailsController extends Controller
         $suppliers = Suppliers::where('status', 'Active')->get();
         $bundles = Bundles::all();
         $products = Product::all();
-        
+
         return view('SUPPLIERS.suppliers_purchase', compact('suppliers', 'bundles', 'products'));
     }
 
