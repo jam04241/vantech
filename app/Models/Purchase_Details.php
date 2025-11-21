@@ -12,7 +12,6 @@ class Purchase_Details extends Model
     protected $table = 'purchase_details';
 
     protected $fillable = [
-        'product_id',
         'supplier_id',
         'bundle_id',
         'quantity_ordered',
@@ -29,11 +28,6 @@ class Purchase_Details extends Model
         'quantity_ordered' => 'integer',
     ];
 
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
-
     public function bundle()
     {
         return $this->belongsTo(Bundles::class);
@@ -42,18 +36,6 @@ class Purchase_Details extends Model
     public function supplier()
     {
         return $this->belongsTo(Suppliers::class);
-    }
-
-    /**
-     * Get the item name based on type
-     */
-    public function getItemDisplayNameAttribute()
-    {
-        if ($this->item_type === 'bundle' && $this->bundle) {
-            return $this->bundle->bundle_name;
-        }
-        
-        return $this->item_name;
     }
 
     /**

@@ -26,7 +26,7 @@ class ProductController extends Controller
      */
     public function index() {}
 
-    public function create()
+ public function create()
     {
         $suppliers = Suppliers::where('status', 'active')->orderBy('supplier_name')->get();
         return view('PRODUCT.add_product', array_merge(
@@ -73,11 +73,12 @@ class ProductController extends Controller
 
             DB::commit();
             return redirect()->route('product.add')->with('success', 'Product created successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Failed to create product: ' . $e->getMessage())->withInput();
-        }
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Failed to create product: ' . $e->getMessage())->withInput();
     }
+}
+
 
     /**
      * Apply reusable filters to product query.
@@ -569,3 +570,4 @@ class ProductController extends Controller
         return response()->json(['exists' => $exists]);
     }
 }
+

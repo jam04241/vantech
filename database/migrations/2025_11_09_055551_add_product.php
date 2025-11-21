@@ -6,15 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->id(); // BIGINT unsigned, auto-increment
+            $table->id();
             $table->string('product_name');
             $table->foreignId('brand_id')->constrained('brands', 'id')->onDelete('cascade');
             $table->foreignId('category_id')->constrained('categories', 'id')->onDelete('cascade');
@@ -24,14 +19,8 @@ return new class extends Migration
             $table->string('serial_number');
             $table->timestamps();
         });
-        //
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::dropIfExists('products');

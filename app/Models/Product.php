@@ -21,6 +21,7 @@ class Product extends Model
         'product_condition',
         // Define fillable attributes here
     ];
+    
     public function category()
     {
         return $this->belongsTo(Category::class);
