@@ -52,7 +52,7 @@ class ProductController extends Controller
     
     Product::create($data);
     return redirect()->route('product.add')->with('success', 'Product created successfully.');
-}
+}   
 
 
     /**

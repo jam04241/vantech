@@ -60,6 +60,10 @@ Route::get('/Receipt/Quotation', function () {
     return view('POS_SYSTEM.QuotationReceipt');
 })->name('pos.quotationreceipt');
 
+Route::get('/Stock-Out', function () {
+    return view('INVENTORY.stock_out');
+})->name('inventory.stockout');
+
 // ROUTE FOR DATABASE
 // Brand routes
 Route::get('/brands', [BrandController::class, 'index'])->name('brands');
@@ -90,6 +94,7 @@ Route::get('/inventory/categories', [CategoryController::class, 'inventorygetCat
 // Inventory_list fetch PRODUCTS
 Route::get('/inventory/list', [ProductController::class, 'inventoryList'])->name('inventory.list'); //inventory list with search and sorting
 Route::get('/inventory/list/categories', [CategoryController::class, 'inventoryListgetCategories'])->name('inventory.list.categories'); //dropdown categories
+
 
 // Brand History and Category History fetch
 Route::get('/brandcategory/list', [CategoryController::class, 'brandHistory'])->name('brandcategory.brands'); //dropdown categories
