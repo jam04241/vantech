@@ -64,6 +64,10 @@ Route::get('/Stock-Out', function () {
     return view('INVENTORY.stock_out');
 })->name('inventory.stockout');
 
+Route::get('/Total Stocks', function () {
+    return view('partials.total_stock');
+})->name('inventory.stocktotal');
+
 // ROUTE FOR DATABASE
 // Brand routes
 Route::get('/brands', [BrandController::class, 'index'])->name('brands');

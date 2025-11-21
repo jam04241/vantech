@@ -12,8 +12,10 @@
             <div class="bg-white rounded-lg p-4 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-xs text-gray-500 uppercase tracking-wide">Total Products</p>
-                        <p class="text-xl font-light text-gray-900 mt-1">{{ $totalProducts ?? '0' }}</p>
+                    <a href="{{ route('inventory.stocktotal') }}" class="p-2 text-2xl font-bold text-gray-500 uppercase tracking-wide underline decoration-blue-500 underline-offset-4">
+                        Total Products
+                    </a>
+                        <p class="text-xl font-light text-gray-900 mt-1 p-2 mt-3">{{ $totalProducts ?? '0' }}</p>
                     </div>
                     <div class="text-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
@@ -28,8 +30,11 @@
             <div class="bg-white rounded-lg p-4 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-xs text-gray-500 uppercase tracking-wide">Low Stock</p>
-                        <p class="text-xl font-light text-gray-900 mt-1">{{ $lowStockCount ?? '0' }}</p>
+                        <a href="#"
+                            class="p-2 text-2xl font-bold text-gray-500 uppercase tracking-wide underline decoration-orange-500 underline-offset-4">
+                            Low Stock
+                        </a>
+                        <p class="text-xl font-light text-gray-900 mt-1 mt-4 P-2">{{ $lowStockCount ?? '0' }}</p>
                     </div>
                     <div class="text-amber-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
@@ -44,8 +49,11 @@
             <div class="bg-white rounded-lg p-4 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-xs text-gray-500 uppercase tracking-wide">Out of Stock</p>
-                        <p class="text-xl font-light text-gray-900 mt-1">{{ $outOfStockCount ?? '0' }}</p>
+                        <a href="#"
+                            class="p-2 text-2xl font-bold text-gray-500 uppercase tracking-wide underline decoration-red-500 underline-offset-4">
+                            Out of Stock
+                        </a>
+                        <p class="text-xl font-light text-gray-900 mt-1 p-2 mt-3">{{ $outOfStockCount ?? '0' }}</p>
                     </div>
                     <div class="text-red-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
