@@ -17,7 +17,11 @@
     }
 </style>
 @section('content_items')
-    <div class="flex items-center space-between gap-2 w-full sm:w-auto flex-1">
+    <div class="flex items-center space-between gap-2 w-full sm:w-auto flex-1 flex-wrap">
+
+        {{-- Search Bar --}}
+        <input type="text" id="productSearch" placeholder="Search products by name, brand, or category..."
+            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white flex-1 min-w-64" />
 
         {{-- Category Filter --}}
         <select id="categoryFilter"
@@ -46,249 +50,17 @@
         <div class="gap-3">
             <a href="{{ route('customer.addCustomer') }}"
                 class=" px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2
-                                                                                                                                            focus:ring-indigo-500 transition duration-150 ease-in-out">Add
+                                                                                                                                                                                                            focus:ring-indigo-500 transition duration-150 ease-in-out">Add
                 Customer</a>
         </div>
     </div>
     <div class="flex flex-col lg:flex-row gap-6 mt-6">
 
-        <!-- LEFT SIDE: PRODUCTS DISPLAY (4 columns) -->
-        <div class="container flex-1 overflow-y-auto scrollbar-hide">
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6" id="productsGrid">
-                @forelse($grouped as $product)
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition product-card"
-                        data-category="{{ $product->category_id ?? '' }}" data-brand="{{ $product->brand_id ?? '' }}"
-                        data-serial="{{ $product->serial_number ?? '' }}">
-                        <div class="p-4">
+        <!-- LEFT SIDE: PRODUCTS DISPLAY (Included from display_productFrame) -->
+        @include('POS_SYSTEM.display_productFrame')
 
-                            <h3 class="text-lg font-semibold text-gray-800">{{ $product->product_name }}</h3>
-                            <p class="text-gray-600 text-sm mt-2">
-                                <b>Brand:</b> {{ $product->brand?->brand_name ?? 'N/A' }}
-                            </p>
-                            <p class="text-gray-600 text-sm mt-1">
-                                <b>Type:</b> {{ $product->category?->category_name ?? 'N/A' }}
-                            </p>
-                            <p class="text-gray-600 text-sm mt-1">
-                                <b>Stock:</b> <span class="font-semibold">{{ $product->stock }}</span>
-                            </p>
-                            <p class="text-sm mt-1">
-                                <b>Availability:</b>
-                                <span class="font-semibold {{ $product->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
-                                    {{ $product->stock > 0 ? 'In Stock' : 'Out of Stock' }}
-                                </span>
-                            </p>
-                            <div class="mt-3 flex justify-between items-center">
-                                <span class="text-indigo-600 font-bold text-base">
-                                    ₱{{ number_format($product->price, 2) }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-full">
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center text-gray-500">
-                            No products available yet.
-                        </div>
-                    </div>
-                @endforelse
-            </div>
-        </div>
-
-        <!-- 
-                                RIGHT SIDE: RECEIPT WITH TAB SWITCHER 
-                                Logic: Handles barcode scanning and order management
-                                Basis: Serial number for scanning, but groups items by product name in order list
-                                Key Feature: Multiple serials of same product increase quantity (prevents duplicate lines)
-                                Example: Scan Dell Monitor ABC123 (Qty: 1) + Dell Monitor XYZ789 (Qty: 2 - same line)
-                            -->
-        <div class="container w-full lg:w-1/2">
-            <div class="bg-white rounded-2xl shadow-lg overflow-hidden h-fit sticky top-6">
-                <!-- Barcode Input -->
-                <div class="p-4 bg-gradient-to-r from-indigo-50 to-blue-50">
-                    <label class="block text-xs font-semibold text-gray-700 mb-2">Scan Barcode / Serial No.</label>
-                    <input type="text" id="productSerialNo" placeholder="Scan product barcode here..."
-                        class="w-full px-4 py-3 border-2 border-indigo-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 transition duration-150 ease-in-out text-sm font-medium"
-                        autofocus />
-                    <input type="hidden" id="scannedSerialNumbers" />
-                    <p class="text-xs text-gray-500 mt-2">Auto-input enabled • Automatic calculation</p>
-                </div>
-                <!-- Tab Buttons -->
-                <div class="flex border-b border-gray-200">
-                    <button onclick="switchTabWithConfirm('purchase')" id="purchaseTab"
-                        class="flex-1 py-3 px-4 text-center font-semibold transition-all duration-200 border-b-2 border-indigo-600 text-indigo-600 bg-white">
-                        Purchase
-                    </button>
-                    <button onclick="switchTabWithConfirm('quotation')" id="quotationTab"
-                        class="flex-1 py-3 px-4 text-center font-semibold transition-all duration-200 border-b-2 border-transparent text-gray-500 bg-gray-50 hover:bg-gray-100">
-                        Quotation
-                    </button>
-                </div>
-
-                <!-- Tab Content Container -->
-                <div class="p-6">
-
-                    <!-- PURCHASE TAB CONTENT -->
-                    <div id="purchaseContent" class="tab-content">
-                        <h2 class="text-xl font-extrabold text-gray-900 mb-4 border-b pb-2"> Purchase</h2>
-
-                        <!-- Customer Info -->
-                        <div class="mb-4 text-sm">
-                            <p class="text-gray-700">Order #: <span class="font-semibold text-gray-900">Serial Number</span>
-                            </p>
-                            <p class="text-gray-700">Date: <span
-                                    class="font-semibold text-gray-900">{{ now()->format('M d, Y h:i A') }}</span></p>
-                        </div>
-
-                        <!-- Order List -->
-                        <div class="mb-4">
-                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Order Items</h3>
-                            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                                <div
-                                    class="grid grid-cols-12 gap-1 px-3 py-2 bg-gray-100 text-xs font-semibold text-gray-700 border-b border-gray-200">
-                                    <div class="col-span-5">Product</div>
-                                    <div class="col-span-3 text-center">Price</div>
-                                    <div class="col-span-3 text-right">Subtotal</div>
-                                    <div class="col-span-1 text-center">Remove</div>
-                                </div>
-                                <ul id="purchaseOrderList"
-                                    class="divide-y divide-gray-200 max-h-56 overflow-y-auto scrollbar-hide">
-                                    <!-- Items will be added dynamically here -->
-                                </ul>
-                            </div>
-                            <p id="emptyOrderMsg" class="text-center text-gray-500 text-sm py-4">No items added yet. Scan a
-                                barcode to start.</p>
-                        </div>
-
-                        <!-- Summary -->
-                        <div class="border-t border-gray-300 pt-4 text-sm space-y-3">
-                            <div class="flex justify-between items-center bg-blue-50 px-3 py-2 rounded">
-                                <span class="text-gray-700 font-medium">Subtotal</span>
-                                <span class="font-bold text-gray-900 text-lg">₱<span
-                                        id="purchaseSubtotalDisplay">0.00</span></span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-700">Discount</span>
-                                <div class="flex gap-2 items-center">
-                                    <input type="number" id="purchaseDiscountInput" value="0"
-                                        class="w-20 px-2 py-1 border border-gray-300 rounded text-right focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        step="0.01" oninput="updatePurchaseTotal()" placeholder="0.00" />
-                                    <span class="text-red-500 font-medium w-24 text-right">-₱<span
-                                            id="purchaseDiscountDisplay">0.00</span></span>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-700">VAT (12%)</span>
-                                <span class="font-medium text-gray-900">₱<span id="purchaseVAT">0.00</span></span>
-                            </div>
-                            <div
-                                class="flex justify-between font-extrabold text-gray-900 text-lg border-t-2 border-indigo-300 pt-3 mt-3 bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-2 rounded">
-                                <span>Total</span>
-                                <span>₱<span id="purchaseTotalDisplay">0.00</span></span>
-                            </div>
-                        </div>
-
-                        <!-- Button -->
-                        <div class="mt-5">
-                            <button id="checkout-btn"
-                                class="w-full bg-indigo-600 text-white py-3 rounded-lg text-base font-semibold shadow hover:bg-indigo-700 transition duration-150 flex items-center justify-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path
-                                        d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 110 2h-3V6a1 1 0 011-1v3a1 1 0 011 1H10a1 1 0 01-1 1H7a1 1 0 00-1 1h-3V11a1 1 0 00 1-1V7a1 1 0 011-1h2V3a2 2 0 012 2z" />
-                                </svg>
-                                Proceed to Checkout
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- QUOTATION TAB CONTENT -->
-                    <div id="quotationContent" class="tab-content hidden">
-                        <h2 class="text-xl font-extrabold text-gray-900 mb-4 border-b pb-2"> Quotation</h2>
-
-                        <!-- Customer Info (No Customer Name) -->
-                        <div class="mb-4 text-sm">
-                            <p class="text-gray-700">Order #: <span class="font-semibold text-gray-900">Serial Number</span>
-                            </p>
-                            <p class="text-gray-700">Date: <span
-                                    class="font-semibold text-gray-900">{{ now()->format('M d, Y h:i A') }}</span></p>
-                        </div>
-
-                        <!-- Order List -->
-                        <div class="mb-4">
-                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Order Items</h3>
-                            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                                <div
-                                    class="grid grid-cols-12 gap-1 px-3 py-2 bg-gray-100 text-xs font-semibold text-gray-700 border-b border-gray-200">
-                                    <div class="col-span-5">Product</div>
-                                    <div class="col-span-3 text-center">Price</div>
-                                    <div class="col-span-3 text-right">Subtotal</div>
-                                    <div class="col-span-1 text-center">Remove</div>
-                                </div>
-                                <ul id="quotationOrderList"
-                                    class="divide-y divide-gray-200 max-h-56 overflow-y-auto scrollbar-hide">
-                                    <!-- Items will be added dynamically here -->
-                                </ul>
-                            </div>
-                            <p id="emptyQuotationMsg" class="text-center text-gray-500 text-sm py-4">No items added yet.
-                                Scan a barcode to start.</p>
-                        </div>
-
-                        <!-- Summary -->
-                        <div class="border-t border-gray-300 pt-4 text-sm space-y-3">
-                            <div class="flex justify-between items-center bg-blue-50 px-3 py-2 rounded">
-                                <span class="text-gray-700 font-medium">Subtotal</span>
-                                <span class="font-bold text-gray-900 text-lg">₱<span
-                                        id="quotationSubtotalDisplay">0.00</span></span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-700">Discount</span>
-                                <div class="flex gap-2 items-center">
-                                    <input type="number" id="quotationDiscountInput" value="0"
-                                        class="w-20 px-2 py-1 border border-gray-300 rounded text-right focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        step="0.01" oninput="updateQuotationTotal()" placeholder="0.00" />
-                                    <span class="text-red-500 font-medium w-24 text-right">-₱<span
-                                            id="quotationDiscountDisplay">0.00</span></span>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-700">VAT (12%)</span>
-                                <span class="font-medium text-gray-900">₱<span id="quotationVAT">0.00</span></span>
-                            </div>
-                            <div
-                                class="flex justify-between font-extrabold text-gray-900 text-lg border-t-2 border-green-300 pt-3 mt-3 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-2 rounded">
-                                <span>Total</span>
-                                <span>₱<span id="quotationTotalDisplay">0.00</span></span>
-                            </div>
-                        </div>
-
-                        <!-- Buttons -->
-                        <div class="mt-5 flex flex-col gap-2">
-                            <button id="print-quotation-btn"
-                                class="w-full bg-green-600 text-white py-3 rounded-lg text-base font-semibold shadow hover:bg-green-700 transition duration-150 flex items-center justify-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Proceed to Print Quotation
-                            </button>
-                            <button id="add-pc-build-btn"
-                                class="w-full bg-indigo-600 text-white py-3 rounded-lg text-base font-semibold shadow hover:bg-indigo-700 transition duration-150 flex items-center justify-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Add to PC BUILD
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
+        <!-- RIGHT SIDE: RECEIPT WITH TAB SWITCHER (Component) -->
+        @include('POS_SYSTEM.purchaseFrame')
     </div>
 
     <!-- Tab Switching Script -->
@@ -297,20 +69,25 @@
         let orderItems = [];
         const allProducts = @json($grouped);
 
-        // Filter products by category and brand
+        // Filter products by category, brand, and search query
         function filterProducts() {
             const categoryFilter = document.getElementById('categoryFilter').value;
             const brandFilter = document.getElementById('brandFilter').value;
+            const searchQuery = document.getElementById('productSearch').value.toLowerCase();
             const productCards = document.querySelectorAll('.product-card');
 
             productCards.forEach(card => {
                 const cardCategory = card.getAttribute('data-category');
                 const cardBrand = card.getAttribute('data-brand');
+                const productName = card.querySelector('h3').textContent.toLowerCase();
+                const brandName = card.querySelector('p:nth-of-type(1)').textContent.toLowerCase();
+                const typeName = card.querySelector('p:nth-of-type(2)').textContent.toLowerCase();
 
                 const categoryMatch = categoryFilter === '' || categoryFilter === 'all' || cardCategory === categoryFilter;
                 const brandMatch = brandFilter === '' || brandFilter === 'all' || cardBrand === brandFilter;
+                const searchMatch = searchQuery === '' || productName.includes(searchQuery) || brandName.includes(searchQuery) || typeName.includes(searchQuery);
 
-                if (categoryMatch && brandMatch) {
+                if (categoryMatch && brandMatch && searchMatch) {
                     card.style.display = '';
                 } else {
                     card.style.display = 'none';
@@ -338,83 +115,26 @@
             const serialInput = document.getElementById('productSerialNo');
             serialInput.value = serial;
             serialInput.focus();
-            // Trigger input event to process the barcode
-            serialInput.dispatchEvent(new Event('input'));
         }
 
-        // Process barcode input with validation
-        document.getElementById('productSerialNo').addEventListener('input', function (e) {
-            const serialNo = this.value.trim();
+        // Barcode scanning logic is handled in purchaseFrame.blade.php
+        // This prevents duplicate event listeners and alerts
 
-            if (!serialNo) return;
+        // Add item to order list (basis: quantity, not serial number)
+        function addItemToOrder(product) {
+            // Add product ID to tracked list
+            const productId = product.id;
+            const scannedProductIds = document.getElementById('scannedSerialNumbers').value.split(',').filter(s => s);
+            const updatedProductIds = scannedProductIds.filter(s => s !== productId.toString()).join(',');
+            document.getElementById('scannedSerialNumbers').value = updatedProductIds;
 
-            // Find product by serial number
-            const product = allProducts.find(p => p.serial_number === serialNo);
-
-            if (!product) {
-                return; // Wait for more input or let user press enter
-            }
-
-            // Check if serial number already exists in order
-            const scannedSerials = document.getElementById('scannedSerialNumbers').value.split(',').filter(s => s);
-            if (scannedSerials.includes(serialNo)) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Duplicate Product',
-                    html: `<p>Product with serial <strong>${serialNo}</strong> has been input already</p>`,
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#f59e0b',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                this.value = '';
-                this.focus();
-                return;
-            }
-
-            // Validate product exists and has stock
-            if (!product || product.stock <= 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Product Not Available',
-                    html: `<p>The product <strong>${serialNo}</strong> is either:</p>
-                                                                                           <ul style="text-align: left; margin: 10px 0;">
-                                                                                           <li>Not registered in the inventory</li>
-                                                                                           <li>Out of stock</li>
-                                                                                           </ul>`,
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#ef4444',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                this.value = '';
-                this.focus();
-                return;
-            }
-
-            // Add product to order
-            addItemToOrder(product, serialNo);
-
-            // Clear input and keep focus
-            this.value = '';
-            this.focus();
-        });
-
-        // Add item to order list
-        function addItemToOrder(product, serialNo) {
-            // Add serial number to tracked list
-            const scannedSerials = document.getElementById('scannedSerialNumbers').value;
-            const newSerials = scannedSerials ? scannedSerials + ',' + serialNo : serialNo;
-            document.getElementById('scannedSerialNumbers').value = newSerials;
-
-            // Each scanned item is unique by serial number - add as separate line item
+            // Add product with serial number to order
             orderItems.push({
                 id: product.id,
                 name: product.product_name,
-                serialNo: serialNo,
                 price: product.price,
-                qty: 1,
-                stock: product.stock
+                serialNumber: product.serial_number, // Store serial number
+                qty: 1 // Each scanned item = 1 unit
             });
 
             // Update display
@@ -424,14 +144,14 @@
             Swal.fire({
                 icon: 'success',
                 title: 'Product Added!',
-                html: `<p><strong>${product.product_name}</strong> added to order</p>`,
+                html: `<p><strong>${product.product_name}</strong> (SN: ${product.serial_number}) added to order</p>`,
                 timer: 2000,
                 showConfirmButton: false,
                 position: 'top-end'
             });
         }
 
-        // Update order display in both tabs
+        // Update order display in both tabs (basis: quantity)
         function updateOrderDisplay() {
             const purchaseList = document.getElementById('purchaseOrderList');
             const quotationList = document.getElementById('quotationOrderList');
@@ -442,28 +162,28 @@
             let subtotal = 0;
 
             orderItems.forEach((item, index) => {
-                const itemSubtotal = item.price; // Each serial = 1 unit, so subtotal = price
+                const itemSubtotal = item.price * item.qty; // Price × Quantity
                 subtotal += itemSubtotal;
 
                 html += `
-                                                                                    <li class="py-3 px-3 hover:bg-gray-100 transition">
-                                                                                        <div class="grid grid-cols-12 gap-1 items-center text-xs">
-                                                                                            <div class="col-span-5">
-                                                                                                <p class="font-medium text-gray-900 truncate">${item.name}</p>
-                                                                                                <p class="text-gray-500 text-xs">SN: ${item.serialNo}</p>
-                                                                                            </div>
-                                                                                            <div class="col-span-3 text-center">
-                                                                                                <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
-                                                                                            </div>
-                                                                                            <div class="col-span-3 text-right">
-                                                                                                <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
-                                                                                            </div>
-                                                                                            <div class="col-span-1 text-center">
-                                                                                                <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </li>
-                                                                                `;
+                                                                                                                                                <li class="py-3 px-3 hover:bg-gray-100 transition">
+                                                                                                                                                    <div class="grid grid-cols-12 gap-1 items-center text-xs">
+                                                                                                                                                        <div class="col-span-5">
+                                                                                                                                                            <p class="font-medium text-gray-900 truncate">${item.name}</p>
+                                                                                                                                                            <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div class="col-span-3 text-center">
+                                                                                                                                                            <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div class="col-span-3 text-right">
+                                                                                                                                                            <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div class="col-span-1 text-center">
+                                                                                                                                                            <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
+                                                                                                                                                        </div>
+                                                                                                                                                    </div>
+                                                                                                                                                </li>
+                                                                                                                                            `;
             });
 
             purchaseList.innerHTML = html;
@@ -482,15 +202,13 @@
             updateQuotationTotal();
         }
 
-        // Note: Quantity management removed - each serial number represents one unique unit
-
-        // Remove item from order (remove entire line item since each serial is unique)
+        // Remove item from order (basis: product ID)
         function removeItem(index) {
-            // Remove serial number from tracked list
-            const serialNo = orderItems[index].serialNo;
-            const scannedSerials = document.getElementById('scannedSerialNumbers').value.split(',').filter(s => s);
-            const updatedSerials = scannedSerials.filter(s => s !== serialNo).join(',');
-            document.getElementById('scannedSerialNumbers').value = updatedSerials;
+            // Remove product ID from tracked list
+            const productId = orderItems[index].id;
+            const scannedProductIds = document.getElementById('scannedSerialNumbers').value.split(',').filter(s => s);
+            const updatedProductIds = scannedProductIds.filter(s => s !== productId.toString()).join(',');
+            document.getElementById('scannedSerialNumbers').value = updatedProductIds;
 
             // Remove item from order
             orderItems.splice(index, 1);
@@ -521,9 +239,10 @@
             document.getElementById('quotationTotalDisplay').textContent = total.toFixed(2);
         }
 
-        // Event listeners for filters
+        // Event listeners for filters and search
         document.getElementById('categoryFilter').addEventListener('change', filterProducts);
         document.getElementById('brandFilter').addEventListener('change', filterProducts);
+        document.getElementById('productSearch').addEventListener('input', filterProducts);
 
         // Switch tab with confirmation if items exist
         function switchTabWithConfirm(tabName) {
@@ -540,7 +259,7 @@
                 icon: 'question',
                 title: 'Switch Tab?',
                 html: `<p>You have <strong>${scannedSerials.length}</strong> scanned product(s). Are you sure you want to switch tabs?</p>
-                                                                           <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Your current transaction will be removed.</p>`,
+                                                                                                                                           <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Your current transaction will be removed.</p>`,
                 showCancelButton: true,
                 confirmButtonColor: '#6366f1',
                 cancelButtonColor: '#d33',

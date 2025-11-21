@@ -37,8 +37,18 @@
                 @endforeach
             @endisset
         </select>
-        <select name="sort" hx-get="{{ route('inventory.list') }}" hx-trigger="change"
+
+        {{-- ADDED: Condition filter --}}
+        <select name="condition" hx-get="{{ route('inventory.list') }}" hx-trigger="change"
             hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
+            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
+            <option value="" {{ request('condition') == '' ? 'selected' : '' }}>All Conditions</option>
+            <option value="Brand New" {{ request('condition') == 'Brand New' ? 'selected' : '' }}>Brand New</option>
+            <option value="Second Hand" {{ request('condition') == 'Second Hand' ? 'selected' : '' }}>Second Hand</option>
+        </select>
+
+        <select name="sort" hx-get="{{ route('inventory.list') }}" hx-trigger="change" hx-target="#product-table-container"
+            hx-include="#filter-container" hx-swap="innerHTML"
             class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
             <option value="name_asc" {{ $activeSort === 'name_asc' ? 'selected' : '' }}>Name A-Z</option>
             <option value="name_desc" {{ $activeSort === 'name_desc' ? 'selected' : '' }}>Name Z-A</option>
@@ -46,6 +56,9 @@
             <option value="qty_asc" {{ $activeSort === 'qty_asc' ? 'selected' : '' }}>Quantity Low-High</option>
             <option value="price_desc" {{ $activeSort === 'price_desc' ? 'selected' : '' }}>Price High-Low</option>
             <option value="price_asc" {{ $activeSort === 'price_asc' ? 'selected' : '' }}>Price Low-High</option>
+            {{-- ADDED: Condition sorting --}}
+            <option value="condition_new" {{ $activeSort === 'condition_new' ? 'selected' : '' }}>Brand New First</option>
+            <option value="condition_used" {{ $activeSort === 'condition_used' ? 'selected' : '' }}>Second Hand First</option>
         </select>
         <button class="px-4 py-2 border rounded-lg bg-white flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -30,13 +30,21 @@
     })->name('dashboard');
 
     Route::get('/POS', function () {
-        return view('DASHBOARD.POS');
-    })->name('POS');
+        return view('DASHBOARD.Sales');
+    })->name('Sales');
 
     // Route::get('/inventory/list', function () {
     //     return view('DASHBOARD.inventory_list');
     // })->name('inventory.list');
 
+    //USE FOR CHART.JS
+
+    // Route::get('/api/sales/metrics', [SalesController::class, 'getMetrics']);
+    // Route::get('/api/sales/trend', [SalesController::class, 'getTrendData']);
+    // Route::get('/api/sales/by-category', [SalesController::class, 'getCategoryData']);
+    // Route::get('/api/sales/top-products', [SalesController::class, 'getTopProducts']);
+    // Route::get('/api/sales/hourly', [SalesController::class, 'getHourlyData']);
+    // Route::get('/api/sales/transactions', [SalesController::class, 'getTransactions']);
 
     Route::get('/Suppliers', function () {
         return view('DASHBOARD.suppliers');
@@ -46,6 +54,9 @@
         return view('DASHBOARD.suppliers_orders');
     })->name('suppliers.list');
 
+    Route::get('/Suppliers/List', function () {
+        return view('DASHBOARD.suppliers_orders');
+    })->name('suppliers.list');
 
     Route::get('/staff', function () {
         return view('DASHBOARD/staff');
@@ -77,6 +88,9 @@
         return view('Customer.addCustomer');
     })->name('customer.addCustomer');
 
+    Route::get('/PointOfSale/purchaseFrame', function () {
+        return view('POS_SYSTEM.purchaseFrame');
+    })->name('pointofsale.purchaseframe');
 
     // ROUTE FOR DATABAASE
     // Brand routes
@@ -105,6 +119,11 @@
     // ============= SERIAL NUMBER DUPLICATE CHECK API ROUTE =============
     Route::get('/api/products/check-serial', [ProductController::class, 'checkSerialNumber'])->name('products.check-serial');
     // ============= END SERIAL NUMBER DUPLICATE CHECK API ROUTE =============
+
+    // ============= POS PRODUCT LOOKUP API ROUTE (Serial Number Search) =============
+    // Used by purchaseFrame component to fetch product by serial number
+    Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber'])->name('products.search-pos');
+    // ============= END POS PRODUCT LOOKUP API ROUTE =============
 
     Route::get('/Suppliers', [SuppliersController::class, 'index'])->name('suppliers');
     Route::post('/suppliers', [SuppliersController::class, 'store'])->name('suppliers.store');

@@ -8,6 +8,7 @@
                 <th class="p-4 font-semibold">Warranty</th>
                 <th class="p-4 font-semibold">Brand</th>
                 <th class="p-4 font-semibold">Category</th>
+                <th class="p-4 font-semibold" hidden>Price</th>
                 <th class="p-4 font-semibold">Condition</th>
                 <th class="p-4 font-semibold">Supplier</th>
                 <th class="p-4">Actions</th>
@@ -53,6 +54,11 @@
                             <span class="text-gray-400 text-xs italic">N/A</span>
                         @endif
                     </td>
+                    <td class="p-4" hidden>
+                        <span class="text-purple-800 text-xs font-bold px-2 py-1 rounded-full">
+                            {{ $product->stock?->price ?? 'N/A' }}
+                        </span>
+                    </td>
                     <td class="p-4">
                         @php
                             $payload = [
@@ -64,6 +70,7 @@
                                 'category_id' => $product->category_id,
                                 'product_condition' => $product->product_condition,
                                 'supplier_id' => $product->supplier_id,
+                                'price' => $product->stock?->price ?? 0,
                             ];
                         @endphp
                         <button type="button" data-product-modal data-product='@json($payload)'

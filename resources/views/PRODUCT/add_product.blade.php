@@ -56,7 +56,8 @@
                         Add New Product
                     </h2>
 
-                    <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+                    {{-- ADDED: Form with ID for SweetAlert confirmation --}}
+                    <form id="addProductForm" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                         @csrf
 
                         {{-- PRODUCT INFORMATION --}}
@@ -467,7 +468,6 @@
                     title: 'Success!',
                     text: '{{ session('success') }}',
                     confirmButtonColor: '#4F46E5',
-                    timer: 3000
                 });
             @endif
 
@@ -749,5 +749,29 @@
 
             // SweetAlert messages
             // SweetAlert messages are now handled by the showSweetAlerts() function
+
+            // ADDED: SweetAlert confirmation for product registration
+            const addProductForm = document.getElementById('addProductForm');
+            if (addProductForm) {
+                addProductForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    Swal.fire({
+                        title: 'Confirm Product Registration',
+                        text: 'Are you sure you want to register this product?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#4F46E5',
+                        cancelButtonColor: '#6B7280',
+                        confirmButtonText: 'Yes, Register',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Submit the form if confirmed
+                            addProductForm.submit();
+                        }
+                    });
+                });
+            }
     </script>
 @endsection

@@ -28,7 +28,7 @@ class ProductController extends Controller
 
     public function create()
     {
-        $suppliers = Suppliers::orderBy('supplier_name')->get();
+        $suppliers = Suppliers::where('status', 'active')->orderBy('supplier_name')->get();
         return view('PRODUCT.add_product', array_merge(
             $this->loadBrands(),
             $this->loadCategories(),
@@ -98,6 +98,16 @@ class ProductController extends Controller
             $query->where('brand_id', $request->brand);
         }
 
+        // ADDED: Condition filter (Brand New or Second Hand)
+        if ($request->filled('condition') && $request->condition !== '') {
+            $query->where('product_condition', $request->condition);
+        }
+
+        // ADDED: Supplier filter
+        if ($request->filled('supplier') && $request->supplier !== '') {
+            $query->where('supplier_id', $request->supplier);
+        }
+
         return $query;
     }
 
@@ -121,6 +131,8 @@ class ProductController extends Controller
             $q->whereRaw('LOWER(products.product_name) LIKE ?', [$like])
                 ->orWhereRaw('LOWER(products.serial_number) LIKE ?', [$like])
                 ->orWhereRaw('LOWER(products.warranty_period) LIKE ?', [$like])
+                // UPDATED: Added product_condition search
+                ->orWhereRaw('LOWER(products.product_condition) LIKE ?', [$like])
                 ->orWhereHas('brand', function ($brand) use ($like) {
                     $brand->whereRaw('LOWER(brand_name) LIKE ?', [$like]);
                 })
@@ -130,6 +142,11 @@ class ProductController extends Controller
                 ->orWhereHas('stock', function ($stock) use ($like) {
                     $stock->whereRaw('LOWER(CAST(stock_quantity AS VARCHAR(50))) LIKE ?', [$like])
                         ->orWhereRaw('LOWER(CAST(price AS VARCHAR(50))) LIKE ?', [$like]);
+                })
+                // UPDATED: Added supplier company_name search
+                ->orWhereHas('supplier', function ($supplier) use ($like) {
+                    $supplier->whereRaw('LOWER(company_name) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(supplier_name) LIKE ?', [$like]);
                 });
         });
     }
@@ -177,6 +194,14 @@ class ProductController extends Controller
                     'asc'
                 );
                 break;
+            // ADDED: Condition sorting (Brand New first, then Second Hand)
+            case 'condition_new':
+                $query->orderBy('products.product_condition', 'asc');
+                break;
+            // ADDED: Condition sorting (Second Hand first, then Brand New)
+            case 'condition_used':
+                $query->orderBy('products.product_condition', 'desc');
+                break;
             case 'name_asc':
             default:
                 $query->orderBy('products.product_name', 'asc');
@@ -210,7 +235,7 @@ class ProductController extends Controller
         // Get products
         $products = $query->get();
 
-        $suppliers = Suppliers::orderBy('supplier_name')->get();
+        $suppliers = Suppliers::where('status', 'active')->orderBy('supplier_name')->get();
 
         $data = array_merge(
             $this->loadBrands(),
@@ -399,41 +424,56 @@ class ProductController extends Controller
     // ============= END AUTO-SUGGESTION API =============
 
     /**
-     * Display products for POS system with grouped stock counts
+     * Display products for POS system with grouped quantity counts
      * Groups products by name, brand, category, condition, and price
-     * Counts total stock for each group
+     * Counts total quantity for each group (basis: quantity, NOT serial number)
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View
      */
+    /* FOR LEFT SIDE IN PODUCT LIST JUST TO LIST THE PRODUCTS*/
     public function posList(Request $request)
     {
-        $query = Product::with('brand', 'category', 'stock');
+        // Load products with brand and category relationships (NO stock relationship)
+        $query = Product::with('brand', 'category');
 
         // Apply reusable filters
         $query = $this->applyProductFilters($query, $request);
 
         $productsCollection = $query->get();
 
-        // ============= MAP INDIVIDUAL PRODUCTS WITH SERIAL NUMBERS =============
-        // Each product is mapped individually with its own serial number
-        // This allows scanning any serial number, even with same brand/name/price
-        $grouped = $productsCollection->map(function ($product) {
+        // ============= GROUP BY PRODUCT NAME, BRAND, AND CATEGORY =============
+        // Products are grouped by name, brand, and category only
+        // Quantity is counted based on duplicate product descriptions
+        $grouped = $productsCollection->groupBy(function ($product) {
+            return implode('|', [
+                $product->product_name,
+                $product->brand_id ?? 'null',
+                $product->category_id ?? 'null',
+            ]);
+        })->map(function ($group) {
+            $first = $group->first();
+
+            // Get price from stock relationship if available
+            $price = 0;
+            if ($first->stock) {
+                $price = $first->stock->price ?? 0;
+            }
+
             return (object) [
-                'id' => $product->id,
-                'product_name' => $product->product_name,
-                'serial_number' => $product->serial_number, // Each product has its own serial
-                'brand' => $product->brand,
-                'category' => $product->category,
-                'brand_id' => $product->brand_id,
-                'category_id' => $product->category_id,
-                'product_condition' => $product->product_condition,
-                'image_path' => $product->image_path,
-                'stock' => 1, // Each individual product = 1 unit
-                'price' => $product->stock?->price ?? 0,
+                'id' => $first->id,
+                'product_name' => $first->product_name,
+                'brand' => $first->brand,
+                'category' => $first->category,
+                'brand_id' => $first->brand_id,
+                'category_id' => $first->category_id,
+                'product_condition' => $first->product_condition,
+                'image_path' => $first->image_path,
+                'stock' => $group->count(), // Count of duplicate products (each product = 1)
+                'price' => $price,
             ];
         })->values();
-        // ============= END MAPPING =============
+        // ============= END GROUPING BY QUANTITY =============
 
         $data = array_merge(
             $this->loadBrands(),
@@ -442,6 +482,70 @@ class ProductController extends Controller
         );
 
         return view('POS_SYSTEM.item_list', $data);
+    }
+
+    /**
+     * Fetch product by serial number for POS system
+     * Used by purchaseFrame component to retrieve product details when scanning barcode
+     * Basis: Search by serial_number, then group by name, brand, category, condition, price
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    /* FOR RIGHT SIDE IN PRODUCT LIST*/
+    public function getProductBySerialNumber(Request $request)
+    {
+        $serialNumber = $request->query('serial'); // Search by serial number
+
+        if (!$serialNumber) {
+            return response()->json(['product' => null, 'message' => 'No serial number provided']);
+        }
+
+        // Find product by serial number
+        $foundProduct = Product::with('brand', 'category', 'stock')
+            ->where('serial_number', $serialNumber)
+            ->first();
+
+        if (!$foundProduct) {
+            return response()->json(['product' => null, 'message' => 'Serial number not found in database']);
+        }
+
+        // Check if product has stock record and sufficient quantity
+        // Allow products without stock record (stock_quantity can be null/0 initially)
+        if ($foundProduct->stock && $foundProduct->stock->stock_quantity <= 0) {
+            return response()->json(['product' => null, 'message' => 'Product out of stock']);
+        }
+
+        // Get all products with same name, brand, category, condition, and price to calculate total quantity
+        $groupedProducts = Product::with('brand', 'category', 'stock')
+            ->where('product_name', $foundProduct->product_name)
+            ->where('brand_id', $foundProduct->brand_id)
+            ->where('category_id', $foundProduct->category_id)
+            ->where('product_condition', $foundProduct->product_condition)
+            ->whereHas('stock', function ($query) use ($foundProduct) {
+                $query->where('price', $foundProduct->stock?->price ?? 0);
+            })
+            ->get();
+
+        // Calculate total quantity for this group
+        $totalQuantity = $groupedProducts->count();
+
+        // Return product with grouped quantity
+        $product = (object) [
+            'id' => $foundProduct->id,
+            'serial_number' => $foundProduct->serial_number,
+            'product_name' => $foundProduct->product_name,
+            'brand' => $foundProduct->brand,
+            'category' => $foundProduct->category,
+            'brand_id' => $foundProduct->brand_id,
+            'category_id' => $foundProduct->category_id,
+            'product_condition' => $foundProduct->product_condition,
+            'image_path' => $foundProduct->image_path,
+            'stock' => $totalQuantity, // Total quantity of products in this group
+            'price' => $foundProduct->stock?->price ?? 0,
+        ];
+
+        return response()->json(['product' => $product, 'message' => 'Product found']);
     }
 
     /**

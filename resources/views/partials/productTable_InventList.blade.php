@@ -18,9 +18,19 @@
                 <td class="px-4 py-3 text-gray-600">{{ $product->category?->category_name ?? 'N/A' }}</td>
                 <td class="px-4 py-3 text-gray-600">{{ $product->quantity }}</td>
                 <td class="px-4 py-3 text-gray-600">₱{{ number_format($product->price ?? 0, 2) }}</td>
-                <td class="px-4 py-3 text-gray-600">{{ $product->product_condition}}</td>
-
+                {{-- ADDED: Colored condition text --}}
+                <td class="px-4 py-3">
+                    @if($product->product_condition === 'Brand New')
+                        <span class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Brand New</span>
+                    @elseif($product->product_condition === 'Second Hand')
+                        <span class="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">Second
+                            Hand</span>
+                    @else
+                        <span
+                            class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">{{ $product->product_condition }}</span>
+                    @endif
                 </td>
+
                 <td class="px-4 py-3">
                     @php
                         $payload = [
