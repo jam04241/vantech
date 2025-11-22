@@ -26,7 +26,7 @@ class ProductController extends Controller
      */
     public function index() {}
 
- public function create()
+    public function create()
     {
         $suppliers = Suppliers::where('status', 'active')->orderBy('supplier_name')->get();
         return view('PRODUCT.add_product', array_merge(
@@ -73,11 +73,11 @@ class ProductController extends Controller
 
             DB::commit();
             return redirect()->route('product.add')->with('success', 'Product created successfully.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Failed to create product: ' . $e->getMessage())->withInput();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to create product: ' . $e->getMessage())->withInput();
+        }
     }
-}
 
 
     /**
@@ -469,7 +469,6 @@ class ProductController extends Controller
                 'brand_id' => $first->brand_id,
                 'category_id' => $first->category_id,
                 'product_condition' => $first->product_condition,
-                'image_path' => $first->image_path,
                 'stock' => $group->count(), // Count of duplicate products (each product = 1)
                 'price' => $price,
             ];
@@ -494,60 +493,60 @@ class ProductController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     /* FOR RIGHT SIDE IN PRODUCT LIST*/
-    public function getProductBySerialNumber(Request $request)
-    {
-        $serialNumber = $request->query('serial'); // Search by serial number
+    // public function getProductBySerialNumber(Request $request)
+    // {
+    //     $serialNumber = $request->query('serial'); // Search by serial number
 
-        if (!$serialNumber) {
-            return response()->json(['product' => null, 'message' => 'No serial number provided']);
-        }
+    //     if (!$serialNumber) {
+    //         return response()->json(['product' => null, 'message' => 'No serial number provided']);
+    //     }
 
-        // Find product by serial number
-        $foundProduct = Product::with('brand', 'category', 'stock')
-            ->where('serial_number', $serialNumber)
-            ->first();
+    //     // Find product by serial number
+    //     $foundProduct = Product::with('brand', 'category', 'stock')
+    //         ->where('serial_number', $serialNumber)
+    //         ->first();
 
-        if (!$foundProduct) {
-            return response()->json(['product' => null, 'message' => 'Serial number not found in database']);
-        }
+    //     if (!$foundProduct) {
+    //         return response()->json(['product' => null, 'message' => 'Serial number not found in database']);
+    //     }
 
-        // Check if product has stock record and sufficient quantity
-        // Allow products without stock record (stock_quantity can be null/0 initially)
-        if ($foundProduct->stock && $foundProduct->stock->stock_quantity <= 0) {
-            return response()->json(['product' => null, 'message' => 'Product out of stock']);
-        }
+    //     // Check if product has stock record and sufficient quantity
+    //     // Allow products without stock record (stock_quantity can be null/0 initially)
+    //     if ($foundProduct->stock && $foundProduct->stock->stock_quantity <= 0) {
+    //         return response()->json(['product' => null, 'message' => 'Product out of stock']);
+    //     }
 
-        // Get all products with same name, brand, category, condition, and price to calculate total quantity
-        $groupedProducts = Product::with('brand', 'category', 'stock')
-            ->where('product_name', $foundProduct->product_name)
-            ->where('brand_id', $foundProduct->brand_id)
-            ->where('category_id', $foundProduct->category_id)
-            ->where('product_condition', $foundProduct->product_condition)
-            ->whereHas('stock', function ($query) use ($foundProduct) {
-                $query->where('price', $foundProduct->stock?->price ?? 0);
-            })
-            ->get();
+    //     // Get all products with same name, brand, category, condition, and price to calculate total quantity
+    //     $groupedProducts = Product::with('brand', 'category', 'stock')
+    //         ->where('product_name', $foundProduct->product_name)
+    //         ->where('brand_id', $foundProduct->brand_id)
+    //         ->where('category_id', $foundProduct->category_id)
+    //         ->where('product_condition', $foundProduct->product_condition)
+    //         ->whereHas('stock', function ($query) use ($foundProduct) {
+    //             $query->where('price', $foundProduct->stock?->price ?? 0);
+    //         })
+    //         ->get();
 
-        // Calculate total quantity for this group
-        $totalQuantity = $groupedProducts->count();
+    //     // Calculate total quantity for this group
+    //     $totalQuantity = $groupedProducts->count();
 
-        // Return product with grouped quantity
-        $product = (object) [
-            'id' => $foundProduct->id,
-            'serial_number' => $foundProduct->serial_number,
-            'product_name' => $foundProduct->product_name,
-            'brand' => $foundProduct->brand,
-            'category' => $foundProduct->category,
-            'brand_id' => $foundProduct->brand_id,
-            'category_id' => $foundProduct->category_id,
-            'product_condition' => $foundProduct->product_condition,
-            'image_path' => $foundProduct->image_path,
-            'stock' => $totalQuantity, // Total quantity of products in this group
-            'price' => $foundProduct->stock?->price ?? 0,
-        ];
+    //     // Return product with grouped quantity
+    //     $product = (object) [
+    //         'id' => $foundProduct->id,
+    //         'serial_number' => $foundProduct->serial_number,
+    //         'product_name' => $foundProduct->product_name,
+    //         'brand' => $foundProduct->brand,
+    //         'category' => $foundProduct->category,
+    //         'brand_id' => $foundProduct->brand_id,
+    //         'category_id' => $foundProduct->category_id,
+    //         'product_condition' => $foundProduct->product_condition,
+    //         'image_path' => $foundProduct->image_path,
+    //         'stock' => $totalQuantity, // Total quantity of products in this group
+    //         'price' => $foundProduct->stock?->price ?? 0,
+    //     ];
 
-        return response()->json(['product' => $product, 'message' => 'Product found']);
-    }
+    //     return response()->json(['product' => $product, 'message' => 'Product found']);
+    // }
 
     /**
      * Check if a serial number already exists in the database
@@ -570,4 +569,3 @@ class ProductController extends Controller
         return response()->json(['exists' => $exists]);
     }
 }
-
