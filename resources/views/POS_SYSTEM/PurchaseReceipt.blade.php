@@ -15,7 +15,7 @@
             body {
                 margin: 0;
                 padding: 0;
-                font-size: 90% !important;
+                font-size: 70% !important;
                 /* reduce font size */
 
             }
@@ -73,7 +73,7 @@
 
     <!-- Receipt Container -->
     <div class="container mx-auto p-6 scrollbar-hide" style="max-height: calc(100vh - 80px); overflow-y: auto;">
-        <div class="print-container bg-white shadow-lg mx-auto" style="width: 210mm; min-height: 297mm; padding: 20mm;">
+        <div class="print-container bg-white shadow-lg mx-auto" style="width: 210mm; min-height: 200mm; padding: 10mm;">
 
             <!-- Header with Blue Line -->
             <div class="border-t-8 border-blue-600 mb-6"></div>
@@ -82,16 +82,14 @@
             <div class="flex justify-between items-start mb-8">
                 <div>
                     <h1 class="text-2xl font-bold text-blue-700 mb-2">VANTECH COMPUTERS TRADING</h1>
-                    <p class="text-sm text-gray-700">Ivan Bryan C. Randisar - Sole Proprietor</p>
+                    <p class="text-sm text-gray-700">Van Bryan C. Bardillas - Sole Proprietor</p>
                     <p class="text-sm text-gray-700">Non VAT Reg. TIN 505-374240-00000</p>
-                    <p class="text-sm text-gray-700">7598 P7 Bangguingui St., Mintal</p>
-                    <p class="text-sm text-gray-700">8000 City of Davao, Davao Del Sur Philippines</p>
+                    <p class="text-sm text-gray-700">758 F Purok 3, Brgy. Mintal</p>
+                    <p class="text-sm text-gray-700">Davao City, Davao del Sur, 8000</p>
                 </div>
                 <div class="text-right">
-                    <div class="bg-gray-800 text-white px-6 py-3 mb-2">
-                        <h2 class="text-xl font-bold">VANTECH</h2>
-                        <p class="text-xs">COMPUTERS</p>
-                    </div>
+
+                    <img src="{{ asset('images/logo.png') }}" class="w-40 mx-auto py-3 mb-2" />
                     <h3 class="text-lg font-bold text-blue-700">WARRANTY RECEIPT</h3>
                     <p class="text-sm text-gray-700 mt-2">Date: <span
                             class="font-semibold">{{ now()->format('m/d/Y') }}</span></p>
@@ -173,7 +171,7 @@
             <!-- Signatures -->
             <div class="flex justify-end mt-12">
                 <div class="text-right">
-                    <p class="text-sm mb-8">Prepared by: ANDREW GUYO</p>
+                    <p class="text-sm mb-8">Prepared by: ANDREW SUICO</p>
                     <p class="text-sm">Received by: _______________________</p>
                 </div>
             </div>

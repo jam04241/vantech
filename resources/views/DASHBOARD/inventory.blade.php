@@ -214,8 +214,9 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Company</label>
-                        <select name="supplier_id"
+                        <select name="supplier_id" id="editSupplierSelect"
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                            <option value="">Second Hand</option>
                             @foreach ($suppliers ?? collect() as $supplier)
                                 <option value="{{ $supplier->id }}">{{ $supplier->company_name ?? $supplier->supplier_name }}
                                 </option>
@@ -223,7 +224,16 @@
                         </select>
                     </div>
                 </div>
-
+                {{-- Hidden product condition --}}
+                <div class="grid md:grid-cols-1 gap-6 mb-6">
+                    <div>
+                        {{-- <label class="block text-sm font-medium text-gray-700 mb-2" hidden>Product Condition</label>
+                        --}}
+                        <input type="text" name="product_condition" id="editProductCondition"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                            readonly hidden>
+                    </div>
+                </div>
 
                 <div class="flex justify-end gap-3">
                     <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
@@ -356,6 +366,14 @@
                             productFields.supplier_id.value = payload.supplier_id || '';
                             productFields.warranty_period.value = payload.warranty_period || '';
                             productFields.price.value = payload.price || 0;
+
+                            // Update product condition based on supplier_id
+                            const supplierValue = productFields.supplier_id.value;
+                            const conditionInput = document.getElementById('editProductCondition');
+                            if (conditionInput) {
+                                conditionInput.value = (supplierValue === '' || supplierValue === null) ? 'Second Hand' : 'Brand New';
+                            }
+
                             toggleModal(productModal, true);
                         } catch (error) {
                             console.error('Unable to parse product payload', error);
@@ -365,6 +383,25 @@
             };
 
             bindProductButtons();
+
+            // ADDED: Handle supplier change to update product condition
+            const supplierSelect = document.getElementById('editSupplierSelect');
+            const conditionInput = document.getElementById('editProductCondition');
+
+            const updateProductCondition = () => {
+                const supplierValue = supplierSelect.value;
+                if (supplierValue === '' || supplierValue === null) {
+                    // Supplier is null = Second Hand
+                    conditionInput.value = 'Second Hand';
+                } else {
+                    // Supplier is not null = Brand New
+                    conditionInput.value = 'Brand New';
+                }
+            };
+
+            if (supplierSelect && conditionInput) {
+                supplierSelect.addEventListener('change', updateProductCondition);
+            }
 
             document.body.addEventListener('htmx:afterSwap', (event) => {
                 if (event.target.id === 'product-table-container') {

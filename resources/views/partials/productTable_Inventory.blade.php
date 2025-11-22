@@ -78,15 +78,14 @@
                             <button type="button" data-product-modal data-product='@json($payload)'
                                 data-action="{{ route('products.update', $product->id) }}"
                                 class="bg-[#46647F] hover:bg-[#3a556f] text-white transition-colors duration-200 px-3 py-2 rounded-lg text-sm font-semibold flex items-center space-x-1">
-                                <i class="fa-regular fa-pen-to-square w-4 h-4"></i>
-                                <span>Edit</span>
+                                <i class="fa-regular fa-pen-to-square w-4 h-4" title="Edit"></i>
                             </button>
 
                             <!-- Stock Out Button -->
                             <button type="button"
                                 class="bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 px-3 py-2 rounded-lg text-sm font-semibold flex items-center space-x-1">
-                                <i class="fa-solid fa-box-archive w-4 h-4"></i>
-                                <span>Stock Out</span>
+                                <i class="fa-solid fa-box-archive w-4 h-4" title="Product Out"></i>
+
                             </button>
                         </div>
                     </td>

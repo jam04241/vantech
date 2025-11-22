@@ -347,8 +347,14 @@ class ProductController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($product, $data) {
-            $productData = collect($data)->except(['price'])->toArray();
+            $productData = collect($data)->except(['price', 'product_condition'])->toArray();
             $productData['serial_number'] = $productData['serial_number'] ?? ($product->serial_number ?? 'N/A');
+
+            // Determine product condition based on supplier_id
+            // If supplier_id is null or empty, set to 'Second Hand', otherwise 'Brand New'
+            $productData['product_condition'] = (empty($productData['supplier_id']) || $productData['supplier_id'] === null) 
+                ? 'Second Hand' 
+                : 'Brand New';
 
             $product->update($productData);
 

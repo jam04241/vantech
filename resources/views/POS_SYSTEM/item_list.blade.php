@@ -70,7 +70,7 @@
         <div class="gap-3">
             <a href="{{ route('customer.addCustomer') }}"
                 class=" px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2
-                                                                                                                                                                                                                                                                    focus:ring-indigo-500 transition duration-150 ease-in-out">Add
+                                                                                                                                                                                                                                                                        focus:ring-indigo-500 transition duration-150 ease-in-out">Add
                 Customer</a>
         </div>
     </div>
@@ -211,9 +211,7 @@
         // Update order display in both tabs (basis: quantity)
         function updateOrderDisplay() {
             const purchaseList = document.getElementById('purchaseOrderList');
-            const quotationList = document.getElementById('quotationOrderList');
             const emptyPurchaseMsg = document.getElementById('emptyOrderMsg');
-            const emptyQuotationMsg = document.getElementById('emptyQuotationMsg');
 
             let html = '';
             let subtotal = 0;
@@ -223,43 +221,39 @@
                 subtotal += itemSubtotal;
 
                 html += `
-                                                                                                                                                                                                        <li class="py-3 px-3 hover:bg-gray-100 transition">
-                                                                                                                                                                                                            <div class="grid grid-cols-12 gap-1 items-center text-xs">
-                                                                                                                                                                                                                <div class="col-span-4">
-                                                                                                                                                                                                                    <p class="font-medium text-gray-900 truncate">${item.name}</p>
-                                                                                                                                                                                                                    <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
+                                                                                                                                                                                                            <li class="py-3 px-3 hover:bg-gray-100 transition">
+                                                                                                                                                                                                                <div class="grid grid-cols-12 gap-1 items-center text-xs">
+                                                                                                                                                                                                                    <div class="col-span-4">
+                                                                                                                                                                                                                        <p class="font-medium text-gray-900 truncate">${item.name}</p>
+                                                                                                                                                                                                                        <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
+                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                    <div class="col-span-2 text-center">
+                                                                                                                                                                                                                        <span class="text-gray-700 text-xs">${item.warranty}</span>
+                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                    <div class="col-span-2 text-center">
+                                                                                                                                                                                                                        <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
+                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                    <div class="col-span-3 text-right">
+                                                                                                                                                                                                                        <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
+                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                    <div class="col-span-1 text-center">
+                                                                                                                                                                                                                        <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
+                                                                                                                                                                                                                    </div>
                                                                                                                                                                                                                 </div>
-                                                                                                                                                                                                                <div class="col-span-2 text-center">
-                                                                                                                                                                                                                    <span class="text-gray-700 text-xs">${item.warranty}</span>
-                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                <div class="col-span-2 text-center">
-                                                                                                                                                                                                                    <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
-                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                <div class="col-span-3 text-right">
-                                                                                                                                                                                                                    <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
-                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                <div class="col-span-1 text-center">
-                                                                                                                                                                                                                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
-                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                        </li>
-                                                                                                                                                                                                    `;
+                                                                                                                                                                                                            </li>
+                                                                                                                                                                                                        `;
             });
 
             purchaseList.innerHTML = html;
-            quotationList.innerHTML = html;
 
             // Show/hide empty messages
             emptyPurchaseMsg.style.display = orderItems.length === 0 ? 'block' : 'none';
-            emptyQuotationMsg.style.display = orderItems.length === 0 ? 'block' : 'none';
 
             // Update subtotal
             document.getElementById('purchaseSubtotalDisplay').textContent = subtotal.toFixed(2);
-            document.getElementById('quotationSubtotalDisplay').textContent = subtotal.toFixed(2);
 
             // Recalculate totals
             updatePurchaseTotal();
-            updateQuotationTotal();
         }
 
         // Remove item from order (basis: product ID)
@@ -288,18 +282,6 @@
             document.getElementById('purchaseTotalDisplay').textContent = total.toFixed(2);
         }
 
-        // Update Quotation Total
-        function updateQuotationTotal() {
-            const subtotal = parseFloat(document.getElementById('quotationSubtotalDisplay').textContent) || 0;
-            const discount = parseFloat(document.getElementById('quotationDiscountInput').value) || 0;
-            const vat = (subtotal - discount) * 0.03;
-            const total = subtotal - discount + vat;
-
-            document.getElementById('quotationDiscountDisplay').textContent = discount.toFixed(2);
-            document.getElementById('quotationVAT').textContent = vat.toFixed(2);
-            document.getElementById('quotationTotalDisplay').textContent = total.toFixed(2);
-        }
-
         // Event listeners for filters and search
         document.getElementById('categoryFilter').addEventListener('change', filterProducts);
         document.getElementById('brandFilter').addEventListener('change', filterProducts);
@@ -307,82 +289,9 @@
         document.getElementById('sortFilter').addEventListener('change', filterProducts);
         document.getElementById('productSearch').addEventListener('input', filterProducts);
 
-        // Switch tab with confirmation if items exist
-        function switchTabWithConfirm(tabName) {
-            const scannedSerials = document.getElementById('scannedSerialNumbers').value.split(',').filter(s => s);
-
-            // If no items scanned, just switch
-            if (scannedSerials.length === 0) {
-                switchTab(tabName);
-                return;
-            }
-
-            // Show confirmation alert
-            Swal.fire({
-                icon: 'question',
-                title: 'Switch Tab?',
-                html: `<p>You have <strong>${scannedSerials.length}</strong> scanned product(s). Are you sure you want to switch tabs?</p>
-                                                                                                                                                                                                   <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Your current transaction will be removed.</p>`,
-                showCancelButton: true,
-                confirmButtonColor: '#6366f1',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, Switch',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Clear order items and scanned serials
-                    orderItems = [];
-                    document.getElementById('scannedSerialNumbers').value = '';
-                    switchTab(tabName);
-                    updateOrderDisplay();
-                }
-            });
-        }
-
-        function switchTab(tabName) {
-            // Hide all tab contents
-            const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(content => {
-                content.classList.add('hidden');
-            });
-
-            // Remove active styles from all tabs
-            const purchaseTab = document.getElementById('purchaseTab');
-            const quotationTab = document.getElementById('quotationTab');
-
-            purchaseTab.classList.remove('border-indigo-600', 'text-indigo-600', 'bg-white');
-            purchaseTab.classList.add('border-transparent', 'text-gray-500', 'bg-gray-50', 'hover:bg-gray-100');
-
-            quotationTab.classList.remove('border-indigo-600', 'text-indigo-600', 'bg-white');
-            quotationTab.classList.add('border-transparent', 'text-gray-500', 'bg-gray-50', 'hover:bg-gray-100');
-
-            // Show selected tab content and apply active styles
-            if (tabName === 'purchase') {
-                document.getElementById('purchaseContent').classList.remove('hidden');
-                purchaseTab.classList.add('border-indigo-600', 'text-indigo-600', 'bg-white');
-                purchaseTab.classList.remove('border-transparent', 'text-gray-500', 'bg-gray-50', 'hover:bg-gray-100');
-            } else if (tabName === 'quotation') {
-                document.getElementById('quotationContent').classList.remove('hidden');
-                quotationTab.classList.add('border-indigo-600', 'text-indigo-600', 'bg-white');
-                quotationTab.classList.remove('border-transparent', 'text-gray-500', 'bg-gray-50', 'hover:bg-gray-100');
-            }
-        }
-
         // Generalized Confirmation Handler
         function showConfirmation(title, text, icon, confirmButtonText, confirmButtonColor, actionType) {
             const productSerialNo = document.getElementById('productSerialNo').value.trim();
-
-            // // Validate product serial number
-            // if (!productSerialNo && actionType === 'checkout') {
-            //     Swal.fire({
-            //         icon: 'warning',
-            //         title: 'Product Serial No. Required',
-            //         text: 'Please enter a product serial number before proceeding.',
-            //         confirmButtonText: 'OK',
-            //         confirmButtonColor: '#6366f1'
-            //     });
-            //     return;
-            // }
 
             Swal.fire({
                 title: title,
@@ -410,12 +319,6 @@
             if (actionType === 'checkout') {
                 title = '🛒 Processing Purchase';
                 html = `<p>Product Serial: <strong>${productSerialNo}</strong></p><p>Processing order in <b></b> seconds...</p>`;
-            } else if (actionType === 'print') {
-                title = '🖨️ Preparing Quotation';
-                html = 'Generating quotation document in <b></b> seconds...';
-            } else if (actionType === 'pcbuild') {
-                title = '🖥️ Adding to PC Build';
-                html = 'Adding items to PC build in <b></b> seconds...';
             }
 
             Swal.fire({
@@ -452,47 +355,8 @@
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#6366f1'
                 });
-            } else if (actionType === 'print') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Quotation Ready!',
-                    text: 'The quotation document is ready to print.',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#10b981'
-                });
-            } else if (actionType === 'pcbuild') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Added to PC Build!',
-                    text: 'Items have been successfully added to PC build.',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#6366f1'
-                });
             }
         }
-
-        // Event Listeners
-        document.getElementById('print-quotation-btn').addEventListener('click', function () {
-            showConfirmation(
-                'Confirm Print',
-                'Are you sure you want to print this quotation?',
-                'question',
-                'Yes, Print!',
-                '#10b981',
-                'print'
-            );
-        });
-
-        document.getElementById('add-pc-build-btn').addEventListener('click', function () {
-            showConfirmation(
-                'Confirm Add to PC Build',
-                'Are you sure you want to add these items to PC build?',
-                'question',
-                'Yes, Add!',
-                '#6366f1',
-                'pcbuild'
-            );
-        });
 
         // Checkout Modal Functions
         function openCheckoutModal() {
