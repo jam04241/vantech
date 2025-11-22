@@ -47,10 +47,30 @@
             @endisset
         </select>
 
+        {{-- Condition Filter --}}
+        <select id="conditionFilter"
+            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
+            <option value="" selected hidden>Select Condition</option>
+            <option value="all">All Conditions</option>
+            <option value="Brand New">Brand New</option>
+            <option value="Second Hand">Second Hand</option>
+        </select>
+
+        {{-- Sort Filter --}}
+        <select id="sortFilter"
+            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
+            <option value="name_asc" selected>Sort by Name (A-Z)</option>
+            <option value="name_desc">Sort by Name (Z-A)</option>
+            <option value="price_asc">Sort by Price (Low to High)</option>
+            <option value="price_desc">Sort by Price (High to Low)</option>
+            <option value="qty_asc">Sort by Stock (Low to High)</option>
+            <option value="qty_desc">Sort by Stock (High to Low)</option>
+        </select>
+
         <div class="gap-3">
             <a href="{{ route('customer.addCustomer') }}"
                 class=" px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2
-                                                                                                                                                                                                            focus:ring-indigo-500 transition duration-150 ease-in-out">Add
+                                                                                                                                                                                                                    focus:ring-indigo-500 transition duration-150 ease-in-out">Add
                 Customer</a>
         </div>
     </div>
@@ -69,29 +89,65 @@
         let orderItems = [];
         const allProducts = @json($grouped);
 
-        // Filter products by category, brand, and search query
+        // Filter and sort products by category, brand, condition, and search query
         function filterProducts() {
             const categoryFilter = document.getElementById('categoryFilter').value;
             const brandFilter = document.getElementById('brandFilter').value;
+            const conditionFilter = document.getElementById('conditionFilter').value;
+            const sortFilter = document.getElementById('sortFilter').value;
             const searchQuery = document.getElementById('productSearch').value.toLowerCase();
-            const productCards = document.querySelectorAll('.product-card');
+            const productCards = Array.from(document.querySelectorAll('.product-card'));
 
-            productCards.forEach(card => {
+            // Filter products
+            const filteredCards = productCards.filter(card => {
                 const cardCategory = card.getAttribute('data-category');
                 const cardBrand = card.getAttribute('data-brand');
+                const cardCondition = card.getAttribute('data-condition');
                 const productName = card.querySelector('h3').textContent.toLowerCase();
                 const brandName = card.querySelector('p:nth-of-type(1)').textContent.toLowerCase();
                 const typeName = card.querySelector('p:nth-of-type(2)').textContent.toLowerCase();
 
                 const categoryMatch = categoryFilter === '' || categoryFilter === 'all' || cardCategory === categoryFilter;
                 const brandMatch = brandFilter === '' || brandFilter === 'all' || cardBrand === brandFilter;
+                const conditionMatch = conditionFilter === '' || conditionFilter === 'all' || cardCondition === conditionFilter;
                 const searchMatch = searchQuery === '' || productName.includes(searchQuery) || brandName.includes(searchQuery) || typeName.includes(searchQuery);
 
-                if (categoryMatch && brandMatch && searchMatch) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
+                return categoryMatch && brandMatch && conditionMatch && searchMatch;
+            });
+
+            // Sort products
+            filteredCards.sort((a, b) => {
+                const aName = a.querySelector('h3').textContent;
+                const bName = b.querySelector('h3').textContent;
+                const aPrice = parseFloat(a.getAttribute('data-price')) || 0;
+                const bPrice = parseFloat(b.getAttribute('data-price')) || 0;
+                const aQty = parseInt(a.getAttribute('data-quantity')) || 0;
+                const bQty = parseInt(b.getAttribute('data-quantity')) || 0;
+
+                switch (sortFilter) {
+                    case 'name_desc':
+                        return bName.localeCompare(aName);
+                    case 'price_asc':
+                        return aPrice - bPrice;
+                    case 'price_desc':
+                        return bPrice - aPrice;
+                    case 'qty_asc':
+                        return aQty - bQty;
+                    case 'qty_desc':
+                        return bQty - aQty;
+                    default: // name_asc
+                        return aName.localeCompare(bName);
                 }
+            });
+
+            // Update display
+            const grid = document.getElementById('productsGrid');
+            productCards.forEach(card => card.style.display = 'none');
+            filteredCards.forEach(card => card.style.display = '');
+
+            // Reorder cards in DOM
+            filteredCards.forEach(card => {
+                grid.appendChild(card);
             });
         }
 
@@ -166,24 +222,24 @@
                 subtotal += itemSubtotal;
 
                 html += `
-                                                                                                                                                <li class="py-3 px-3 hover:bg-gray-100 transition">
-                                                                                                                                                    <div class="grid grid-cols-12 gap-1 items-center text-xs">
-                                                                                                                                                        <div class="col-span-5">
-                                                                                                                                                            <p class="font-medium text-gray-900 truncate">${item.name}</p>
-                                                                                                                                                            <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div class="col-span-3 text-center">
-                                                                                                                                                            <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div class="col-span-3 text-right">
-                                                                                                                                                            <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div class="col-span-1 text-center">
-                                                                                                                                                            <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
-                                                                                                                                                        </div>
-                                                                                                                                                    </div>
-                                                                                                                                                </li>
-                                                                                                                                            `;
+                                                                                                                                                        <li class="py-3 px-3 hover:bg-gray-100 transition">
+                                                                                                                                                            <div class="grid grid-cols-12 gap-1 items-center text-xs">
+                                                                                                                                                                <div class="col-span-5">
+                                                                                                                                                                    <p class="font-medium text-gray-900 truncate">${item.name}</p>
+                                                                                                                                                                    <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
+                                                                                                                                                                </div>
+                                                                                                                                                                <div class="col-span-3 text-center">
+                                                                                                                                                                    <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
+                                                                                                                                                                </div>
+                                                                                                                                                                <div class="col-span-3 text-right">
+                                                                                                                                                                    <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
+                                                                                                                                                                </div>
+                                                                                                                                                                <div class="col-span-1 text-center">
+                                                                                                                                                                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
+                                                                                                                                                                </div>
+                                                                                                                                                            </div>
+                                                                                                                                                        </li>
+                                                                                                                                                    `;
             });
 
             purchaseList.innerHTML = html;
@@ -242,6 +298,8 @@
         // Event listeners for filters and search
         document.getElementById('categoryFilter').addEventListener('change', filterProducts);
         document.getElementById('brandFilter').addEventListener('change', filterProducts);
+        document.getElementById('conditionFilter').addEventListener('change', filterProducts);
+        document.getElementById('sortFilter').addEventListener('change', filterProducts);
         document.getElementById('productSearch').addEventListener('input', filterProducts);
 
         // Switch tab with confirmation if items exist
@@ -259,7 +317,7 @@
                 icon: 'question',
                 title: 'Switch Tab?',
                 html: `<p>You have <strong>${scannedSerials.length}</strong> scanned product(s). Are you sure you want to switch tabs?</p>
-                                                                                                                                           <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Your current transaction will be removed.</p>`,
+                                                                                                                                                   <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Your current transaction will be removed.</p>`,
                 showCancelButton: true,
                 confirmButtonColor: '#6366f1',
                 cancelButtonColor: '#d33',

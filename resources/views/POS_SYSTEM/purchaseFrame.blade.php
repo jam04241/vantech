@@ -193,24 +193,70 @@
 
 <!-- POS Product Lookup Script (Serial Number Search) -->
 <script>
+    // Debounce timer to prevent rapid API calls
+    let scanDebounceTimer = null;
+    let lastFetchTime = 0;
+    const MIN_FETCH_INTERVAL = 300; // Minimum 300ms between API calls
+
     /**
      * Fetch product from API endpoint by serial number
      * Used when purchaseFrame is used independently
      * Basis: Search by serial_number, then group by name, brand, category, condition, price
+     * Includes timeout, validation, and error handling
      */
     async function fetchProductFromAPI(serialNumber) {
         try {
-            const response = await fetch(`/api/products/search-pos?serial=${encodeURIComponent(serialNumber)}`);
+            // Create abort controller for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+            const response = await fetch(`/api/products/search-pos?serial=${encodeURIComponent(serialNumber)}`, {
+                signal: controller.signal,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            clearTimeout(timeoutId);
+
+            // Check if response is ok
+            if (!response.ok) {
+                console.error(`API Error: ${response.status} ${response.statusText}`);
+                return null;
+            }
+
+            // Validate response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('Invalid response type. Expected JSON, got:', contentType);
+                return null;
+            }
+
             const data = await response.json();
 
-            if (data.product) {
+            // Validate response structure
+            if (!data || typeof data !== 'object') {
+                console.error('Invalid response structure:', data);
+                return null;
+            }
+
+            if (data.product && typeof data.product === 'object') {
+                // Validate required product fields
+                if (!data.product.id || !data.product.product_name) {
+                    console.error('Product missing required fields:', data.product);
+                    return null;
+                }
                 return data.product;
             } else {
-                console.warn('Product not found:', data.message);
+                console.warn('Product not found:', data.message || 'Unknown error');
                 return null;
             }
         } catch (error) {
-            console.error('Error fetching product:', error);
+            if (error.name === 'AbortError') {
+                console.error('API request timeout - server may be overloaded');
+            } else {
+                console.error('Error fetching product:', error.message);
+            }
             return null;
         }
     }
@@ -219,6 +265,7 @@
      * Handle barcode input with API lookup
      * This script runs when purchaseFrame is used as a standalone component
      * Searches by serial number and groups by product attributes
+     * Includes debouncing and prevents duplicate rapid scans
      */
     document.addEventListener('DOMContentLoaded', function () {
         const productSerialInput = document.getElementById('productSerialNo');
@@ -229,51 +276,91 @@
 
                 if (!serialNumber) return;
 
-                // Fetch product from API by serial number
-                const product = await fetchProductFromAPI(serialNumber);
+                // Clear previous debounce timer
+                if (scanDebounceTimer) {
+                    clearTimeout(scanDebounceTimer);
+                }
 
-                if (!product) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Serial Number Not Found',
-                        text: 'The serial number could not be found in the database or product is out of stock.',
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#ef4444',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                // Debounce: wait 300ms before making API call
+                scanDebounceTimer = setTimeout(async () => {
+                    // Check minimum interval between fetches
+                    const now = Date.now();
+                    if (now - lastFetchTime < MIN_FETCH_INTERVAL) {
+                        return;
+                    }
+                    lastFetchTime = now;
+
+                    // Fetch product from API by serial number
+                    const product = await fetchProductFromAPI(serialNumber);
+
+                    if (!product) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Serial Number Not Found',
+                            text: 'The serial number could not be found in the database or product is out of stock.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#ef4444',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        this.value = '';
+                        this.focus();
+                        return;
+                    }
+
+                    // Check if serial number already exists in order (by serial number, not product ID)
+                    // This prevents the same physical item from being scanned twice
+                    const existingOrderItems = typeof orderItems !== 'undefined' ? orderItems : [];
+                    const isDuplicate = existingOrderItems.some(item => item.serialNumber === product.serial_number);
+
+                    if (isDuplicate) {
+                        // Show alert for duplicate scan to make user aware
+                        console.warn(`Duplicate scan prevented: Serial ${product.serial_number} already in order`);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Item Already Scanned',
+                            html: `<p>Product <strong>${product.product_name}</strong><br/>Serial: <strong>${product.serial_number}</strong><br/>is already in the order</p>`,
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#f59e0b',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        this.value = '';
+                        this.focus();
+                        return;
+                    }
+
+                    // Add product to order (if addItemToOrder function exists from item_list.blade.php)
+                    if (typeof addItemToOrder === 'function') {
+                        try {
+                            addItemToOrder(product);
+                        } catch (error) {
+                            console.error('Error adding item to order:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error Adding Item',
+                                text: 'Failed to add item to order. Please try again.',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#ef4444',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        }
+                    } else {
+                        console.error('addItemToOrder function not found. Make sure item_list.blade.php is loaded.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'System Error',
+                            text: 'Order list component not loaded. Please refresh the page.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // Clear input
                     this.value = '';
                     this.focus();
-                    return;
-                }
-
-                // Check if product group already in order (by product ID)
-                const scannedProductIds = document.getElementById('scannedSerialNumbers').value.split(',').filter(s => s);
-                if (scannedProductIds.includes(product.id.toString())) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Product Already Added',
-                        html: `<p>Product <strong>${product.product_name}</strong> is already in the order</p>`,
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#f59e0b',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    this.value = '';
-                    this.focus();
-                    return;
-                }
-
-                // Add product to order (if addItemToOrder function exists from item_list.blade.php)
-                if (typeof addItemToOrder === 'function') {
-                    addItemToOrder(product);
-                } else {
-                    console.warn('addItemToOrder function not found. Make sure item_list.blade.php is loaded.');
-                }
-
-                // Clear input
-                this.value = '';
-                this.focus();
+                }, 300); // Debounce delay
             });
         }
     });

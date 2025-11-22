@@ -4,7 +4,8 @@
         @forelse($grouped as $product)
             <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition product-card"
                 data-category="{{ $product->category_id ?? '' }}" data-brand="{{ $product->brand_id ?? '' }}"
-                data-quantity="{{ $product->stock ?? 0 }}">
+                data-condition="{{ $product->product_condition ?? '' }}" data-quantity="{{ $product->stock ?? 0 }}"
+                data-price="{{ $product->price ?? 0 }}">
                 <div class="p-4">
 
                     <h3 class="text-lg font-semibold text-gray-800">{{ $product->product_name }}</h3>
@@ -13,6 +14,13 @@
                     </p>
                     <p class="text-gray-600 text-sm mt-1">
                         <b>Type:</b> {{ $product->category?->category_name ?? 'N/A' }}
+                    </p>
+                    <p class="text-gray-600 text-sm mt-1">
+                        <b>Condition:</b>
+                        <span
+                            class="font-semibold {{ $product->product_condition === 'Brand New' ? 'text-blue-600' : 'text-orange-600' }}">
+                            {{ $product->product_condition ?? 'N/A' }}
+                        </span>
                     </p>
                     <p class="text-gray-600 text-sm mt-1">
                         <b>Stock:</b> <span class="font-semibold">{{ $product->stock }}</span>
