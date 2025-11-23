@@ -441,31 +441,32 @@ class ProductController extends Controller
     /* FOR LEFT SIDE IN PODUCT LIST JUST TO LIST THE PRODUCTS*/
     public function posList(Request $request)
     {
-        // Load products with brand and category relationships (NO stock relationship)
-        $query = Product::with('brand', 'category');
+        // Load products with brand, category, and stock relationships
+        $query = Product::with('brand', 'category', 'stock');
 
         // Apply reusable filters
         $query = $this->applyProductFilters($query, $request);
 
         $productsCollection = $query->get();
 
-        // ============= GROUP BY PRODUCT NAME, BRAND, AND CATEGORY =============
-        // Products are grouped by name, brand, and category only
-        // Quantity is counted based on duplicate product descriptions
+        // ============= GROUP BY PRODUCT NAME, BRAND, CATEGORY, CONDITION, AND PRICE =============
+        // Products are grouped by name, brand, category, condition, and price
+        // This matches the grouping logic in getProductBySerialNumber() for consistency
+        // Products with same description but different condition/price will be separate entries
         $grouped = $productsCollection->groupBy(function ($product) {
+            $price = $product->stock?->price ?? 0;
             return implode('|', [
                 $product->product_name,
                 $product->brand_id ?? 'null',
                 $product->category_id ?? 'null',
+                $product->product_condition ?? 'null',
+                $price, // Include price in grouping
             ]);
         })->map(function ($group) {
             $first = $group->first();
 
             // Get price from stock relationship if available
-            $price = 0;
-            if ($first->stock) {
-                $price = $first->stock->price ?? 0;
-            }
+            $price = $first->stock?->price ?? 0;
 
             return (object) [
                 'id' => $first->id,
