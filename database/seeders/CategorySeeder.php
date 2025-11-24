@@ -31,7 +31,7 @@ class CategorySeeder extends Seeder
         ['category_name' => 'STORAGE'],
         ['category_name' => 'PSU'],
         ['category_name' => 'PC CASE'],
-        ['category_name' => 'PC BUILD'],
+        ['category_name' => 'MONITOR'],
         ['category_name' => 'PERIPHERALS'],
     ];
 }

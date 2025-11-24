@@ -13,20 +13,10 @@ class PaymentMethodSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
-    {
-        PaymentMethod::insert(self::$paymentMethods);
-    }
+    public function run() {}
     /**
      * The car model data.
      *
      * @var array
      */
-    protected static $paymentMethods   = [
-        ['method_name' => 'Cash'],
-        ['method_name' => 'Credit Card'],
-        ['method_name' => 'Gcash'],
-        ['method_name' => 'BPI'],
-        ['method_name' => 'Others'],
-    ];
 }
