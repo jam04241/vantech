@@ -180,4 +180,57 @@ Route::get('/LOGIN_FORM', function () {
     return view('LOGIN_FORM.login');
 })->name('login');
 
-    // Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/login', [AuthController::class, 'login']);
+
+// DEBUG ROUTE - Check if data is being stored
+Route::get('/debug/checkout-data', function () {
+    $orders = \App\Models\Customer_Purchase_Order::latest()->limit(5)->get();
+    $payments = \App\Models\Payment_Method::latest()->limit(5)->get();
+
+    return response()->json([
+        'recent_orders' => $orders,
+        'recent_payments' => $payments,
+        'total_orders' => \App\Models\Customer_Purchase_Order::count(),
+        'total_payments' => \App\Models\Payment_Method::count()
+    ]);
+});
+
+// DEBUG ROUTE - Test checkout endpoint directly
+Route::post('/debug/test-checkout', function (\Illuminate\Http\Request $request) {
+    \Illuminate\Support\Facades\Log::info('DEBUG TEST CHECKOUT RECEIVED', [
+        'all_data' => $request->all(),
+        'has_items' => $request->has('items'),
+        'items_count' => count($request->input('items', []))
+    ]);
+
+    return response()->json([
+        'status' => 'received',
+        'message' => 'Test checkout endpoint received data',
+        'data' => $request->all()
+    ]);
+});
+
+// DEBUG ROUTE - Test actual checkout to see what's failing
+Route::post('/debug/checkout-test', function (\Illuminate\Http\Request $request) {
+    \Illuminate\Support\Facades\Log::info('=== DEBUG CHECKOUT TEST ===', [
+        'timestamp' => now(),
+        'all_request_data' => $request->all(),
+        'customer_id' => $request->input('customer_id'),
+        'payment_method' => $request->input('payment_method'),
+        'amount' => $request->input('amount'),
+        'items_count' => count($request->input('items', [])),
+        'items' => $request->input('items', [])
+    ]);
+
+    return response()->json([
+        'status' => 'debug_received',
+        'message' => 'Debug checkout received',
+        'received_data' => [
+            'customer_id' => $request->input('customer_id'),
+            'payment_method' => $request->input('payment_method'),
+            'amount' => $request->input('amount'),
+            'items_count' => count($request->input('items', [])),
+            'items' => $request->input('items', [])
+        ]
+    ]);
+});

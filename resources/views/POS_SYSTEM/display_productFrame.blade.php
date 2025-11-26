@@ -23,13 +23,8 @@
                         </span>
                     </p>
                     <p class="text-gray-600 text-sm mt-1">
-                        <b>Stock:</b> <span class="font-semibold">{{ $product->stock }}</span>
-                    </p>
-                    <p class="text-sm mt-1">
-                        <b>Availability:</b>
-                        <span class="font-semibold {{ $product->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
-                            {{ $product->stock > 0 ? 'In Stock' : 'Out of Stock' }}
-                        </span>
+                        <b>SKU:</b> <span
+                            class="font-semibold text-indigo-600">{{ $product->serial_number ?? 'N/A' }}</span>
                     </p>
                     <div class="mt-3 flex justify-between items-center">
                         <span class="text-indigo-600 font-bold text-base">

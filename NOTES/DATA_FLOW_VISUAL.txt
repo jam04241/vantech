@@ -1,0 +1,271 @@
+================================================================================
+                    CHECKOUT SYSTEM - COMPLETE DATA FLOW
+================================================================================
+
+STEP 1: USER SCANS BARCODE
+─────────────────────────────────────────────────────────────────────────────
+  Input: Serial Number (e.g., "SN123456")
+         ↓
+  API Call: GET /api/products/search-pos?serial=SN123456
+         ↓
+  ProductController::getProductBySerialNumber()
+         ↓
+  Response: {
+    "product": {
+      "id": 10,
+      "serial_number": "SN123456",
+      "product_name": "Laptop Dell XPS",
+      "price": 45000,
+      "warranty_period": "2 Years"
+    }
+  }
+         ↓
+  JavaScript: addItemToOrder(product)
+         ↓
+  orderItems.push({
+    id: 10,
+    name: "Laptop Dell XPS",
+    price: 45000,
+    serialNumber: "SN123456",
+    warranty: "2 Years",
+    qty: 1
+  })
+
+
+STEP 2: DISPLAY ITEM IN ORDER LIST (purchaseOrderList - Line 57)
+─────────────────────────────────────────────────────────────────────────────
+  updateOrderDisplay() creates HTML:
+  
+  <ul id="purchaseOrderList">
+    <li class="py-3 px-3"
+        data-product-id="10"
+        data-serial-number="SN123456"
+        data-unit-price="45000"
+        data-quantity="1"
+        data-total-price="45000">
+      
+      <div class="grid grid-cols-12">
+        <div>1</div>                          ← Sequence number
+        <div>Laptop Dell XPS (SN: SN123456)</div>  ← Product name
+        <div>2 Years</div>                   ← Warranty
+        <div>₱45000.00</div>                 ← Unit price
+        <div>₱45000.00</div>                 ← Subtotal
+        <div>−</div>                         ← Remove button
+      </div>
+    </li>
+  </ul>
+
+  ✅ KEY: data-* attributes store the actual values
+
+
+STEP 3: USER FILLS CHECKOUT FORM
+─────────────────────────────────────────────────────────────────────────────
+  Checkout Modal (checkoutModal):
+  
+  Customer Name: "John Doe"
+  Payment Method: "Cash"
+  Amount: "46350.00"
+  
+  Hidden field: customer_id = "5"
+
+
+STEP 4: USER CLICKS "PRINT RECEIPT"
+─────────────────────────────────────────────────────────────────────────────
+  handleCheckout(event) executes:
+  
+  1. Validate all fields
+     ✓ Order has items
+     ✓ Customer name filled
+     ✓ Customer ID set
+     ✓ Payment method selected
+     ✓ Amount entered
+  
+  2. Extract data from DOM (Lines 386-423)
+     
+     const purchaseOrderListItems = document.querySelectorAll('#purchaseOrderList li');
+     
+     For each <li>:
+       productId = li.getAttribute('data-product-id')        → "10"
+       unitPrice = li.getAttribute('data-unit-price')        → "45000"
+       quantity = li.getAttribute('data-quantity')           → "1"
+       totalPrice = li.getAttribute('data-total-price')      → "45000"
+  
+  3. Create hidden form inputs (Lines 407-421)
+     
+     <div id="itemsContainer">
+       <input type="hidden" name="items[0][product_id]" value="10">
+       <input type="hidden" name="items[0][unit_price]" value="45000">
+       <input type="hidden" name="items[0][quantity]" value="1">
+       <input type="hidden" name="items[0][total_price]" value="45000">
+     </div>
+  
+  4. Submit form via AJAX (Lines 477-555)
+     
+     POST /api/checkout
+     
+     FormData:
+     ├─ _token: "csrf_token_here"
+     ├─ customer_id: "5"
+     ├─ payment_method: "Cash"
+     ├─ amount: "46350.00"
+     ├─ items[0][product_id]: "10"
+     ├─ items[0][unit_price]: "45000"
+     ├─ items[0][quantity]: "1"
+     └─ items[0][total_price]: "45000"
+
+
+STEP 5: BACKEND RECEIVES REQUEST
+─────────────────────────────────────────────────────────────────────────────
+  Route: POST /api/checkout → CheckoutController::store()
+  
+  CheckoutRequest validates:
+    ✓ customer_id exists in customers table
+    ✓ payment_method is string
+    ✓ amount is numeric
+    ✓ items is array with min 1 item
+    ✓ items[*].product_id exists in products table
+    ✓ items[*].unit_price is numeric
+    ✓ items[*].quantity is integer >= 1
+    ✓ items[*].total_price is numeric
+  
+  PHP receives:
+    $request->input('customer_id')     → "5"
+    $request->input('payment_method')  → "Cash"
+    $request->input('amount')          → "46350.00"
+    $request->input('items')           → Array [
+                                           [0] => [
+                                             'product_id' => "10",
+                                             'unit_price' => "45000",
+                                             'quantity' => "1",
+                                             'total_price' => "45000"
+                                           ]
+                                         ]
+
+
+STEP 6: BACKEND CREATES PURCHASE ORDERS
+─────────────────────────────────────────────────────────────────────────────
+  CheckoutController calls:
+    Customer_Purchase_OrderController::store($items, $customerId)
+  
+  For each item:
+    Customer_Purchase_Order::create([
+      'product_id' => 10,
+      'customer_id' => 5,
+      'quantity' => 1,
+      'unit_price' => 45000,
+      'total_price' => 45000,
+      'order_date' => '2025-11-26',
+      'status' => 'Success'
+    ])
+  
+  Database INSERT:
+    INSERT INTO customer_purchase_orders
+    (product_id, customer_id, quantity, unit_price, total_price, order_date, status, created_at, updated_at)
+    VALUES (10, 5, 1, 45000, 45000, '2025-11-26', 'Success', NOW(), NOW())
+  
+  Result: id = 1
+
+
+STEP 7: BACKEND CREATES PAYMENT METHOD
+─────────────────────────────────────────────────────────────────────────────
+  CheckoutController calls:
+    Payment_MethodController::store($paymentData, $firstPurchaseOrderId)
+  
+  Payment_Method::create([
+    'customer_purchase_order_id' => 1,
+    'method_name' => 'Cash',
+    'payment_date' => '2025-11-26',
+    'amount' => 46350
+  ])
+  
+  Database INSERT:
+    INSERT INTO payment_methods
+    (customer_purchase_order_id, method_name, payment_date, amount, created_at, updated_at)
+    VALUES (1, 'Cash', '2025-11-26', 46350, NOW(), NOW())
+  
+  Result: id = 1
+
+
+STEP 8: REDIRECT TO RECEIPT
+─────────────────────────────────────────────────────────────────────────────
+  CheckoutController returns:
+    redirect()->route('pos.purchasereceipt')
+  
+  Browser redirects to: /POS/purchasereceipt
+  
+  PurchaseReceipt view displays:
+    ✓ Customer name: "John Doe"
+    ✓ Items purchased: Laptop Dell XPS (1x ₱45000)
+    ✓ Payment method: Cash
+    ✓ Amount: ₱46350.00
+
+
+================================================================================
+                              DATABASE RESULT
+================================================================================
+
+customer_purchase_orders table:
+┌────┬────────────┬─────────────┬──────────┬────────────┬─────────────┬────────────┬─────────┐
+│ id │ product_id │ customer_id │ quantity │ unit_price │ total_price │ order_date │ status  │
+├────┼────────────┼─────────────┼──────────┼────────────┼─────────────┼────────────┼─────────┤
+│ 1  │ 10         │ 5           │ 1        │ 45000.00   │ 45000.00    │ 2025-11-26 │ Success │
+└────┴────────────┴─────────────┴──────────┴────────────┴─────────────┴────────────┴─────────┘
+
+payment_methods table:
+┌────┬────────────────────────────┬─────────────┬────────────┬─────────┐
+│ id │ customer_purchase_order_id │ method_name │ payment_date│ amount  │
+├────┼────────────────────────────┼─────────────┼────────────┼─────────┤
+│ 1  │ 1                          │ Cash        │ 2025-11-26 │ 46350.00│
+└────┴────────────────────────────┴─────────────┴────────────┴─────────┘
+
+
+================================================================================
+                            KEY CONNECTION POINTS
+================================================================================
+
+1. DISPLAY → DATA ATTRIBUTES
+   purchaseOrderList <li> elements have data-* attributes
+   Source: item_list.blade.php lines 270-275
+
+2. DATA ATTRIBUTES → HIDDEN INPUTS
+   handleCheckout() extracts data-* and creates hidden inputs
+   Source: purchaseFrame.blade.php lines 380-423
+
+3. HIDDEN INPUTS → FORM SUBMISSION
+   Form includes hidden inputs when submitted
+   Source: purchaseFrame.blade.php lines 407-421
+
+4. FORM SUBMISSION → BACKEND
+   AJAX sends FormData with all inputs
+   Source: purchaseFrame.blade.php lines 477-555
+
+5. BACKEND → DATABASE
+   CheckoutController delegates to specialized controllers
+   Source: app/Http/Controllers/CheckoutController.php
+
+6. DATABASE → DISPLAY
+   PurchaseReceipt view queries database and displays data
+   Source: resources/views/POS_SYSTEM/PurchaseReceipt.blade.php
+
+
+================================================================================
+                              VERIFICATION TESTS
+================================================================================
+
+TEST 1: Check data attributes on display
+  JavaScript: document.querySelector('#purchaseOrderList li').getAttribute('data-product-id')
+  Expected: "10"
+
+TEST 2: Check hidden inputs are created
+  JavaScript: document.querySelectorAll('#itemsContainer input').length
+  Expected: 4 (product_id, unit_price, quantity, total_price)
+
+TEST 3: Check form is submitted
+  Browser: Open Network tab → Click Print Receipt → Look for POST /api/checkout
+  Expected: Request with items data in payload
+
+TEST 4: Check database storage
+  SQL: SELECT * FROM customer_purchase_orders ORDER BY id DESC LIMIT 1;
+  Expected: New record with correct data
+
+================================================================================

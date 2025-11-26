@@ -29,10 +29,12 @@ class CheckoutRequest extends FormRequest
             'amount' => 'required|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.serial_number' => 'required|string',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.total_price' => 'required|numeric|min:0',
+            'items.*.serial_number' => 'required|string',
+            'items.*.order_date' => 'required|date',
+            'items.*.status' => 'required|string',
         ];
     }
 
@@ -51,7 +53,6 @@ class CheckoutRequest extends FormRequest
             'amount.numeric' => 'Amount must be a valid number',
             'items.required' => 'At least one item is required',
             'items.*.product_id.required' => 'Product ID is required for each item',
-            'items.*.serial_number.required' => 'Serial number is required for each item',
             'items.*.unit_price.required' => 'Unit price is required for each item',
             'items.*.quantity.required' => 'Quantity is required for each item',
             'items.*.total_price.required' => 'Total price is required for each item',

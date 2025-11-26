@@ -8,13 +8,30 @@ use Illuminate\Database\Eloquent\Model;
 class Customer_Purchase_Order extends Model
 {
     use HasFactory;
+
     protected $fillable = [
-        'product_id',
         'customer_id',
+        'product_id',
+        'serial_number',
         'quantity',
         'unit_price',
         'total_price',
         'order_date',
-        'status',
+        'status'
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function paymentMethod()
+    {
+        return $this->hasOne(Payment_Method::class);
+    }
 }

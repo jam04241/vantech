@@ -84,7 +84,7 @@
         <div class="gap-3">
             <a href="{{ route('customer.addCustomer') }}"
                 class=" px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2>
-                                                                                                                                                                                                                                                                                            focus:ring-indigo-500 transition duration-150 ease-in-out">Add
+                                                                                                                                                                                                                                                                                                                            focus:ring-indigo-500 transition duration-150 ease-in-out">Add
                 Customer</a>
         </div>
     </div>
@@ -192,21 +192,43 @@
 
         // Add item to order list (basis: quantity, not serial number)
         function addItemToOrder(product) {
-            // Add product ID to tracked list
-            const productId = product.id;
-            const scannedProductIds = document.getElementById('scannedSerialNumbers').value.split(',').filter(s => s);
-            const updatedProductIds = scannedProductIds.filter(s => s !== productId.toString()).join(',');
-            document.getElementById('scannedSerialNumbers').value = updatedProductIds;
+            console.log('=== ADD ITEM TO ORDER ===');
+            console.log('Product data received from API:', product);
 
-            // Add product with serial number to order
-            orderItems.push({
-                id: product.id,
-                name: product.product_name,
-                price: product.price,
-                serialNumber: product.serial_number, // Store serial number
-                warranty: product.warranty_period || '1 Year', // Store warranty from database
-                qty: 1 // Each scanned item = 1 unit
-            });
+            // Check if product already exists in order (by product ID for grouping)
+            const existingItemIndex = orderItems.findIndex(item =>
+                item.id === product.id && item.serialNumber === product.serial_number
+            );
+
+            if (existingItemIndex !== -1) {
+                // Product with same serial already exists - this should not happen due to duplicate check
+                // But if it does, update quantity
+                orderItems[existingItemIndex].qty += 1;
+                console.log('Updated existing item quantity:', orderItems[existingItemIndex]);
+            } else {
+                // Add new product with serial number to order
+                const itemData = {
+                    id: product.id,
+                    name: product.product_name,
+                    price: parseFloat(product.price) || 0,
+                    serialNumber: product.serial_number,
+                    warranty: product.warranty_period || '1 Year',
+                    qty: 1
+                };
+
+                console.log('📋 NEW ITEM DATA FOR PURCHASE ORDER:', {
+                    product_id: itemData.id,
+                    serial_number: itemData.serialNumber,
+                    unit_price: itemData.price,
+                    quantity: itemData.qty,
+                    total_price: itemData.price * itemData.qty
+                });
+
+                orderItems.push(itemData);
+            }
+
+            console.log('Total items in order:', orderItems.length);
+            console.log('All order items:', orderItems);
 
             // Update display
             updateOrderDisplay();
@@ -224,42 +246,59 @@
 
         // Update order display in both tabs (basis: quantity)
         function updateOrderDisplay() {
+            console.log('=== UPDATE ORDER DISPLAY ===');
             const purchaseList = document.getElementById('purchaseOrderList');
             const emptyPurchaseMsg = document.getElementById('emptyOrderMsg');
 
             let html = '';
             let subtotal = 0;
 
+            console.log('📊 DISPLAYING ORDER ITEMS:');
             orderItems.forEach((item, index) => {
-                const itemSubtotal = item.price * item.qty; // Price × Quantity
+                const itemSubtotal = item.price * item.qty;
                 subtotal += itemSubtotal;
-                const sequenceNumber = index + 1; // Sequence number starts from 1
+                const sequenceNumber = index + 1;
+
+                console.log(`Item ${sequenceNumber}:`, {
+                    product_id: item.id,
+                    product_name: item.name,
+                    serial_number: item.serialNumber,
+                    warranty: item.warranty,
+                    unit_price: item.price,
+                    quantity: item.qty,
+                    subtotal: itemSubtotal
+                });
 
                 html += `
-                        <li class="py-3 px-3 hover:bg-gray-100 transition">
-                            <div class="grid grid-cols-12 gap-1 items-center text-xs">
-                                <div class="col-span-1 text-center">
-                                    <span class="font-semibold text-gray-900">${sequenceNumber}</span>
-                                </div>
-                                <div class="col-span-3">
-                                    <p class="font-medium text-gray-900 truncate">${item.name}</p>
-                                    <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
-                                </div>
-                                <div class="col-span-2 text-center">
-                                    <span class="text-gray-700 text-xs">${item.warranty}</span>
-                                </div>
-                                <div class="col-span-2 text-center">
-                                    <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
-                                </div>
-                                <div class="col-span-3 text-right">
-                                    <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
-                                </div>
-                                <div class="col-span-1 text-center">
-                                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
-                                </div>
-                            </div>
-                        </li>
-                    `;
+                <li class="py-3 px-3 hover:bg-gray-100 transition"
+                    data-product-id="${item.id}"
+                    data-serial-number="${item.serialNumber}"
+                    data-unit-price="${item.price}"
+                    data-quantity="${item.qty}"
+                    data-total-price="${itemSubtotal}">
+                    <div class="grid grid-cols-12 gap-1 items-center text-xs">
+                        <div class="col-span-1 text-center">
+                            <span class="font-semibold text-gray-900">${sequenceNumber}</span>
+                        </div>
+                        <div class="col-span-3">
+                            <p class="font-medium text-gray-900 truncate">${item.name}</p>
+                            <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
+                        </div>
+                        <div class="col-span-2 text-center">
+                            <span class="text-gray-700 text-xs">${item.warranty}</span>
+                        </div>
+                        <div class="col-span-2 text-center">
+                            <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
+                        </div>
+                        <div class="col-span-3 text-right">
+                            <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="col-span-1 text-center">
+                            <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
+                        </div>
+                    </div>
+                </li>
+            `;
             });
 
             purchaseList.innerHTML = html;
@@ -269,6 +308,9 @@
 
             // Update subtotal
             document.getElementById('purchaseSubtotalDisplay').textContent = subtotal.toFixed(2);
+
+            console.log('💰 TOTALS UPDATED:');
+            console.log('   Subtotal:', subtotal.toFixed(2));
 
             // Recalculate totals
             updatePurchaseTotal();
@@ -298,6 +340,12 @@
             document.getElementById('purchaseDiscountDisplay').textContent = discount.toFixed(2);
             document.getElementById('purchaseVAT').textContent = vat.toFixed(2);
             document.getElementById('purchaseTotalDisplay').textContent = total.toFixed(2);
+
+            console.log('💰 PURCHASE TOTALS (Line 53-54):');
+            console.log('   Unit Price (line 53): ₱' + subtotal.toFixed(2));
+            console.log('   Total Price (line 54): ₱' + total.toFixed(2));
+            console.log('   Discount: ₱' + discount.toFixed(2));
+            console.log('   VAT (3%): ₱' + vat.toFixed(2));
         }
 
         // Event listeners for filters and search
@@ -510,79 +558,10 @@
             });
         }
 
-        // Attach checkout form submission handler
-        const checkoutForm = document.getElementById('checkoutForm');
-        if (checkoutForm) {
-            checkoutForm.addEventListener('submit', handleCheckout);
-        }
+        // NOTE: Checkout form is in purchaseFrame.blade.php
+        // Checkout flow: CheckoutController → Customer_Purchase_OrderController → Payment_MethodController
+        // This prevents duplicate form conflicts and ensures proper separation of concerns
     </script>
-
-    <!-- Checkout Modal -->
-    <div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 relative">
-            <button type="button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                onclick="closeCheckoutModal()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">Checkout</h3>
-            <form id="checkoutForm">
-                <!-- Customer Name -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Customer Name</label>
-                    <input type="text" id="customerName" name="customerName"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                        placeholder="Enter customer name" required>
-                </div>
-
-                <!-- Payment Method -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-                    <select id="paymentMethod" name="paymentMethod"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                        required>
-                        <option value="">Select Payment Method</option>
-                        <option value="Cash">Cash</option>
-                        <option value="Gcash">Gcash</option>
-                        <option value="BPI">BPI</option>
-                        <option value="Credit Card">Credit Card</option>
-                        <option value="Debit Card">Debit Card</option>
-                        <option value="Others">Others</option>
-                    </select>
-                </div>
-
-                <!-- Amount -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-3 text-gray-700 font-semibold">₱</span>
-                        <input type="number" id="amount" name="amount" step="0.01" min="0"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pl-8 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                            placeholder="0.00" required>
-                    </div>
-                </div>
-
-                <!-- Buttons -->
-                <div class="flex gap-3">
-                    <button type="button" onclick="closeCheckoutModal()"
-                        class="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition duration-150">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                        class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold transition duration-150 flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        Proceed
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- Auto-hide success message after 5 seconds -->
     <script>

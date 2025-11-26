@@ -8,10 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class Payment_Method extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'customer_purchase_order_id',
         'method_name',
         'payment_date',
-        'amount',
+        'amount'
     ];
+
+    public function purchaseOrder()
+    {
+        return $this->belongsTo(Customer_Purchase_Order::class);
+    }
 }

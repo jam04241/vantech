@@ -19,6 +19,7 @@
     @endif
 
     <div class="bg-white rounded-2xl shadow-lg overflow-hidden h-fit sticky top-6">
+
         <!-- Barcode Input -->
         <div class="p-4 bg-white border-b border-gray-200">
             <label class="block text-xs font-semibold text-gray-600 mb-2">Scan Barcode / Serial No.</label>
@@ -101,7 +102,6 @@
                     </button>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -117,7 +117,11 @@
             </svg>
         </button>
         <h3 class="text-2xl font-bold text-gray-800 mb-6">Checkout</h3>
-        <form id="checkoutForm" onsubmit="handleCheckout(event)">
+        <form id="checkoutForm" action="{{ route('checkout.store') }}" method="POST" onsubmit="handleCheckout(event)">
+            @csrf
+            <!-- Customer ID (Hidden) -->
+            <input type="hidden" id="customerId" name="customer_id" value="">
+
             <!-- Customer Name -->
             <div class="mb-4 relative">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Customer Name</label>
@@ -132,7 +136,7 @@
             <!-- Payment Method -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-                <select id="paymentMethod" name="paymentMethod"
+                <select id="paymentMethod" name="payment_method"
                     class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
                     required>
                     <option value="">Select Payment Method</option>
@@ -156,6 +160,9 @@
                 </div>
             </div>
 
+            <!-- Items (Hidden) -->
+            <div id="itemsContainer"></div>
+
             <!-- Buttons -->
             <div class="flex gap-3">
                 <button type="button" onclick="closeCheckoutModal()"
@@ -178,13 +185,13 @@
 
 <!-- POS Product Lookup Script (Serial Number Search) -->
 <script>
-    // Auto-hide success message after 5 seconds
+    // Auto-hide success message after 1.75 seconds
     document.addEventListener('DOMContentLoaded', function () {
         const successMessage = document.getElementById('customerSuccessMessage');
         if (successMessage) {
             setTimeout(() => {
                 successMessage.style.display = 'none';
-            }, 5000);
+            }, 1750);
         }
     });
 
@@ -292,12 +299,29 @@
     function handleCheckout(event) {
         event.preventDefault();
 
+        console.log('=== CHECKOUT PROCESS STARTED ===');
+        console.log('Timestamp:', new Date().toISOString());
+
+        // DEBUG: Check if orderItems is accessible
+        console.log('orderItems accessible?', typeof orderItems !== 'undefined');
+        console.log('orderItems value:', typeof orderItems !== 'undefined' ? orderItems : 'NOT DEFINED');
+
         const customerName = document.getElementById('customerName').value;
+        const customerId = document.getElementById('customerId').value;
         const paymentMethod = document.getElementById('paymentMethod').value;
         const amount = document.getElementById('amount').value;
 
-        // Get order items
+        console.log('Checkout Data:', {
+            customerName: customerName,
+            customerId: customerId,
+            paymentMethod: paymentMethod,
+            amount: amount
+        });
+
+        // Validate: Check if order has items
         const orderListItems = document.querySelectorAll('#purchaseOrderList li');
+        console.log('Order list items count:', orderListItems.length);
+
         if (orderListItems.length === 0) {
             Swal.fire({
                 icon: 'warning',
@@ -308,7 +332,7 @@
             return;
         }
 
-        // Validate customer name is filled
+        // Validate: Customer name is filled
         if (!customerName || customerName.trim() === '') {
             Swal.fire({
                 icon: 'error',
@@ -319,100 +343,222 @@
             return;
         }
 
-        // Get customer ID from orderItems array (first item has customer info)
-        let customerId = null;
-        if (typeof orderItems !== 'undefined' && orderItems.length > 0) {
-            customerId = orderItems[0].customerId;
-        }
-
-        if (!customerId) {
+        // Validate: Customer ID is set
+        if (!customerId || customerId === '') {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: 'Customer ID not found. Please select a customer from the suggestions.',
                 confirmButtonColor: '#ef4444'
             });
-            console.log('Debug: orderItems =', orderItems);
+            console.log('Debug: customerId =', customerId);
             return;
         }
 
-        // Prepare order data for API
-        const checkoutData = {
-            customer_id: customerId,
-            payment_method: paymentMethod,
-            amount: amount,
-            items: []
-        };
-
-        // Collect order items with product details
-        if (typeof orderItems !== 'undefined') {
-            orderItems.forEach(item => {
-                checkoutData.items.push({
-                    product_id: item.id,
-                    serial_number: item.serialNumber,
-                    unit_price: item.price,
-                    quantity: item.qty,
-                    total_price: item.price * item.qty
-                });
+        // Validate: Payment method is selected
+        if (!paymentMethod || paymentMethod === '') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please select a payment method.',
+                confirmButtonColor: '#ef4444'
             });
+            return;
         }
 
-        // Send checkout data to API
-        fetch('{{ route("checkout.store") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-            },
-            body: JSON.stringify(checkoutData)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Store data in sessionStorage for receipt page
-                    const receiptData = {
-                        customerName: customerName,
-                        paymentMethod: paymentMethod,
-                        amount: amount,
-                        subtotal: document.getElementById('purchaseSubtotalDisplay').textContent,
-                        discount: document.getElementById('purchaseDiscountDisplay').textContent,
-                        vat: document.getElementById('purchaseVAT').textContent,
-                        total: document.getElementById('purchaseTotalDisplay').textContent,
-                        items: checkoutData.items
-                    };
-                    sessionStorage.setItem('receiptData', JSON.stringify(receiptData));
+        // Validate: Amount is entered
+        if (!amount || parseFloat(amount) <= 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please enter a valid amount.',
+                confirmButtonColor: '#ef4444'
+            });
+            return;
+        }
 
-                    // Show success message
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Order Processed!',
-                        text: 'Your order has been successfully recorded.',
-                        confirmButtonText: 'View Receipt',
-                        confirmButtonColor: '#6366f1'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Redirect to receipt page
+        // Clear previous items container
+        const itemsContainer = document.getElementById('itemsContainer');
+        itemsContainer.innerHTML = '';
+
+        // Get items from DOM instead of relying on orderItems variable
+        // This is more reliable than depending on JavaScript scope
+        const purchaseOrderListItems = document.querySelectorAll('#purchaseOrderList li');
+        let itemsToSubmit = [];
+
+        purchaseOrderListItems.forEach((li, index) => {
+            // Extract product data from the DOM
+            const productIdAttr = li.getAttribute('data-product-id');
+            const unitPriceAttr = li.getAttribute('data-unit-price');
+            const quantityAttr = li.getAttribute('data-quantity');
+            const totalPriceAttr = li.getAttribute('data-total-price');
+            const serialNumberAttr = li.getAttribute('data-serial-number');
+
+            if (productIdAttr && unitPriceAttr && quantityAttr && totalPriceAttr) {
+                const purchaseOrderData = {
+                    product_id: parseInt(productIdAttr),
+                    unit_price: parseFloat(unitPriceAttr),
+                    quantity: parseInt(quantityAttr),
+                    total_price: parseFloat(totalPriceAttr),
+                    serial_number: serialNumberAttr || '',
+                    order_date: new Date().toISOString().split('T')[0],
+                    status: 'Success'
+                };
+
+                console.log(`Item ${index + 1}:`, purchaseOrderData);
+                itemsToSubmit.push(purchaseOrderData);
+
+                // Create hidden inputs for each item field
+                const inputs = [
+                    { name: `items[${index}][product_id]`, value: purchaseOrderData.product_id },
+                    { name: `items[${index}][unit_price]`, value: purchaseOrderData.unit_price },
+                    { name: `items[${index}][quantity]`, value: purchaseOrderData.quantity },
+                    { name: `items[${index}][total_price]`, value: purchaseOrderData.total_price },
+                    { name: `items[${index}][serial_number]`, value: purchaseOrderData.serial_number },
+                    { name: `items[${index}][order_date]`, value: purchaseOrderData.order_date },
+                    { name: `items[${index}][status]`, value: purchaseOrderData.status }
+                ];
+
+                inputs.forEach(input => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = input.name;
+                    hiddenInput.value = input.value;
+                    itemsContainer.appendChild(hiddenInput);
+                });
+            }
+        });
+
+        if (itemsToSubmit.length === 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Could not extract item data from order list. Please try again.',
+                confirmButtonColor: '#ef4444'
+            });
+            return;
+        }
+
+        console.log('📋 CUSTOMER PURCHASE ORDER DATA:');
+        console.log('Total items to process:', itemsToSubmit.length);
+        console.log('Items:', itemsToSubmit);
+
+        // Prepare payment method data
+        const paymentMethodData = {
+            method_name: paymentMethod,
+            payment_date: new Date().toISOString().split('T')[0],
+            amount: parseFloat(amount)
+        };
+
+        console.log('💳 PAYMENT METHOD DATA:', paymentMethodData);
+
+        // Store data in sessionStorage for receipt page
+        const receiptData = {
+            customerName: customerName,
+            customerId: customerId,
+            paymentMethod: paymentMethod,
+            amount: amount,
+            subtotal: document.getElementById('purchaseSubtotalDisplay').textContent,
+            discount: document.getElementById('purchaseDiscountDisplay').textContent,
+            vat: document.getElementById('purchaseVAT').textContent,
+            total: document.getElementById('purchaseTotalDisplay').textContent,
+            items: orderItems
+        };
+        sessionStorage.setItem('receiptData', JSON.stringify(receiptData));
+
+        console.log('📋 CHECKOUT FLOW:');
+        console.log('1️⃣  CheckoutController receives and validates all data');
+        console.log('   - customer_id:', customerId);
+        console.log('   - payment_method:', paymentMethod);
+        console.log('   - amount:', amount);
+        console.log('   - items_count:', orderItems.length);
+        console.log('2️⃣  Customer_Purchase_OrderController::store() creates purchase orders');
+        console.log('   - Loops through each item');
+        console.log('   - Creates customer_purchase_order record for each item');
+        console.log('3️⃣  Payment_MethodController::store() creates payment method');
+        console.log('   - Links to first purchase order (foreign key)');
+        console.log('   - Stores payment details');
+        console.log('Submitting form to backend...');
+
+        // Show processing modal before submitting
+        Swal.fire({
+            title: '🛒 Processing Purchase',
+            html: `<p>Customer: <strong>${customerName}</strong></p><p>Processing order in <b></b> seconds...</p>`,
+            timer: 3000,
+            timerProgressBar: true,
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+                const timer = Swal.getPopup().querySelector("b");
+                let timerInterval = setInterval(() => {
+                    const secondsLeft = Math.ceil(Swal.getTimerLeft() / 1000);
+                    timer.textContent = secondsLeft;
+                }, 100);
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.timer) {
+                console.log('Processing timer completed, submitting form via AJAX...');
+
+                // Get form data
+                const form = document.getElementById('checkoutForm');
+                const formData = new FormData(form);
+
+                console.log('Form data being sent:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`  ${key}: ${value}`);
+                }
+
+                // Submit via AJAX instead of form submission
+                fetch('{{ route("checkout.store") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        console.log('Response text:', response.statusText);
+
+                        // Check if response is JSON
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json().then(data => {
+                                if (!response.ok) {
+                                    console.error('Server returned error:', data);
+                                    throw new Error(data.message || data.error || 'Server error: ' + response.status);
+                                }
+                                return data;
+                            });
+                        } else {
+                            // If not JSON, it's likely a redirect (success)
+                            if (response.ok || response.status === 200 || response.status === 302 || response.status === 301) {
+                                console.log('✓ Checkout successful! Redirecting to receipt...');
+                                window.location.href = '{{ route("pos.purchasereceipt") }}';
+                                return;
+                            } else {
+                                throw new Error('Server error: ' + response.status + ' ' + response.statusText);
+                            }
+                        }
+                    })
+                    .then(data => {
+                        if (data) {
+                            console.log('✓ Checkout successful! Response:', data);
                             window.location.href = '{{ route("pos.purchasereceipt") }}';
                         }
+                    })
+                    .catch(error => {
+                        console.error('❌ Checkout error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Checkout Failed',
+                            html: `<p>${error.message || 'An error occurred during checkout'}</p><p style="font-size: 0.8em; color: #666; margin-top: 10px;">Check browser console for details</p>`,
+                            confirmButtonColor: '#ef4444'
+                        });
                     });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: data.message || 'Failed to process order',
-                        confirmButtonColor: '#ef4444'
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Checkout error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'An error occurred while processing your order.',
-                    confirmButtonColor: '#ef4444'
-                });
-            });
+            }
+        });
     }
 
     /**
@@ -589,17 +735,109 @@
 
     /**
      * Select customer from suggestions
-     * Populates the customer name field with full name and stores customer ID in orderItems
+     * Populates the customer name field with full name and stores customer ID in hidden field
      */
     function selectCustomer(firstName, lastName, customerId) {
         document.getElementById('customerName').value = `${firstName} ${lastName}`;
+        document.getElementById('customerId').value = customerId;
         document.getElementById('customerSuggestions').classList.add('hidden');
 
-        // Store customer ID in all order items
+        console.log('Customer selected:', {
+            name: `${firstName} ${lastName}`,
+            id: customerId
+        });
+
+        // Store customer ID in all order items (for reference)
         if (typeof orderItems !== 'undefined') {
             orderItems.forEach(item => {
                 item.customerId = customerId;
             });
         }
+    }
+
+    /**
+     * Test checkout data - sends form data to test endpoint
+     */
+    function testCheckoutData() {
+        const form = document.getElementById('checkoutForm');
+        const formData = new FormData(form);
+
+        console.log('=== TESTING CHECKOUT DATA ===');
+        console.log('Sending to: /debug/test-checkout');
+        console.log('Form data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`);
+        }
+
+        fetch('/debug/test-checkout', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✓ Test endpoint response:', data);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Test Successful',
+                    html: `<p>Form data was received by backend!</p><p style="font-size: 0.8em; color: #666; margin-top: 10px;">Check browser console for details</p>`,
+                    confirmButtonColor: '#10b981'
+                });
+            })
+            .catch(error => {
+                console.error('❌ Test error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Test Failed',
+                    text: error.message,
+                    confirmButtonColor: '#ef4444'
+                });
+            });
+    }
+
+    /**
+     * Debug checkout - sends form data to debug endpoint
+     */
+    function debugCheckout() {
+        const form = document.getElementById('checkoutForm');
+        const formData = new FormData(form);
+
+        console.log('=== DEBUG CHECKOUT ===');
+        console.log('Sending to: /debug/checkout-test');
+        console.log('Form data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`);
+        }
+
+        fetch('/debug/checkout-test', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✓ Debug response:', data);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Debug Checkout Sent',
+                    html: `<p>Data sent to debug endpoint!</p><p style="font-size: 0.8em; color: #666; margin-top: 10px;">Check browser console and Laravel logs</p>`,
+                    confirmButtonColor: '#10b981'
+                });
+            })
+            .catch(error => {
+                console.error('❌ Debug error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Debug Failed',
+                    text: error.message,
+                    confirmButtonColor: '#ef4444'
+                });
+            });
     }
 </script>

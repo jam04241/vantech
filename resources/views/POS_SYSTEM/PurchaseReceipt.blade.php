@@ -143,7 +143,7 @@
                     </div>
                     <div class="flex justify-between mb-2">
                         <span class="text-sm italic text-red-700">Discount</span>
-                        <span class="text-sm font-semibold" id="receiptDiscountAmount">₱0.00</span>
+                        <span class="text-sm text-red-700 font-semibold" id="receiptDiscountAmount">-₱0.00</span>
                     </div>
                     <div class="flex justify-between mb-2">
                         <span class="text-sm font-medium">VAT(3%)</span>
@@ -257,7 +257,7 @@
                     // Update subtotal, VAT, discount, and total amounts
                     document.getElementById('receiptSubtotalAmount').textContent = '₱' + subtotal.toFixed(2);
                     document.getElementById('receiptVATAmount').textContent = '₱' + vat.toFixed(2);
-                    document.getElementById('receiptDiscountAmount').textContent = '₱' + discount.toFixed(2);
+                    document.getElementById('receiptDiscountAmount').textContent = '-₱' + discount.toFixed(2);
                     document.getElementById('receiptTotalAmount').textContent = '₱' + total.toFixed(2);
 
                 } catch (error) {

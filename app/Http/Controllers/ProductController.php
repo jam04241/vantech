@@ -297,6 +297,7 @@ class ProductController extends Controller
                 'product_condition' => $first->product_condition,
                 'quantity' => $group->count(),
                 'price' => $first->stock?->price ?? 0,
+                'serial_number' => $first->serial_number ?? 'N/A',
             ];
         })->values();
         // ============= END GROUPING BY PRICE =============
@@ -352,8 +353,8 @@ class ProductController extends Controller
 
             // Determine product condition based on supplier_id
             // If supplier_id is null or empty, set to 'Second Hand', otherwise 'Brand New'
-            $productData['product_condition'] = (empty($productData['supplier_id']) || $productData['supplier_id'] === null) 
-                ? 'Second Hand' 
+            $productData['product_condition'] = (empty($productData['supplier_id']) || $productData['supplier_id'] === null)
+                ? 'Second Hand'
                 : 'Brand New';
 
             $product->update($productData);
