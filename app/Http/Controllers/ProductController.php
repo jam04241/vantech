@@ -328,21 +328,7 @@ class ProductController extends Controller
         return view('DASHBOARD.inventory_list', $data);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Product $product) {}
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
+   
     public function update(ProductRequest $request, Product $product)
     {
         $data = $request->validated();
@@ -368,16 +354,7 @@ class ProductController extends Controller
         return redirect()->route('inventory')->with('success', 'Product updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Product $product)
-    {
-        //
-    }
+  
 
     // ============= AUTO-SUGGESTION API FOR PRODUCT NAME =============
     // This endpoint returns recent products for autocomplete suggestions
@@ -440,10 +417,14 @@ class ProductController extends Controller
      * @return \Illuminate\View\View
      */
     /* FOR LEFT SIDE IN PODUCT LIST JUST TO LIST THE PRODUCTS*/
-    public function posList(Request $request)
+     public function posList(Request $request)
     {
         // Load products with brand, category, and stock relationships
-        $query = Product::with('brand', 'category', 'stock');
+        // Only include products that have stock_quantity > 0
+        $query = Product::with('brand', 'category', 'stock')
+            ->whereHas('stock', function ($query) {
+                $query->where('stock_quantity', '>', 0);
+            });
 
         // Apply reusable filters
         $query = $this->applyProductFilters($query, $request);
@@ -451,9 +432,7 @@ class ProductController extends Controller
         $productsCollection = $query->get();
 
         // ============= GROUP BY PRODUCT NAME, BRAND, CATEGORY, CONDITION, AND PRICE =============
-        // Products are grouped by name, brand, category, condition, and price
-        // This matches the grouping logic in getProductBySerialNumber() for consistency
-        // Products with same description but different condition/price will be separate entries
+        // Only group products that are in stock
         $grouped = $productsCollection->groupBy(function ($product) {
             $price = $product->stock?->price ?? 0;
             return implode('|', [
@@ -479,6 +458,7 @@ class ProductController extends Controller
                 'product_condition' => $first->product_condition,
                 'stock' => $group->count(), // Count of duplicate products (each product = 1)
                 'price' => $price,
+                'serial_number' => $first->serial_number ?? 'N/A',
             ];
         })->values();
         // ============= END GROUPING BY QUANTITY =============
@@ -495,12 +475,7 @@ class ProductController extends Controller
     /**
      * Fetch product by serial number for POS system
      * Used by purchaseFrame component to retrieve product details when scanning barcode
-     * Basis: Search by serial_number, then group by name, brand, category, condition, price
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    /* FOR RIGHT SIDE IN PRODUCT LIST*/
     public function getProductBySerialNumber(Request $request)
     {
         $serialNumber = $request->query('serial'); // Search by serial number
@@ -515,18 +490,16 @@ class ProductController extends Controller
         }
 
         // Find product by serial number with optimized query
+        // Only find products that are in stock
         $foundProduct = Product::with('brand', 'category', 'stock')
             ->where('serial_number', $serialNumber)
+            ->whereHas('stock', function ($query) {
+                $query->where('stock_quantity', '>', 0);
+            })
             ->first();
 
         if (!$foundProduct) {
-            return response()->json(['product' => null, 'message' => 'Serial number not found in database'], 404);
-        }
-
-        // Check if product has stock record and sufficient quantity
-        // Allow products without stock record (stock_quantity can be null/0 initially)
-        if ($foundProduct->stock && $foundProduct->stock->stock_quantity <= 0) {
-            return response()->json(['product' => null, 'message' => 'Product out of stock'], 409);
+            return response()->json(['product' => null, 'message' => 'Serial number not found in database or product out of stock'], 404);
         }
 
         // Get count of all products with same name, brand, category, condition, and price
@@ -538,7 +511,8 @@ class ProductController extends Controller
             ->where('category_id', $foundProduct->category_id)
             ->where('product_condition', $foundProduct->product_condition)
             ->whereHas('stock', function ($query) use ($price) {
-                $query->where('price', $price);
+                $query->where('price', $price)
+                      ->where('stock_quantity', '>', 0);
             })
             ->count();
 
@@ -560,6 +534,9 @@ class ProductController extends Controller
 
         return response()->json(['product' => $product, 'message' => 'Product found'], 200);
     }
+
+
+
 
     /**
      * Check if a serial number already exists in the database

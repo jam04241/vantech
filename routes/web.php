@@ -74,14 +74,7 @@ Route::get('/Audit', function () {
 })->name('audit.logs');
 
 
-//USE FOR CHART.JS
 
-// Route::get('/api/sales/metrics', [SalesController::class, 'getMetrics']);
-// Route::get('/api/sales/trend', [SalesController::class, 'getTrendData']);
-// Route::get('/api/sales/by-category', [SalesController::class, 'getCategoryData']);
-// Route::get('/api/sales/top-products', [SalesController::class, 'getTopProducts']);
-// Route::get('/api/sales/hourly', [SalesController::class, 'getHourlyData']);
-// Route::get('/api/sales/transactions', [SalesController::class, 'getTransactions']);
 
 // Purchase Orders List
 Route::get('/Suppliers/List', [PurchaseDetailsController::class, 'index'])->name('suppliers.list');
@@ -97,7 +90,7 @@ Route::get('/PointOfSale/AddCustomer', function () {
     return view('Customer.addCustomer');
 })->name('customer.addCustomer');
 
-Route::post('/PointOfSale/AddCustomer/create', [CustomerController::class, 'store'])->name('create.customer');
+
 
 Route::get('/PointOfSale/purchaseFrame', function () {
     return view('POS_SYSTEM.purchaseFrame');
@@ -120,6 +113,8 @@ Route::get('/products', [ProductController::class, 'index'])->name('products');
 Route::post('/products', [ProductController::class, 'store'])->name('products.store');
 Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::put('/products/{product}/price', [ProductStocksController::class, 'updatePrice'])->name('products.update_price');
+
+
 // ============= AUTO-SUGGESTION API ROUTE =============
 Route::get('/api/products/recent', [ProductController::class, 'getRecentProducts'])->name('products.recent');
 // ============= END AUTO-SUGGESTION API ROUTE =============
@@ -128,17 +123,12 @@ Route::get('/api/products/recent', [ProductController::class, 'getRecentProducts
 Route::get('/api/products/check-serial', [ProductController::class, 'checkSerialNumber'])->name('products.check-serial');
 // ============= END SERIAL NUMBER DUPLICATE CHECK API ROUTE =============
 
-// ============= POS PRODUCT LOOKUP API ROUTE (Serial Number Search) =============
-// Used by purchaseFrame component to fetch product by serial number
-Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber'])->name('products.search-pos');
-// ============= END POS PRODUCT LOOKUP API ROUTE =============
 
 // ============= CUSTOMER AUTOSUGGESTION API ROUTE =============
 Route::get('/api/customers/search', [CustomerController::class, 'searchCustomers'])->name('customers.search');
 // ============= END CUSTOMER AUTOSUGGESTION API ROUTE =============
 
-// ============= CHECKOUT API ROUTE =============
-Route::post('/api/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
 // ============= END CHECKOUT API ROUTE =============
 
 // Suppliers routes
@@ -166,7 +156,7 @@ Route::get('/PointOfSale/brand', [BrandController::class, 'posBrand'])->name('po
 // POS CATEGORIES DROPDOWN (JSON API)
 Route::get('/PointOfSale/categories', [CategoryController::class, 'posCategories'])->name('pos.categories');
 // POS PRODUCTS LIST WITH GROUPED STOCK
-Route::get('/PointOfSale/products', [ProductController::class, 'posList'])->name('pos.products');
+
 
 // Purchase Details Routes
 Route::get('/suppliers/purchase-orders', [PurchaseDetailsController::class, 'create'])
@@ -175,62 +165,26 @@ Route::get('/purchase/create', [PurchaseDetailsController::class, 'create'])->na
 Route::post('/purchase/store', [PurchaseDetailsController::class, 'store'])->name('purchase.store');
 
 
+Route::post('/customers', [CustomerController::class, 'store'])->name('customer.store');
+
+
+// POS Routes
+Route::get('/pos', [ProductController::class, 'posList'])->name('pos.itemlist');
+Route::get('/pos/receipt', [CheckoutController::class, 'showReceipt'])->name('pos.purchasereceipt');
+
+// Checkout Route
+Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
+// Customer Routes
+Route::post('/customer', [CustomerController::class, 'store'])->name('customer.store');
+Route::get('/api/customers/search', [CustomerController::class, 'search']);
+
+// Product search by serial number for POS
+Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber']);
+
 // LOGIN FORM
 Route::get('/LOGIN_FORM', function () {
     return view('LOGIN_FORM.login');
 })->name('login');
 
-// Route::post('/login', [AuthController::class, 'login']);
-
-// DEBUG ROUTE - Check if data is being stored
-Route::get('/debug/checkout-data', function () {
-    $orders = \App\Models\Customer_Purchase_Order::latest()->limit(5)->get();
-    $payments = \App\Models\Payment_Method::latest()->limit(5)->get();
-
-    return response()->json([
-        'recent_orders' => $orders,
-        'recent_payments' => $payments,
-        'total_orders' => \App\Models\Customer_Purchase_Order::count(),
-        'total_payments' => \App\Models\Payment_Method::count()
-    ]);
-});
-
-// DEBUG ROUTE - Test checkout endpoint directly
-Route::post('/debug/test-checkout', function (\Illuminate\Http\Request $request) {
-    \Illuminate\Support\Facades\Log::info('DEBUG TEST CHECKOUT RECEIVED', [
-        'all_data' => $request->all(),
-        'has_items' => $request->has('items'),
-        'items_count' => count($request->input('items', []))
-    ]);
-
-    return response()->json([
-        'status' => 'received',
-        'message' => 'Test checkout endpoint received data',
-        'data' => $request->all()
-    ]);
-});
-
-// DEBUG ROUTE - Test actual checkout to see what's failing
-Route::post('/debug/checkout-test', function (\Illuminate\Http\Request $request) {
-    \Illuminate\Support\Facades\Log::info('=== DEBUG CHECKOUT TEST ===', [
-        'timestamp' => now(),
-        'all_request_data' => $request->all(),
-        'customer_id' => $request->input('customer_id'),
-        'payment_method' => $request->input('payment_method'),
-        'amount' => $request->input('amount'),
-        'items_count' => count($request->input('items', [])),
-        'items' => $request->input('items', [])
-    ]);
-
-    return response()->json([
-        'status' => 'debug_received',
-        'message' => 'Debug checkout received',
-        'received_data' => [
-            'customer_id' => $request->input('customer_id'),
-            'payment_method' => $request->input('payment_method'),
-            'amount' => $request->input('amount'),
-            'items_count' => count($request->input('items', [])),
-            'items' => $request->input('items', [])
-        ]
-    ]);
-});
+    // Route::post('/login', [AuthController::class, 'login']);

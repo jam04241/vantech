@@ -2,62 +2,45 @@
 
 namespace App\Http\Controllers;
 
-
-
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-
 use App\Http\Requests\CustomerRequest;
 use App\Models\Customer;
 
 class CustomerController extends Controller
 {
-
     public function index()
     {
-        $Customers = Customer::all();
-        return response()->json($Customers);
+        // Index method can remain empty or be used for other purposes
     }
 
     public function store(CustomerRequest $request)
     {
-        $data = $request->validated();
-        Customer::create($data);
-        return redirect()->route('pos.itemlist')
-            ->with('success', 'Customer created successfully.')
-            ->with('from_customer_add', true); // Add flag to indicate redirect from customer add
+        try {
+            $data = $request->validated();
+            Customer::create($data);
+            
+            return redirect()->route('pos.itemlist')
+                ->with('success', 'Customer added successfully.')
+                ->with('from_customer_add', true);
+                
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Failed to add customer. Please try again.')
+                ->withInput();
+        }
     }
 
-    public function show($id)
+    public function search(Request $request)
     {
-        //
-    }
-
-    public function edit($id)
-    {
-        //
-    }
-    public function update($id) {}
-
-    public function destroy($id)
-    {
-        //
-    }
-
-    public function searchCustomers()
-    {
-        $query = request()->input('query', '');
-
+        $query = $request->get('query', '');
+        
         if (strlen($query) < 2) {
             return response()->json([]);
         }
 
-        $customers = Customer::where(function ($q) use ($query) {
-            $q->where('first_name', 'LIKE', "%{$query}%")
-                ->orWhere('last_name', 'LIKE', "%{$query}%")
-                ->orWhere('contact_no', 'LIKE', "%{$query}%");
-        })
-            ->select('id', 'first_name', 'last_name', 'contact_no')
+        $customers = Customer::where('first_name', 'like', "%{$query}%")
+            ->orWhere('last_name', 'like', "%{$query}%")
+            ->orWhere('contact_no', 'like', "%{$query}%")
             ->limit(10)
             ->get()
             ->map(function ($customer) {
@@ -65,7 +48,7 @@ class CustomerController extends Controller
                     'id' => $customer->id,
                     'first_name' => $customer->first_name,
                     'last_name' => $customer->last_name,
-                    'full_name' => trim("{$customer->first_name} {$customer->last_name}"),
+                    'full_name' => $customer->first_name . ' ' . $customer->last_name,
                     'contact_no' => $customer->contact_no
                 ];
             });

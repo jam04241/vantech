@@ -6,31 +6,14 @@
     .scrollbar-hide {
         overflow-y: auto;
         -ms-overflow-style: none;
-        /* IE and Edge */
         scrollbar-width: none;
-        /* Firefox */
     }
 
     .scrollbar-hide::-webkit-scrollbar {
         display: none;
-        /* Chrome, Safari, Opera */
     }
 </style>
 @section('content_items')
-    <!-- Success Message Container -->
-    @if(session('success') && session('from_customer_add'))
-        <div id="customerSuccessMessage"
-            class="mb-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-lg w-full">
-            <div class="flex justify-between items-center">
-                <p>{{ session('success') }}</p>
-                <button type="button" class="text-green-700"
-                    onclick="document.getElementById('customerSuccessMessage').style.display = 'none';">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-        </div>
-    @endif
-
     <div class="flex items-center space-between gap-2 w-full sm:w-auto flex-1 flex-wrap">
 
         {{-- Search Bar --}}
@@ -82,10 +65,10 @@
         </select>
 
         <div class="gap-3">
-            <a href="{{ route('customer.addCustomer') }}"
-                class=" px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2>
-                                                                                                                                                                                                                                                                                                                            focus:ring-indigo-500 transition duration-150 ease-in-out">Add
-                Customer</a>
+            <button type="button" onclick="openAddCustomerModal()"
+                class="px-4 py-2 bg-indigo-600 text-white border border-transparent rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                Add Customer
+            </button>
         </div>
     </div>
     <div class="flex flex-col lg:flex-row gap-6 mt-6">
@@ -93,8 +76,61 @@
         <!-- LEFT SIDE: PRODUCTS DISPLAY (Included from display_productFrame) -->
         @include('POS_SYSTEM.display_productFrame')
 
-        <!-- RIGHT SIDE: RECEIPT WITH TAB SWITCHER (Component) -->
+        <!-- RIGHT SIDE: PURCHASE ORDER FORM (Component) -->
         @include('POS_SYSTEM.purchaseFrame')
+    </div>
+
+    <!-- Minimalist Add Customer Modal -->
+    <div id="addCustomerModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 hidden">
+        <div class="bg-white w-full max-w-lg rounded-lg shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="flex justify-between items-center px-4 py-3 border-b">
+                <h3 class="text-base font-medium text-gray-800">Add Customer</h3>
+                <button type="button" onclick="closeAddCustomerModal()" class="text-gray-500 hover:text-gray-700">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Form Body -->
+            <form method="POST" action="{{ route('customer.store') }}" class="px-4 py-4 space-y-4">
+                @csrf
+
+                <!-- Personal Info -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" name="first_name" required class="w-full border rounded px-2 py-1 text-sm"
+                        placeholder="First Name *" value="{{ old('first_name') }}">
+                    <input type="text" name="middle_name" class="w-full border rounded px-2 py-1 text-sm"
+                        placeholder="Middle Name" value="{{ old('middle_name') }}">
+                    <input type="text" name="last_name" required class="w-full border rounded px-2 py-1 text-sm"
+                        placeholder="Last Name *" value="{{ old('last_name') }}">
+                </div>
+
+                <!-- Contact Info -->
+                <input type="tel" name="contact_no" required class="w-full border rounded px-2 py-1 text-sm"
+                    placeholder="Contact Number *" value="{{ old('contact_no') }}">
+
+                <!-- Address -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" name="street" class="md:col-span-3 w-full border rounded px-2 py-1 text-sm"
+                        placeholder="Street" value="{{ old('street') }}">
+                    <input type="text" name="brgy" class="w-full border rounded px-2 py-1 text-sm" placeholder="Barangay"
+                        value="{{ old('brgy') }}">
+                    <input type="text" name="city_province" class="md:col-span-2 w-full border rounded px-2 py-1 text-sm"
+                        placeholder="City / Province" value="{{ old('city_province') }}">
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeAddCustomerModal()"
+                        class="px-3 py-1 border rounded text-sm text-gray-600 hover:bg-gray-100">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-3 py-1 rounded text-sm bg-gray-800 text-white hover:bg-gray-700">
+                        Add Customer
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Tab Switching Script -->
@@ -187,9 +223,6 @@
             serialInput.focus();
         }
 
-        // Barcode scanning logic is handled in purchaseFrame.blade.php
-        // This prevents duplicate event listeners and alerts
-
         // Add item to order list (basis: quantity, not serial number)
         function addItemToOrder(product) {
             console.log('=== ADD ITEM TO ORDER ===');
@@ -270,35 +303,35 @@
                 });
 
                 html += `
-                <li class="py-3 px-3 hover:bg-gray-100 transition"
-                    data-product-id="${item.id}"
-                    data-serial-number="${item.serialNumber}"
-                    data-unit-price="${item.price}"
-                    data-quantity="${item.qty}"
-                    data-total-price="${itemSubtotal}">
-                    <div class="grid grid-cols-12 gap-1 items-center text-xs">
-                        <div class="col-span-1 text-center">
-                            <span class="font-semibold text-gray-900">${sequenceNumber}</span>
-                        </div>
-                        <div class="col-span-3">
-                            <p class="font-medium text-gray-900 truncate">${item.name}</p>
-                            <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
-                        </div>
-                        <div class="col-span-2 text-center">
-                            <span class="text-gray-700 text-xs">${item.warranty}</span>
-                        </div>
-                        <div class="col-span-2 text-center">
-                            <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
-                        </div>
-                        <div class="col-span-3 text-right">
-                            <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
-                        </div>
-                        <div class="col-span-1 text-center">
-                            <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
-                        </div>
-                    </div>
-                </li>
-            `;
+                        <li class="py-3 px-3 hover:bg-gray-100 transition"
+                            data-product-id="${item.id}"
+                            data-serial-number="${item.serialNumber}"
+                            data-unit-price="${item.price}"
+                            data-quantity="${item.qty}"
+                            data-total-price="${itemSubtotal}">
+                            <div class="grid grid-cols-12 gap-1 items-center text-xs">
+                                <div class="col-span-1 text-center">
+                                    <span class="font-semibold text-gray-900">${sequenceNumber}</span>
+                                </div>
+                                <div class="col-span-3">
+                                    <p class="font-medium text-gray-900 truncate">${item.name}</p>
+                                    <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
+                                </div>
+                                <div class="col-span-2 text-center">
+                                    <span class="text-gray-700 text-xs">${item.warranty}</span>
+                                </div>
+                                <div class="col-span-2 text-center">
+                                    <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
+                                </div>
+                                <div class="col-span-3 text-right">
+                                    <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
+                                </div>
+                                <div class="col-span-1 text-center">
+                                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
+                                </div>
+                            </div>
+                        </li>
+                    `;
             });
 
             purchaseList.innerHTML = html;
@@ -355,221 +388,56 @@
         document.getElementById('sortFilter').addEventListener('change', filterProducts);
         document.getElementById('productSearch').addEventListener('input', filterProducts);
 
-        // Generalized Confirmation Handler
-        function showConfirmation(title, text, icon, confirmButtonText, confirmButtonColor, actionType) {
-            const productSerialNo = document.getElementById('productSerialNo').value.trim();
-
-            Swal.fire({
-                title: title,
-                text: text,
-                icon: icon,
-                showCancelButton: true,
-                confirmButtonColor: confirmButtonColor,
-                cancelButtonColor: '#d33',
-                confirmButtonText: confirmButtonText,
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Show processing timer
-                    showProcessingTimer(actionType, productSerialNo);
-                }
-            });
+        // Customer Modal Functions
+        function openAddCustomerModal() {
+            const modal = document.getElementById('addCustomerModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
 
-        // Generalized Processing Timer
-        function showProcessingTimer(actionType, productSerialNo = '') {
-            let timerInterval;
-            let title = '';
-            let html = '';
+        function closeAddCustomerModal() {
+            const modal = document.getElementById('addCustomerModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
 
-            if (actionType === 'checkout') {
-                title = '🛒 Processing Purchase';
-                html = `<p>Product Serial: <strong>${productSerialNo}</strong></p><p>Processing order in <b></b> seconds...</p>`;
+        // Close modal when clicking outside
+        document.getElementById('addCustomerModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeAddCustomerModal();
             }
+        });
 
-            Swal.fire({
-                title: title,
-                html: html,
-                timer: 2000,
-                timerProgressBar: true,
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                    const timer = Swal.getPopup().querySelector("b");
-                    timerInterval = setInterval(() => {
-                        const secondsLeft = Math.ceil(Swal.getTimerLeft() / 1000);
-                        timer.textContent = secondsLeft;
-                    }, 100);
-                },
-                willClose: () => {
-                    clearInterval(timerInterval);
-                }
-            }).then((result) => {
-                if (result.dismiss === Swal.DismissReason.timer) {
-                    showSuccessMessage(actionType, productSerialNo);
-                }
-            });
-        }
-
-        // Success Message
-        function showSuccessMessage(actionType, productSerialNo = '') {
-            if (actionType === 'checkout') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Purchase Complete!',
-                    html: `<p>Order for product <strong>${productSerialNo}</strong> has been processed successfully.</p>`,
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#6366f1'
-                });
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeAddCustomerModal();
             }
-        }
+        });
 
-        // Checkout Modal Functions
-        function openCheckoutModal() {
-            const checkoutModal = document.getElementById('checkoutModal');
-            if (checkoutModal) {
-                checkoutModal.classList.remove('hidden');
-                checkoutModal.classList.add('flex');
-                // Pre-fill amount with current total
-                const totalAmount = document.getElementById('purchaseTotalDisplay').textContent;
-                document.getElementById('amount').value = totalAmount;
-            }
-        }
-
-        function closeCheckoutModal() {
-            const checkoutModal = document.getElementById('checkoutModal');
-            if (checkoutModal) {
-                checkoutModal.classList.add('hidden');
-                checkoutModal.classList.remove('flex');
-            }
-        }
-
-        // Handle checkout form submission with SweetAlert flow
-        function handleCheckout(event) {
-            event.preventDefault();
-
-            const customerName = document.getElementById('customerName').value;
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            const amount = document.getElementById('amount').value;
-
-            // Get order items
-            const orderListItems = document.querySelectorAll('#purchaseOrderList li');
-            if (orderListItems.length === 0) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'No Items',
-                    text: 'Please add items to the order before checkout.',
-                    confirmButtonColor: '#f59e0b'
-                });
-                return;
-            }
-
-            // Close modal first
-            closeCheckoutModal();
-
-            // Show confirmation alert
-            Swal.fire({
-                icon: 'question',
-                title: 'Confirm Purchase',
-                html: `<p><strong>${customerName}</strong></p><p>Payment Method: <strong>${paymentMethod}</strong></p><p>Amount: <strong>₱${parseFloat(amount).toFixed(2)}</strong></p>`,
-                showCancelButton: true,
-                confirmButtonColor: '#6366f1',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, Proceed!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Show processing timer
-                    showCheckoutProcessing(customerName, paymentMethod, amount);
-                }
-            });
-        }
-
-        // Processing timer for checkout
-        function showCheckoutProcessing(customerName, paymentMethod, amount) {
-            let timerInterval;
-
-            Swal.fire({
-                title: '🛒 Processing Purchase',
-                html: `<p>Customer: <strong>${customerName}</strong></p><p>Processing order in <b></b> seconds...</p>`,
-                timer: 3000,
-                timerProgressBar: true,
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                    const timer = Swal.getPopup().querySelector("b");
-                    timerInterval = setInterval(() => {
-                        const secondsLeft = Math.ceil(Swal.getTimerLeft() / 1000);
-                        timer.textContent = secondsLeft;
-                    }, 100);
-                },
-                willClose: () => {
-                    clearInterval(timerInterval);
-                }
-            }).then((result) => {
-                if (result.dismiss === Swal.DismissReason.timer) {
-                    showCheckoutSuccess(customerName, paymentMethod, amount);
-                }
-            });
-        }
-
-        // Success message and redirect
-        function showCheckoutSuccess(customerName, paymentMethod, amount) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Purchase Complete!',
-                html: `<p>Order for <strong>${customerName}</strong> has been processed successfully.</p>`,
-                confirmButtonText: 'View Receipt',
-                confirmButtonColor: '#6366f1'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Prepare order data
-                    const orderListItems = document.querySelectorAll('#purchaseOrderList li');
-                    const orderData = {
-                        customerName: customerName,
-                        paymentMethod: paymentMethod,
-                        amount: amount,
-                        subtotal: document.getElementById('purchaseSubtotalDisplay').textContent,
-                        discount: document.getElementById('purchaseDiscountDisplay').textContent,
-                        vat: document.getElementById('purchaseVAT').textContent,
-                        total: document.getElementById('purchaseTotalDisplay').textContent,
-                        items: []
-                    };
-
-                    // Collect order items from orderItems array (more reliable)
-                    orderItems.forEach(item => {
-                        const subtotal = (item.price * item.qty).toFixed(2);
-
-                        orderData.items.push({
-                            productName: item.name,
-                            price: item.price.toFixed(2),
-                            warranty: item.warranty || '1 Year',
-                            quantity: item.qty,
-                            subtotal: subtotal
-                        });
-                    });
-
-                    // Store data in sessionStorage for receipt page
-                    sessionStorage.setItem('receiptData', JSON.stringify(orderData));
-
-                    // Redirect to receipt page
-                    window.location.href = '{{ route("pos.purchasereceipt") }}';
-                }
-            });
-        }
-
-        // NOTE: Checkout form is in purchaseFrame.blade.php
-        // Checkout flow: CheckoutController → Customer_Purchase_OrderController → Payment_MethodController
-        // This prevents duplicate form conflicts and ensures proper separation of concerns
-    </script>
-
-    <!-- Auto-hide success message after 5 seconds -->
-    <script>
+        // Auto-hide messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function () {
+            // Success message
             const successMessage = document.getElementById('customerSuccessMessage');
             if (successMessage) {
                 setTimeout(() => {
                     successMessage.style.display = 'none';
+                }, 5000);
+            }
+
+            // Error message
+            const errorMessage = document.getElementById('customerErrorMessage');
+            if (errorMessage) {
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            }
+
+            // Validation errors
+            const validationErrors = document.getElementById('validationErrors');
+            if (validationErrors) {
+                setTimeout(() => {
+                    validationErrors.style.display = 'none';
                 }, 5000);
             }
         });

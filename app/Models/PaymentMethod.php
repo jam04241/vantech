@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Payment_Method extends Model
+class PaymentMethod extends Model
 {
     use HasFactory;
 
+    protected $table = 'payment_methods';
     protected $fillable = [
         'customer_purchase_order_id',
         'method_name',
@@ -18,6 +19,6 @@ class Payment_Method extends Model
 
     public function purchaseOrder()
     {
-        return $this->belongsTo(Customer_Purchase_Order::class);
+        return $this->belongsTo(CustomerPurchaseOrder::class);
     }
 }

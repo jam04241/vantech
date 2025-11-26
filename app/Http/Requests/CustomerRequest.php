@@ -33,4 +33,18 @@ class CustomerRequest extends FormRequest
             'city_province' => 'nullable|string|max:255',
         ];
     }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'first_name.required' => 'First name is required.',
+            'last_name.required' => 'Last name is required.',
+            'contact_no.required' => 'Contact number is required.',
+        ];
+    }
 }

@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Customer_Purchase_Order extends Model
+class CustomerPurchaseOrder extends Model
 {
     use HasFactory;
+
+     protected $table = 'customer_purchase_orders';
 
     protected $fillable = [
         'customer_id',
@@ -32,6 +34,6 @@ class Customer_Purchase_Order extends Model
 
     public function paymentMethod()
     {
-        return $this->hasOne(Payment_Method::class);
+        return $this->hasOne(PaymentMethod::class);
     }
 }
