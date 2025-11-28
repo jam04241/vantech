@@ -317,7 +317,7 @@
                 Staff
             </a>
 
-        <a href="" class="sidebar-item">
+        <a href="{{ route('customer.records') }}" class="sidebar-item">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 
                        012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 

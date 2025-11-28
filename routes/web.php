@@ -82,6 +82,9 @@ Route::get('/Audit', function () {
     return view('DASHBOARD.audit');
 })->name('audit.logs');
 
+Route::get('/CustomerRecords', function () {
+    return view('DASHBOARD.Customer_record');
+})->name('customer.records');
 
 
 
@@ -90,18 +93,20 @@ Route::get('/Suppliers/List', [PurchaseDetailsController::class, 'index'])->name
 // Confirm purchase order
 Route::put('/purchase/{id}/confirm', [PurchaseDetailsController::class, 'confirm'])->name('purchase.confirm');
 Route::get('/purchase/statistics', [PurchaseDetailsController::class, 'statistics'])->name('purchase.statistics');
+Route::put('/purchase/{id}/cancel', [PurchaseDetailsController::class, 'cancel'])->name('purchase.cancel');
+//na add ni cancel purchase josh
 
 
 
 // Employee Routes
-Route::get('/staff/Records', [EmployeeController::class, 'show'])->name('staff.record');
+
 Route::get('/staff/AddEmployee', function () {
     return view('Employee.addEmployee');
 })->name('add.employee');
-
-Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+Route::get('/staff/Records', [EmployeeController::class, 'show'])->name('staff.record');
+Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
 Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
-Route::get('/employees/{id}/edit', [EmployeeController::class, 'getEmployee'])->name('employees.edit');
+Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
 
 
 Route::get('/PointOfSale/AddCustomer', function () {
@@ -185,6 +190,11 @@ Route::post('/purchase/store', [PurchaseDetailsController::class, 'store'])->nam
 
 
 Route::post('/customers', [CustomerController::class, 'store'])->name('customer.store');
+Route::get('/CustomerRecords', [CustomerController::class, 'index'])->name('customer.records');
+Route::get('/customers/{id}', [CustomerController::class, 'show'])->name('customers.show');
+Route::put('/customers/{id}', [CustomerController::class, 'update'])->name('customers.update');
+Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
+//kani sad josh
 
 
 // POS Routes

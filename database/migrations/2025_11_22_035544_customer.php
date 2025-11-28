@@ -16,12 +16,12 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id(); // BIGINT unsigned, auto-increment
             $table->string('first_name');
-            $table->string('middle_name')->nullable();
             $table->string('last_name');
+            $table->string('gender');
             $table->string('contact_no');
-            $table->string('street')->nullable();
-            $table->string('brgy')->nullable();
-            $table->string('city_province')->nullable();
+            $table->string('street');
+            $table->string('brgy');
+            $table->string('city_province');
             $table->timestamps();
         });
     }

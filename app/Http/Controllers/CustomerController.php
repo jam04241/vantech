@@ -10,7 +10,8 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        // Index method can remain empty or be used for other purposes
+        $customers = Customer::all();
+        return view('DASHBOARD.Customer_record', compact('customers'));
     }
 
     public function store(CustomerRequest $request)
@@ -19,40 +20,48 @@ class CustomerController extends Controller
             $data = $request->validated();
             Customer::create($data);
             
-            return redirect()->route('pos.itemlist')
-                ->with('success', 'Customer added successfully.')
-                ->with('from_customer_add', true);
+            return response()->json([
+                'success' => true,
+                'message' => 'Customer added successfully.'
+            ]);
                 
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Failed to add customer. Please try again.')
-                ->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add customer. Please try again.'
+            ], 500);
         }
     }
 
-    public function search(Request $request)
+    public function show($id)
     {
-        $query = $request->get('query', '');
-        
-        if (strlen($query) < 2) {
-            return response()->json([]);
+        try {
+            $customer = Customer::findOrFail($id);
+            return response()->json($customer);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Customer not found'
+            ], 404);
         }
+    }
 
-        $customers = Customer::where('first_name', 'like', "%{$query}%")
-            ->orWhere('last_name', 'like', "%{$query}%")
-            ->orWhere('contact_no', 'like', "%{$query}%")
-            ->limit(10)
-            ->get()
-            ->map(function ($customer) {
-                return [
-                    'id' => $customer->id,
-                    'first_name' => $customer->first_name,
-                    'last_name' => $customer->last_name,
-                    'full_name' => $customer->first_name . ' ' . $customer->last_name,
-                    'contact_no' => $customer->contact_no
-                ];
-            });
-
-        return response()->json($customers);
+    public function update(CustomerRequest $request, $id)
+    {
+        try {
+            $customer = Customer::findOrFail($id);
+            $data = $request->validated();
+            $customer->update($data);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Customer updated successfully.'
+            ]);
+                
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update customer. Please try again.'
+            ], 500);
+        }
     }
 }

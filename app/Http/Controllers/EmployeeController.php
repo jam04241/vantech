@@ -8,11 +8,10 @@ use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
 {
-    // API method to get single employee for editing
-    public function getEmployee($id)
+    public function edit($id)
     {
-        $employee = Employee::find($id);
-        return response()->json($employee);
+        $employee = Employee::findOrFail($id);
+        return view('DASHBOARD.edit_employee_modal', compact('employee'));
     }
 
     public function store(EmployeeRequest $request)
@@ -27,7 +26,7 @@ class EmployeeController extends Controller
 
     public function show(Request $request)
     {
-        $employees = Employee::latest()->paginate(50); // 50 records per page
+        $employees = Employee::latest()->paginate(50);
         return view('DASHBOARD.staff_record', compact('employees'));
     }
 

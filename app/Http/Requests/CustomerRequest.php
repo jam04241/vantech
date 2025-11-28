@@ -23,15 +23,15 @@ class CustomerRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'contact_no' => 'required|string|max:255',
-            'street' => 'nullable|string|max:255',
-            'brgy' => 'nullable|string|max:255',
-            'city_province' => 'nullable|string|max:255',
-        ];
+      return [
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'gender' => 'required|string|max:255',
+        'contact_no' => 'required|string|max:255',
+        'street' => 'required|string|max:255',
+        'brgy' => 'required|string|max:255',
+        'city_province' => 'required|string|max:255',
+    ];
     }
 
     /**

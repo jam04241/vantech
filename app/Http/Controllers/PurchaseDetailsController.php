@@ -21,15 +21,39 @@ class PurchaseDetailsController extends Controller
         return view('SUPPLIERS.suppliers_purchase', compact('suppliers', 'bundles', 'products'));
     }
 
-
-     public function index()
+    public function index(Request $request)
     {
-        // Get all purchase orders with relationships
-        $purchaseOrders = Purchase_Details::with(['supplier', 'bundle'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Start query
+        $query = Purchase_Details::with(['supplier', 'bundle']);
 
-        // Get statistics
+        // Apply status filter if provided
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+        // Apply date filter if provided
+        if ($request->has('date') && $request->date != '') {
+            $query->whereDate('order_date', $request->date);
+        }
+
+        // Apply search filter if provided
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('id', 'LIKE', "%{$search}%")
+                  ->orWhereHas('supplier', function($q) use ($search) {
+                      $q->where('company_name', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('bundle', function($q) use ($search) {
+                      $q->where('bundle_name', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        // Get paginated results with sorting
+        $purchaseOrders = $query->orderBy('created_at', 'desc')->paginate(50);
+
+        // Get statistics (unfiltered)
         $totalOrders = Purchase_Details::count();
         $pendingOrders = Purchase_Details::where('status', 'Pending')->count();
         $receivedOrders = Purchase_Details::where('status', 'Received')->count();
@@ -115,8 +139,7 @@ class PurchaseDetailsController extends Controller
         }
     }
 
-        
-     public function confirm($id)
+    public function confirm($id)
     {
         try {
             DB::beginTransaction();
@@ -150,6 +173,40 @@ class PurchaseDetailsController extends Controller
         }
     }
 
+    public function cancel($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $order = Purchase_Details::findOrFail($id);
+            
+            // Update order status to Cancelled
+            $order->update([
+                'status' => 'Cancelled'
+            ]);
+
+            DB::commit();
+
+            // Get updated statistics
+            $statistics = $this->getOrderStatistics();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order cancelled successfully.',
+                'order' => $order,
+                'statistics' => $statistics
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel order: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function statistics()
     {
         try {
@@ -177,5 +234,4 @@ class PurchaseDetailsController extends Controller
             'cancelledOrders' => Purchase_Details::where('status', 'Cancelled')->count(),
         ];
     }
-
 }

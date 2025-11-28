@@ -20,7 +20,7 @@ class EmployeeRequest extends FormRequest
             'barangay' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'phone_number' => 'required|string|max:20',
-            'role' => 'required|string|max:255',
+            'role' => 'required|in:Staff,Assistant,Technical,Cashier',
             'gender' => 'required|in:male,female',
         ];
     }
@@ -28,7 +28,14 @@ class EmployeeRequest extends FormRequest
     public function messages()
     {
         return [
-            'gender.in' => 'Please select a valid gender.',
+           'first_name.required' => 'First name is required',
+            'last_name.required' => 'Last name is required',
+            'street.required' => 'Street address is required',
+            'barangay.required' => 'Barangay is required',
+            'city.required' => 'City is required',
+            'phone_number.required' => 'Phone number is required',
+            'gender.required' => 'Gender is required',
+            'role.required' => 'Role is required',
         ];
     }
 }
