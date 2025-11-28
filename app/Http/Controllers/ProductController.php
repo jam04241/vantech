@@ -192,40 +192,40 @@ class ProductController extends Controller
         return $query;
     }
 
-    public function show(Request $request): View
-    {
-        $query = Product::with('brand', 'category', 'supplier', 'stock');
+   public function show(Request $request): View
+{
+    $query = Product::with('brand', 'category', 'supplier', 'stock');
 
-        // Apply filters
-        $query = $this->applyProductFilters($query, $request);
+    // Apply filters
+    $query = $this->applyProductFilters($query, $request);
 
-        // Apply search
-        if ($request->filled('search')) {
-            $query = $this->applyProductSearch($query, $request->search);
-        }
-
-        $query = $this->applySorting($query, $request);
-
-        // Get products
-        $products = $query->get();
-
-        $suppliers = Suppliers::where('status', 'active')->orderBy('supplier_name')->get();
-
-        $data = array_merge(
-            $this->loadBrands(),
-            $this->loadCategories(),
-            compact('products', 'suppliers'),
-            ['currentSort' => $request->get('sort', 'created_desc')]
-        );
-
-        // If HTMX request, return only the table partial
-        if ($request->header('HX-Request')) {
-            return view('partials.productTable_Inventory', $data);
-        }
-
-        // Otherwise return full view
-        return view('DASHBOARD.inventory', $data);
+    // Apply search
+    if ($request->filled('search')) {
+        $query = $this->applyProductSearch($query, $request->search);
     }
+
+    $query = $this->applySorting($query, $request);
+
+    // Get products with pagination (50 per page)
+    $products = $query->paginate(50)->withQueryString();
+
+    $suppliers = Suppliers::where('status', 'active')->orderBy('supplier_name')->get();
+
+    $data = array_merge(
+        $this->loadBrands(),
+        $this->loadCategories(),
+        compact('products', 'suppliers'),
+        ['currentSort' => $request->get('sort', 'created_desc')]
+    );
+
+    // If HTMX request, return only the table partial
+    if ($request->header('HX-Request')) {
+        return view('partials.productTable_Inventory', $data);
+    }
+
+    // Otherwise return full view
+    return view('DASHBOARD.inventory', $data);
+}
 
     public function inventoryList(Request $request)
     {
@@ -289,7 +289,7 @@ class ProductController extends Controller
         })->values();
 
         $sort = $request->get('sort', 'name_asc');
-        $products = match ($sort) {
+        $productsSorted = match ($sort) {
             'name_desc' => $grouped->sortByDesc('product_name')->values(),
             'qty_desc' => $grouped->sortByDesc('quantity')->values(),
             'qty_asc' => $grouped->sortBy('quantity')->values(),
@@ -299,6 +299,24 @@ class ProductController extends Controller
             'status_desc' => $grouped->sortByDesc('stock_status')->values(),
             default => $grouped->sortBy('product_name')->values(),
         };
+
+        // Convert to array for pagination
+        $productsArray = $productsSorted->toArray();
+        
+        // Manual pagination for collection
+        $page = $request->get('page', 1);
+        $perPage = 50;
+        $offset = ($page - 1) * $perPage;
+        $paginatedItems = array_slice($productsArray, $offset, $perPage);
+        
+        // Create LengthAwarePaginator instance
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedItems,
+            count($productsArray),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         $data = array_merge(
             $this->loadBrands(),
@@ -471,23 +489,8 @@ class ProductController extends Controller
             $query = $this->applyProductSearch($query, $request->search);
         }
 
-        // Get individual products (not grouped)
-        $products = $query->get()->map(function ($product) {
-            return (object) [
-                'id' => $product->id,
-                'product_name' => $product->product_name,
-                'brand' => $product->brand,
-                'category' => $product->category,
-                'brand_id' => $product->brand_id,
-                'category_id' => $product->category_id,
-                'product_condition' => $product->product_condition,
-                'stock_quantity' => $product->stock->stock_quantity ?? 0, // Real stock quantity
-                'price' => $product->stock->price ?? 0,
-                'serial_number' => $product->serial_number ?? 'N/A',
-                'warranty_period' => $product->warranty_period,
-                'image_path' => $product->image_path,
-            ];
-        });
+        // Get individual products (not grouped) with pagination
+        $products = $query->paginate(50);
 
         $data = array_merge(
             $this->loadBrands(),

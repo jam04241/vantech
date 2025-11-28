@@ -73,3 +73,10 @@
         @endforelse
     </tbody>
 </table>
+
+{{-- Pagination Links --}}
+@if($products->hasPages())
+    <div class="mt-6">
+        {{ $products->links() }}
+    </div>
+@endif

@@ -10,4 +10,12 @@ use Illuminate\Support\Facades\DB;
 class EmployeeController extends Controller
 {
     //
+    public function store($request){
+        
+    }
+
+
+    public function show(){
+
+    }
 }

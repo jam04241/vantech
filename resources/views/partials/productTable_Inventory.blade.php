@@ -103,4 +103,11 @@
             @endforelse
         </tbody>
     </table>
+
+    {{-- Pagination Links --}}
+    @if($products->hasPages())
+        <div class="mt-6 px-4 py-3 border-t border-gray-200">
+            {{ $products->withQueryString()->links() }}
+        </div>
+    @endif
 </div>

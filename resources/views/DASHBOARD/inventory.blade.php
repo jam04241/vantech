@@ -12,11 +12,15 @@
                 {{-- SEARCH BAR --}}
                 <input type="text" name="search" placeholder="Search inventory..." value="{{ request('search') }}"
                     hx-get="{{ route('inventory') }}" hx-trigger="input changed delay:300ms, search"
-                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
+                    hx-target="#product-table-container"
+                    hx-include="[name='search'], [name='category'], [name='brand'], [name='condition'], [name='supplier']"
+                    hx-swap="innerHTML"
                     class="w-1/2 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
 
                 <select name="category" hx-get="{{ route('inventory') }}" hx-trigger="change"
-                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
+                    hx-target="#product-table-container"
+                    hx-include="[name='search'], [name='category'], [name='brand'], [name='condition'], [name='supplier']"
+                    hx-swap="innerHTML"
                     class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
                     <option value="" {{ request('category') == '' ? 'selected' : '' }}>All Categories</option>
                     @isset($categories)
@@ -29,7 +33,9 @@
                 </select>
 
                 <select name="brand" hx-get="{{ route('inventory') }}" hx-trigger="change"
-                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
+                    hx-target="#product-table-container"
+                    hx-include="[name='search'], [name='category'], [name='brand'], [name='condition'], [name='supplier']"
+                    hx-swap="innerHTML"
                     class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
                     <option value="" {{ request('brand') == '' ? 'selected' : '' }}>All Brands</option>
                     @isset($brands)
@@ -43,7 +49,9 @@
 
                 {{-- ADDED: Condition filter --}}
                 <select name="condition" hx-get="{{ route('inventory') }}" hx-trigger="change"
-                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
+                    hx-target="#product-table-container"
+                    hx-include="[name='search'], [name='category'], [name='brand'], [name='condition'], [name='supplier']"
+                    hx-swap="innerHTML"
                     class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
                     <option value="" {{ request('condition') == '' ? 'selected' : '' }}>All Conditions</option>
                     <option value="Brand New" {{ request('condition') == 'Brand New' ? 'selected' : '' }}>Brand New</option>
@@ -53,7 +61,9 @@
 
                 {{-- ADDED: Supplier filter --}}
                 <select name="supplier" hx-get="{{ route('inventory') }}" hx-trigger="change"
-                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
+                    hx-target="#product-table-container"
+                    hx-include="[name='search'], [name='category'], [name='brand'], [name='condition'], [name='supplier']"
+                    hx-swap="innerHTML"
                     class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
                     <option value="" {{ request('supplier') == '' ? 'selected' : '' }}>All Suppliers</option>
                     @isset($suppliers)
@@ -64,20 +74,6 @@
                         @endforeach
                     @endisset
                 </select>
-
-                <select name="sort" hx-get="{{ route('inventory') }}" hx-trigger="change"
-                    hx-target="#product-table-container" hx-include="#filter-container" hx-swap="innerHTML"
-                    class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
-                    <option value="name_asc" {{ $activeSort === 'name_asc' ? 'selected' : '' }}>A-Z</option>
-                    <option value="name_desc" {{ $activeSort === 'name_desc' ? 'selected' : '' }}>Z-A</option>
-                    {{-- ADDED: Condition sorting --}}
-                    <option value="condition_new" {{ $activeSort === 'condition_new' ? 'selected' : '' }}>Brand New First
-                    </option>
-                    <option value="condition_used" {{ $activeSort === 'condition_used' ? 'selected' : '' }}>Second Hand First
-                    </option>
-                </select>
-            </div>
-            <div class="flex flex-wrap gap-2 justify-end">
                 <button type="button" id="openBrandEditor"
                     class="px-4 py-2 border border-gray-300 rounded-lg bg-white shadow hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out whitespace-nowrap">
                     Edit Brand
@@ -86,6 +82,8 @@
                     class="px-4 py-2 border border-gray-300 rounded-lg bg-white shadow hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out whitespace-nowrap">
                     Edit Category
                 </button>
+            </div>
+            <div class="flex flex-wrap gap-2 justify-end">
                 <a id="addProductBtn" href="{{ route('product.add') }}"
                     class="bg-[#46647F] text-white px-4 py-2 rounded-lg shadow hover:bg-[#3B4A5A] focus:ring-2 focus:ring-[#3B4A5A] transition duration-150 ease-in-out whitespace-nowrap">
                     Add Product
@@ -501,6 +499,35 @@
             document.body.addEventListener('htmx:afterSwap', (event) => {
                 if (event.target.id === 'product-table-container') {
                     setupPriceModal();
+                }
+            });
+
+            // Fix for pagination links to maintain filters
+            document.addEventListener('click', function (e) {
+                if (e.target.matches('.pagination a')) {
+                    e.preventDefault();
+                    const url = e.target.href;
+
+                    // Get current filter values
+                    const search = document.querySelector('[name="search"]').value;
+                    const category = document.querySelector('[name="category"]').value;
+                    const brand = document.querySelector('[name="brand"]').value;
+                    const condition = document.querySelector('[name="condition"]').value;
+                    const supplier = document.querySelector('[name="supplier"]').value;
+
+                    // Build URL with filters
+                    const urlObj = new URL(url);
+                    if (search) urlObj.searchParams.set('search', search);
+                    if (category) urlObj.searchParams.set('category', category);
+                    if (brand) urlObj.searchParams.set('brand', brand);
+                    if (condition) urlObj.searchParams.set('condition', condition);
+                    if (supplier) urlObj.searchParams.set('supplier', supplier);
+
+                    // Make HTMX request
+                    htmx.ajax('GET', urlObj.toString(), {
+                        target: '#product-table-container',
+                        swap: 'innerHTML'
+                    });
                 }
             });
         });
