@@ -9,6 +9,8 @@ use App\Http\Controllers\SuppliersController;
 use App\Http\Controllers\PurchaseDetailsController;
 use App\Http\Controllers\ProductStocksController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\EmployeeController;
+
 use Illuminate\Support\Facades\DB;
 
 /*
@@ -35,10 +37,11 @@ Route::get('/POS', function () {
     return view('DASHBOARD.Sales');
 })->name('Sales');
 
+Route::get('/staff/Records', function () {
+    return view('DASHBOARD.staff_record');
+})->name('staff.record');
 
-Route::get('/staff', function () {
-    return view('DASHBOARD/staff');
-})->name('staff');
+
 
 Route::get('/tester', function () {
     return view('tester.testscanner');
@@ -88,9 +91,18 @@ Route::get('/Suppliers/List', [PurchaseDetailsController::class, 'index'])->name
 Route::put('/purchase/{id}/confirm', [PurchaseDetailsController::class, 'confirm'])->name('purchase.confirm');
 Route::get('/purchase/statistics', [PurchaseDetailsController::class, 'statistics'])->name('purchase.statistics');
 
+
+
+// Employee Routes
+Route::get('/staff/Records', [EmployeeController::class, 'show'])->name('staff.record');
 Route::get('/staff/AddEmployee', function () {
-    return view(' Employee.employeeForm');
+    return view('Employee.addEmployee');
 })->name('add.employee');
+
+Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+Route::get('/employees/{id}/edit', [EmployeeController::class, 'getEmployee'])->name('employees.edit');
+
 
 Route::get('/PointOfSale/AddCustomer', function () {
     return view('Customer.addCustomer');
