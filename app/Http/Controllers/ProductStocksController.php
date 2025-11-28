@@ -29,7 +29,7 @@ class ProductStocksController extends Controller
                 $stock = Product_Stocks::firstOrNew(['product_id' => $productId]);
                 if (!$stock->exists && $stock->stock_quantity === null) {
                     $stock->stock_quantity = 1;
-                }
+                }   
                 $stock->price = $price;
                 $stock->save();
             }

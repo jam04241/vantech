@@ -48,76 +48,25 @@ class ProductController extends Controller
         $price = $data['price'] ?? 0;
         unset($data['price']);
 
-        // For Second Hand products, don't check for existing archived products with same price
-        // because each Second Hand product can have its own price
-        if ($productCondition === 'Brand New') {
-            // Check if there's an archived product with the same attributes (including price for Brand New)
-            $existingArchivedProduct = Product::where('product_name', $data['product_name'])
-                ->where('brand_id', $data['brand_id'] ?? null)
-                ->where('category_id', $data['category_id'])
-                ->where('product_condition', $productCondition)
-                ->where('archived', true)
-                ->whereHas('stock', function($query) use ($price) {
-                    $query->where('price', $price);
-                })
-                ->first();
-        } else {
-            // For Second Hand, only check by attributes (not price)
-            $existingArchivedProduct = Product::where('product_name', $data['product_name'])
-                ->where('brand_id', $data['brand_id'] ?? null)
-                ->where('category_id', $data['category_id'])
-                ->where('product_condition', $productCondition)
-                ->where('archived', true)
-                ->first();
-        }
-
         DB::beginTransaction();
 
         try {
-            if ($existingArchivedProduct) {
-                // Unarchive the existing product and update its details
-                $existingArchivedProduct->update([
-                    'archived' => false,
-                    'serial_number' => $data['serial_number'] ?? $existingArchivedProduct->serial_number,
-                    'warranty_period' => $data['warranty_period'] ?? $existingArchivedProduct->warranty_period,
-                    'supplier_id' => $data['supplier_id'] ?? $existingArchivedProduct->supplier_id,
+            // Always create new product (no archive checking)
+            $product = Product::create($data);
+
+            if ($product) {
+                Product_Stocks::create([
+                    'product_id' => $product->id,
+                    'stock_quantity' => 1,
+                    'price' => $price,
                 ]);
-
-                // Update the stock price (only for Brand New, Second Hand keeps individual prices)
-                if ($productCondition === 'Brand New') {
-                    $existingArchivedProduct->stock()->update([
-                        'price' => $price,
-                    ]);
-                }
-                
-                // Increment stock quantity
-                $existingArchivedProduct->stock()->update([
-                    'stock_quantity' => DB::raw('stock_quantity + 1')
-                ]);
-
-                DB::commit();
-                
-                return redirect()->route('product.add')
-                    ->with('success', 'Product "' . $data['product_name'] . '" has been unarchived and updated successfully!')
-                    ->with('clear_form', true);
-            } else {
-                // Create new product
-                $product = Product::create($data);
-
-                if ($product) {
-                    Product_Stocks::create([
-                        'product_id' => $product->id,
-                        'stock_quantity' => 1,
-                        'price' => $price,
-                    ]);
-                }
-
-                DB::commit();
-                
-                return redirect()->route('product.add')
-                    ->with('success', 'Product "' . $data['product_name'] . '" has been successfully registered!')
-                    ->with('clear_form', true);
             }
+
+            DB::commit();
+            
+            return redirect()->route('product.add')
+                ->with('success', 'Product "' . $data['product_name'] . '" has been successfully registered!')
+                ->with('clear_form', true);
                 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -278,94 +227,94 @@ class ProductController extends Controller
         return view('DASHBOARD.inventory', $data);
     }
 
- public function inventoryList(Request $request)
-{
-    $query = Product::with('brand', 'category', 'supplier', 'stock');
+    public function inventoryList(Request $request)
+    {
+        $query = Product::with('brand', 'category', 'supplier', 'stock');
 
-    // Apply reusable filters
-    $query = $this->applyProductFilters($query, $request);
+        // Apply reusable filters
+        $query = $this->applyProductFilters($query, $request);
 
-    // Apply search
-    if ($request->filled('search')) {
-        $query = $this->applyProductSearch($query, $request->search);
-    }
+        // Apply search
+        if ($request->filled('search')) {
+            $query = $this->applyProductSearch($query, $request->search);
+        }
 
-    // Only show products with stock > 0
-    $query->whereHas('stock', function($q) {
-        $q->where('stock_quantity', '>', 0);
-    });
-
-    $productsCollection = $query->get();
-
-    // Group products
-    $grouped = $productsCollection->groupBy(function ($product) {
-        return implode('|', [
-            $product->product_name,
-            $product->brand_id ?? 'null',
-            $product->category_id ?? 'null',
-            $product->product_condition,
-            $product->stock?->price ?? 0,
-        ]);
-    })->map(function ($group) {
-        $first = $group->first();
-        
-        // Calculate total quantity from stock_quantity, not product count
-        $quantity = $group->sum(function ($product) {
-            return $product->stock ? $product->stock->stock_quantity : 0;
+        // Only show products with stock > 0
+        $query->whereHas('stock', function($q) {
+            $q->where('stock_quantity', '>', 0);
         });
 
-        // Determine stock status
-        $stock_status = $quantity >= 10 ? 'Good' : 'Low Stock';
-        $status_color = $quantity >= 10 ? 'green' : 'red';
+        $productsCollection = $query->get();
 
-        return (object) [
-            'id' => $first->id,
-            'product_name' => $first->product_name,
-            'brand' => $first->brand,
-            'category' => $first->category,
-            'brand_id' => $first->brand_id,
-            'category_id' => $first->category_id,
-            'product_condition' => $first->product_condition,
-            'quantity' => $quantity, // Real stock quantity
-            'price' => $first->stock?->price ?? 0,
-            'serial_number' => $first->serial_number ?? 'N/A',
-            'stock_status' => $stock_status,
-            'status_color' => $status_color,
-        ];
-    })->values();
+        // Group products
+        $grouped = $productsCollection->groupBy(function ($product) {
+            return implode('|', [
+                $product->product_name,
+                $product->brand_id ?? 'null',
+                $product->category_id ?? 'null',
+                $product->product_condition,
+                $product->stock?->price ?? 0,
+            ]);
+        })->map(function ($group) {
+            $first = $group->first();
+            
+            // Calculate total quantity from stock_quantity, not product count
+            $quantity = $group->sum(function ($product) {
+                return $product->stock ? $product->stock->stock_quantity : 0;
+            });
 
-    // Filter out groups with 0 quantity
-    $grouped = $grouped->filter(function ($product) {
-        return $product->quantity > 0;
-    })->values();
+            // Determine stock status
+            $stock_status = $quantity >= 10 ? 'Good' : 'Low Stock';
+            $status_color = $quantity >= 10 ? 'green' : 'red';
 
-    $sort = $request->get('sort', 'name_asc');
-    $products = match ($sort) {
-        'name_desc' => $grouped->sortByDesc('product_name')->values(),
-        'qty_desc' => $grouped->sortByDesc('quantity')->values(),
-        'qty_asc' => $grouped->sortBy('quantity')->values(),
-        'price_desc' => $grouped->sortByDesc('price')->values(),
-        'price_asc' => $grouped->sortBy('price')->values(),
-        'status_asc' => $grouped->sortBy('stock_status')->values(),
-        'status_desc' => $grouped->sortByDesc('stock_status')->values(),
-        default => $grouped->sortBy('product_name')->values(),
-    };
+            return (object) [
+                'id' => $first->id,
+                'product_name' => $first->product_name,
+                'brand' => $first->brand,
+                'category' => $first->category,
+                'brand_id' => $first->brand_id,
+                'category_id' => $first->category_id,
+                'product_condition' => $first->product_condition,
+                'quantity' => $quantity, // Real stock quantity
+                'price' => $first->stock?->price ?? 0,
+                'serial_number' => $first->serial_number ?? 'N/A',
+                'stock_status' => $stock_status,
+                'status_color' => $status_color,
+            ];
+        })->values();
 
-    $data = array_merge(
-        $this->loadBrands(),
-        $this->loadCategories(),
-        compact('products'),
-        ['currentSort' => $sort]
-    );
+        // Filter out groups with 0 quantity
+        $grouped = $grouped->filter(function ($product) {
+            return $product->quantity > 0;
+        })->values();
 
-    // If HTMX request, return only the table partial
-    if ($request->header('HX-Request')) {
-        return view('partials.productTable_InventList', $data);
+        $sort = $request->get('sort', 'name_asc');
+        $products = match ($sort) {
+            'name_desc' => $grouped->sortByDesc('product_name')->values(),
+            'qty_desc' => $grouped->sortByDesc('quantity')->values(),
+            'qty_asc' => $grouped->sortBy('quantity')->values(),
+            'price_desc' => $grouped->sortByDesc('price')->values(),
+            'price_asc' => $grouped->sortBy('price')->values(),
+            'status_asc' => $grouped->sortBy('stock_status')->values(),
+            'status_desc' => $grouped->sortByDesc('stock_status')->values(),
+            default => $grouped->sortBy('product_name')->values(),
+        };
+
+        $data = array_merge(
+            $this->loadBrands(),
+            $this->loadCategories(),
+            compact('products'),
+            ['currentSort' => $sort]
+        );
+
+        // If HTMX request, return only the table partial
+        if ($request->header('HX-Request')) {
+            return view('partials.productTable_InventList', $data);
+        }
+
+        // Otherwise return full view
+        return view('DASHBOARD.inventory_list', $data);
     }
-
-    // Otherwise return full view
-    return view('DASHBOARD.inventory_list', $data);
-}
 
     /**
      * Update product price with different logic for Brand New vs Second Hand
@@ -387,7 +336,6 @@ class ProductController extends Controller
                         ->where('brand_id', $product->brand_id)
                         ->where('category_id', $product->category_id)
                         ->where('product_condition', 'Brand New')
-                        ->where('archived', $product->archived)
                         ->get();
 
                     foreach ($productsToUpdate as $prod) {
@@ -405,7 +353,6 @@ class ProductController extends Controller
                         ->where('brand_id', $product->brand_id)
                         ->where('category_id', $product->category_id)
                         ->where('product_condition', 'Second Hand')
-                        ->where('archived', $product->archived)
                         ->whereHas('stock', function ($query) use ($currentPrice) {
                             $query->where('price', $currentPrice);
                         })
@@ -430,8 +377,6 @@ class ProductController extends Controller
                 ->with('error', 'Failed to update price: ' . $e->getMessage());
         }
     }
-
-   
 
     public function update(ProductRequest $request, Product $product)
     {
@@ -462,7 +407,6 @@ class ProductController extends Controller
         $search = $request->get('search', '');
 
         $query = Product::with('brand', 'category', 'stock')
-            ->where('archived', false)
             ->orderBy('created_at', 'desc')
             ->limit(50);
 
@@ -508,14 +452,13 @@ class ProductController extends Controller
     }
 
     /**
- * Display products for POS system - Show individual products (not grouped)
- */
-public function posList(Request $request)
+     * Display products for POS system - Show individual products (not grouped)
+     */
+    public function posList(Request $request)
     {
         // Load products with brand, category, and stock relationships
-        // Only include products that have stock_quantity > 0 and are NOT archived
+        // Only include products that have stock_quantity > 0
         $query = Product::with('brand', 'category', 'stock')
-            ->where('archived', false)
             ->whereHas('stock', function ($query) {
                 $query->where('stock_quantity', '>', 0);
             });
@@ -570,17 +513,16 @@ public function posList(Request $request)
             return response()->json(['product' => null, 'message' => 'Invalid serial number format'], 400);
         }
 
-        // Find product by serial number - only active (non-archived) products with stock > 0
+        // Find product by serial number - only products with stock > 0
         $foundProduct = Product::with('brand', 'category', 'stock')
             ->where('serial_number', $serialNumber)
-            ->where('archived', false)
             ->whereHas('stock', function ($query) {
                 $query->where('stock_quantity', '>', 0);
             })
             ->first();
 
         if (!$foundProduct) {
-            return response()->json(['product' => null, 'message' => 'Serial number not found, product is archived, or product out of stock'], 404);
+            return response()->json(['product' => null, 'message' => 'Serial number not found or product out of stock'], 404);
         }
 
         $price = $foundProduct->stock?->price ?? 0;
@@ -592,7 +534,6 @@ public function posList(Request $request)
                 ->where('brand_id', $foundProduct->brand_id)
                 ->where('category_id', $foundProduct->category_id)
                 ->where('product_condition', $foundProduct->product_condition)
-                ->where('archived', false)
                 ->whereHas('stock', function ($query) use ($price) {
                     $query->where('price', $price)
                           ->where('stock_quantity', '>', 0);
@@ -620,7 +561,6 @@ public function posList(Request $request)
 
         return response()->json(['product' => $product, 'message' => 'Product found'], 200);
     }
-
 
     public function checkSerialNumber(Request $request)
     {
