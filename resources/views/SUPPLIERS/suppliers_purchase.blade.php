@@ -15,11 +15,12 @@
             <a href="{{ route('suppliers.list') }}" class="px-4 py-2 border rounded-lg bg-white">Back to Orders</a>
         </div>
 
-        <form action="{{ route('purchase.store') }}" method="POST">
+        <form action="{{ route('purchase.store') }}" method="POST" id="purchaseForm">
             @csrf
             <div class="p-6">
-                <input type="hidden" name="items" id="itemsInput">
                 <input type="hidden" name="status" id="statusInput" value="Pending">
+                <!-- Items will be added as hidden fields with array notation for middleware compatibility -->
+                <div id="itemsHiddenFields"></div>
 
                 <!-- Supplier Information -->
                 <div class="mb-8 pb-6 border-b border-gray-200">
@@ -161,18 +162,25 @@
             });
 
             // Form submission handler
-            document.querySelector('form').addEventListener('submit', function (e) {
+            document.getElementById('purchaseForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                // Validate form before submission
                 if (!validateForm()) {
-                    e.preventDefault();
                     Swal.fire({
                         title: 'Validation Error',
-                        text: 'Please fill in all required fields and add at least one item.',
+                        text: 'Please fill in all required fields in all items.',
                         icon: 'warning',
                         confirmButtonText: 'OK'
                     });
-                } else {
-                    prepareItemsForSubmission();
+                    return false;
                 }
+
+                // Prepare items for submission (create hidden fields with Laravel array notation)
+                prepareItemsForSubmission();
+
+                // Submit the form
+                this.submit();
             });
 
             // SweetAlert notifications
@@ -211,38 +219,38 @@
                     const row = document.createElement('tr');
                     row.className = 'border-b border-gray-200';
                     row.innerHTML = `
-                        <td class="px-4 py-3">${rowCount}</td>
-                        <td class="px-4 py-3">
-                            <input type="text" name="bundle_name" class="bundle-name w-full border border-gray-300 rounded px-2 py-1" 
-                                placeholder="Enter bundle name" required>
-                        </td>
-                        <td class="px-4 py-3">
-                            <select name="bundle_type" class="bundle-type w-full border border-gray-300 rounded px-2 py-1" required>
-                                <option value="" disabled selected>Select Type</option>
-                                ${bundleTypes.map(type =>
+                                <td class="px-4 py-3">${rowCount}</td>
+                                <td class="px-4 py-3">
+                                    <input type="text" class="bundle-name w-full border border-gray-300 rounded px-2 py-1" 
+                                        placeholder="Enter bundle name" required>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <select class="bundle-type w-full border border-gray-300 rounded px-2 py-1" required>
+                                        <option value="" disabled selected>Select Type</option>
+                                        ${bundleTypes.map(type =>
                         `<option value="${type}">${type.charAt(0).toUpperCase() + type.slice(1)}</option>`
                     ).join('')}
-                            </select>
-                        </td>
-                        <td class="px-4 py-3">
-                            <input type="number" name="quantity_bundle" class="quantity-bundle w-full border border-gray-300 rounded px-2 py-1" 
-                                min="1" value="1" required>
-                        </td>
-                        <td class="px-4 py-3">
-                            <input type="number" name="quantity_ordered" class="quantity-ordered w-full border border-gray-300 rounded px-2 py-1" 
-                                min="1" value="1" required>
-                        </td>
-                        <td class="px-4 py-3">
-                            <input type="number" name="unit_price" class="unit-price w-full border border-gray-300 rounded px-2 py-1" 
-                                min="0" step="0.01" value="0.00" required>
-                        </td>
-                        <td class="px-4 py-3 total-amount">0.00</td>
-                        <td class="px-4 py-3">
-                            <button type="button" class="remove-row text-red-500 hover:text-red-700">
-                                ✕
-                            </button>
-                        </td>
-                    `;
+                                    </select>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <input type="number" class="quantity-bundle w-full border border-gray-300 rounded px-2 py-1" 
+                                        min="1" value="1" required>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <input type="number" class="quantity-ordered w-full border border-gray-300 rounded px-2 py-1" 
+                                        min="1" value="1" required>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <input type="number" class="unit-price w-full border border-gray-300 rounded px-2 py-1" 
+                                        min="0" step="0.01" value="0.00" required>
+                                </td>
+                                <td class="px-4 py-3 total-amount">0.00</td>
+                                <td class="px-4 py-3">
+                                    <button type="button" class="remove-row text-red-500 hover:text-red-700">
+                                        ✕
+                                    </button>
+                                </td>
+                            `;
 
                     tbody.appendChild(row);
                     attachRowEventListeners(row);
@@ -301,29 +309,59 @@
             }
 
             // Function to prepare items for form submission
+            // Uses Laravel array notation (items[0][bundle_name]) for middleware compatibility
             function prepareItemsForSubmission() {
-                const items = [];
+                console.log('📋 PREPARING ITEMS FOR SUBMISSION...');
+                
+                // Clear existing hidden fields
+                const hiddenFieldsContainer = document.getElementById('itemsHiddenFields');
+                hiddenFieldsContainer.innerHTML = '';
+                
                 const rows = document.querySelectorAll('#itemsTableBody tr');
+                console.log('📊 Total rows found:', rows.length);
 
-                rows.forEach(row => {
-                    const bundleName = row.querySelector('.bundle-name').value;
-                    const bundleType = row.querySelector('.bundle-type').value;
+                rows.forEach((row, index) => {
+                    const bundleName = row.querySelector('.bundle-name').value.trim();
+                    const bundleType = row.querySelector('.bundle-type').value.trim();
                     const quantityBundle = row.querySelector('.quantity-bundle').value;
                     const quantityOrdered = row.querySelector('.quantity-ordered').value;
                     const unitPrice = row.querySelector('.unit-price').value;
 
+                    console.log(`📦 Row ${index + 1}:`, {
+                        bundleName,
+                        bundleType,
+                        quantityBundle,
+                        quantityOrdered,
+                        unitPrice,
+                        allFieldsFilled: !!(bundleName && bundleType && quantityBundle && quantityOrdered && unitPrice)
+                    });
+
                     if (bundleName && bundleType && quantityBundle && quantityOrdered && unitPrice) {
-                        items.push({
-                            bundle_name: bundleName,
-                            bundle_type: bundleType,
-                            quantity_bundle: parseInt(quantityBundle),
-                            quantity_ordered: parseInt(quantityOrdered),
-                            unit_price: parseFloat(unitPrice)
+                        // Create hidden fields using Laravel array notation for middleware compatibility
+                        // This format works better with Laravel's middleware (CSRF, TrimStrings, etc.)
+                        const fields = [
+                            { name: `items[${index}][bundle_name]`, value: bundleName },
+                            { name: `items[${index}][bundle_type]`, value: bundleType },
+                            { name: `items[${index}][quantity_bundle]`, value: parseInt(quantityBundle) },
+                            { name: `items[${index}][quantity_ordered]`, value: parseInt(quantityOrdered) },
+                            { name: `items[${index}][unit_price]`, value: parseFloat(unitPrice) }
+                        ];
+
+                        fields.forEach(field => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = field.name;
+                            input.value = field.value;
+                            hiddenFieldsContainer.appendChild(input);
                         });
+
+                        console.log(`✅ Item ${index + 1} prepared with array notation`);
+                    } else {
+                        console.warn(`❌ Item ${index + 1} skipped - missing fields`);
                     }
                 });
 
-                document.getElementById('itemsInput').value = JSON.stringify(items);
+                console.log('✅ All items prepared as hidden form fields with Laravel array notation');
             }
 
             // Function to validate form before submission
