@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard')</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -235,25 +236,39 @@
         </div>
 
         <nav class="space-y-4">
-            <!-- Dashboard -->
+            <!-- Dashboard - Available to all authenticated users -->
             <a href="{{ route('dashboard') }}" class="sidebar-item">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 12l9-9 9 9M4 10v10h16V10" />
                 </svg>
-
                 Dashboard
             </a>
 
-            <a href="{{ route('Sales') }}" class="sidebar-item">
-                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                </svg>
-                Sales
-            </a>
+            <!-- Sales - Admin Only -->
+            @if(Auth::user() && Auth::user()->role === 'admin')
+                <button onclick="checkAdminAccess('{{ route('Sales') }}')" class="sidebar-item w-full text-left">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                    Sales
+                </button>
+            @elseif(Auth::user() && Auth::user()->role === 'staff')
+                <button onclick="showAdminVerificationModal('{{ route('Sales') }}')"
+                    class="sidebar-item w-full text-left relative group">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                    Sales
+                    <span
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs bg-red-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Admin
+                        Only</span>
+                </button>
+            @endif
 
-            <!-- Inventory Dropdown -->
+            <!-- Inventory Dropdown - Available to all authenticated users -->
             <details class="group">
                 <summary class="dropdown-toggle">
                     <div class="flex items-center">
@@ -262,7 +277,6 @@
                                 d="M3 7h13v10H3zM16 10h3l2 3v4h-5zM5 17a2 2 0 11-.001 3.999A2 2 0 015 17zm11 0a2 2 0 11-.001 3.999A2 2 0 0116 17z">
                             </path>
                         </svg>
-
                         Inventory
                     </div>
                     <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor"
@@ -273,12 +287,35 @@
                 <div class="dropdown-content space-y-1">
                     <a href="{{ route('inventory')}}" class="dropdown-item">Inventory Manage</a>
                     <a href="{{ route('inventory.list') }}" class="dropdown-item">Inventory List</a>
+                    <a href="" class="dropdown-item">Inventory Archive</a>
                 </div>
             </details>
 
-            <!-- Suppliers Dropdown -->
-            <details class="group">
-                <summary class="dropdown-toggle">
+            <!-- Suppliers Dropdown - Admin Only -->
+            @if(Auth::user() && Auth::user()->role === 'admin')
+                <details class="group">
+                    <summary class="dropdown-toggle">
+                        <div class="flex items-center">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                            Suppliers
+                        </div>
+                        <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </summary>
+                    <div class="dropdown-content space-y-1">
+                        <a href="{{ route('suppliers') }}" class="dropdown-item">Supplier Manage</a>
+                        <a href="{{ route('suppliers.list') }}" class="dropdown-item">Purchase Orders</a>
+                    </div>
+                </details>
+            @elseif(Auth::user() && Auth::user()->role === 'staff')
+                <button onclick="showAdminVerificationModal('{{ route('suppliers') }}')"
+                    class="dropdown-toggle w-full relative group">
                     <div class="flex items-center">
                         <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -287,47 +324,89 @@
                         </svg>
                         Suppliers
                     </div>
-                    <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    <span
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs bg-red-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Admin
+                        Only</span>
+                </button>
+            @endif
+
+            <!-- Audit Logs - Admin Only -->
+            @if(Auth::user() && Auth::user()->role === 'admin')
+                <a href="{{ route('audit.logs') }}" class="sidebar-item">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 2h6l4 4v6m-4 10H7a2 2 0 01-2-2V4a2 2 0 012-2h2m5 14a4 4 0 100-8 4 4 0 000 8zm5 5l-3.5-3.5">
+                        </path>
                     </svg>
-                </summary>
-                <div class="dropdown-content space-y-1">
-                    <a href="{{ route('suppliers') }}" class="dropdown-item">Supplier Manage</a>
-                    <a href="{{ route('suppliers.list') }}" class="dropdown-item">Purchase Orders</a>
-                </div>
-            </details>
-        <a href="{{ route('audit.logs') }}" class="sidebar-item">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 2h6l4 4v6m-4 10H7a2 2 0 01-2-2V4a2 2 0 012-2h2m5 14a4 4 0 100-8 4 4 0 000 8zm5 5l-3.5-3.5">
-                </path>
-            </svg>
-            Audit Logs
-        </a>
+                    Audit Logs
+                </a>
+            @elseif(Auth::user() && Auth::user()->role === 'staff')
+                <button onclick="showAdminVerificationModal('{{ route('audit.logs') }}')"
+                    class="sidebar-item w-full text-left relative group">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 2h6l4 4v6m-4 10H7a2 2 0 01-2-2V4a2 2 0 012-2h2m5 14a4 4 0 100-8 4 4 0 000 8zm5 5l-3.5-3.5">
+                        </path>
+                    </svg>
+                    Audit Logs
+                    <span
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs bg-red-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Admin
+                        Only</span>
+                </button>
+            @endif
 
+            <!-- Staff Management - Admin Only -->
+            @if(Auth::user() && Auth::user()->role === 'admin')
+                <a href="{{ route('staff.record') }}" class="sidebar-item">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5.121 17.804A7 7 0 0112 14a7 7 0 016.879 3.804M12 12a5 5 0 100-10 5 5 0 000 10z" />
+                    </svg>
+                    Staff
+                </a>
+            @elseif(Auth::user() && Auth::user()->role === 'staff')
+                <button onclick="showAdminVerificationModal('{{ route('staff.record') }}')"
+                    class="sidebar-item w-full text-left relative group">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5.121 17.804A7 7 0 0112 14a7 7 0 016.879 3.804M12 12a5 5 0 100-10 5 5 0 000 10z" />
+                    </svg>
+                    Staff
+                    <span
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs bg-red-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Admin
+                        Only</span>
+                </button>
+            @endif
 
-            {{-- STAFF FOR CREATE AND MANAGE ACCOUNT --}}
-            <a href="{{ route('staff.record') }}" class="sidebar-item">
-                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M5.121 17.804A7 7 0 0112 14a7 7 0 016.879 3.804M12 12a5 5 0 100-10 5 5 0 000 10z" />
-                </svg>
-
-                Staff
-            </a>
-
-        <a href="{{ route('customer.records') }}" class="sidebar-item">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 
-                       012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
-                       1.79 4 4H8c0-2.21 1.79-4 4-4z" />
-            </svg>
-            Customer Records
-        </a>
-
+            <!-- Customer Manage - Admin Only -->
+            @if(Auth::user() && Auth::user()->role === 'admin')
+                <a href="{{ route('customer.records') }}" class="sidebar-item">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 
+                                                           012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
+                                                           1.79 4 4H8c0-2.21 1.79-4 4-4z" />
+                    </svg>
+                    Customer Records
+                </a>
+            @elseif(Auth::user() && Auth::user()->role === 'staff')
+                <button onclick="showAdminVerificationModal('{{ route('customer.records') }}')"
+                    class="sidebar-item w-full text-left relative group">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 
+                                                           012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
+                                                           1.79 4 4H8c0-2.21 1.79-4 4-4z" />
+                    </svg>
+                    Customer Records
+                    <span
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs bg-red-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Admin
+                        Only</span>
+                </button>
+            @endif
 
             <!-- Logout -->
+            <form id="logoutForm" action="{{ route('logout') }}" method="POST" class="hidden">
+                @csrf
+            </form>
             <button id="logout-btn" class="sidebar-item w-full text-left">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -397,6 +476,51 @@
             overlay.classList.add('hidden');
         });
 
+        // Admin Verification Modal
+        let intendedUrl = null;
+
+        function showAdminVerificationModal(url) {
+            intendedUrl = url;
+            Swal.fire({
+                title: 'Admin Verification Required',
+                text: 'This page requires admin verification. Please enter an admin password to continue.',
+                icon: 'warning',
+                input: 'password',
+                inputPlaceholder: 'Enter admin password',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Verify',
+                cancelButtonText: 'Cancel',
+                inputAttributes: {
+                    autocapitalize: 'off',
+                    autocorrect: 'off'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit verification form with CSRF token and intended URL
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("verify.admin.password") }}';
+
+                    // Get CSRF token from meta tag
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+                    form.innerHTML = `
+                        <input type="hidden" name="_token" value="${csrfToken}">
+                        <input type="hidden" name="admin_password" value="${result.value}">
+                        <input type="hidden" name="intended_url" value="${intendedUrl}">
+                    `;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function checkAdminAccess(url) {
+            window.location.href = url;
+        }
+
         // Logout with SweetAlert confirmation
         logoutBtn.addEventListener('click', () => {
             Swal.fire({
@@ -410,17 +534,7 @@
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Assuming a logout route or form submission
-                    // Replace with actual logout logic, e.g., window.location.href = '/logout';
-                    // Or submit a form if using CSRF
-                    // For demo, just show success and redirect
-                    Swal.fire(
-                        'Logged out!',
-                        'You have been successfully logged out.',
-                        'success'
-                    ).then(() => {
-                        window.location.href = '/LOGIN_FORM'; // Adjust to your login route
-                    });
+                    document.getElementById('logoutForm').submit();
                 }
             });
         });

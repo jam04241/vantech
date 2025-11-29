@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
@@ -23,191 +25,177 @@ use Illuminate\Support\Facades\DB;
 | contains the "web" middleware group. Now create something great!
 |
 */
+// ============= AUTHENTICATION ROUTES (PUBLIC) =============
+Route::get('/LOGIN_FORM', [AuthController::class, 'create'])->name('login');
+Route::post('/LOGIN_FORM', [AuthController::class, 'store'])->name('login.store');
+Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
+Route::post('/verify-admin-password', [AuthController::class, 'verifyAdminPassword'])->name('verify.admin.password');
 
-// Redirect root URL to Dashboard
-Route::get('/', function () {
-    return redirect()->route('dashboard');
+
+// ============= PROTECTED ROUTES (AUTHENTICATED USERS ONLY) =============
+Route::middleware(['auth'])->group(function () {
+    // Root redirect
+    Route::get('/', function () {
+        return redirect()->route('dashboard');
+    })->name('redirect');
+
+    // ============= DASHBOARD (ACCESSIBLE BY ALL AUTHENTICATED USERS) =============
+    Route::get('/Dashboard', function () {
+        return view('DASHBOARD.homepage');
+    })->name('dashboard');
+    // ============= ADMIN ONLY ROUTES =============
+    Route::middleware(['admin.only'])->group(function () {
+        // Place admin-only routes here
+        Route::get('/POS', function () {
+            return view('DASHBOARD.Sales');
+        })->name('Sales');
+
+        Route::get('/staff/Records', function () {
+            return view('DASHBOARD.staff_record');
+        })->name('staff.record');
+
+        Route::get('/tester', function () {
+            return view('tester.testscanner');
+        })->name('tester.testscanner');
+
+        Route::get('/brandcategory', function () {
+            return view('INVENTORY.brandcategoryHistory');
+        })->name('inventory.brandcategory');
+
+        // Issue Receipt for Quotation and Purchase
+        Route::get('/Receipt/Purchase', function () {
+            return view('POS_SYSTEM.PurchaseReceipt');
+        })->name('pos.purchasereceipt');
+
+        // POS ITEM LIST
+        Route::get('/Suppliers/Create_Orders', function () {
+            return view('SUPPLIERS.suppliers_purchase');
+        })->name('Supplier.CreateOrders');
+
+        Route::get('/Stock-Out', function () {
+            return view('INVENTORY.stock_out');
+        })->name('inventory.stockout');
+
+        Route::get('/Total Stocks', function () {
+            return view('partials.total_stock');
+        })->name('inventory.stocktotal');
+
+        Route::get('/Audit', function () {
+            return view('DASHBOARD.audit');
+        })->name('audit.logs');
+
+        Route::get('/CustomerRecords', function () {
+            return view('DASHBOARD.Customer_record');
+        })->name('customer.records');
+    });
+    // ============= STAFF AND ADMIN SHARED ROUTES =============
+    Route::middleware(['staff.only'])->group(function () {
+        // Place staff-and-admin shared routes here
+        Route::get('/PointOfSale/AddCustomer', function () {
+            return view('Customer.addCustomer');
+        })->name('customer.addCustomer');
+
+        Route::get('/PointOfSale/purchaseFrame', function () {
+            return view('POS_SYSTEM.purchaseFrame');
+        })->name('pointofsale.purchaseframe');
+    });
+
+    // Purchase Orders List
+    Route::get('/Suppliers/List', [PurchaseDetailsController::class, 'index'])->name('suppliers.list');
+    // Confirm purchase order
+    Route::put('/purchase/{id}/confirm', [PurchaseDetailsController::class, 'confirm'])->name('purchase.confirm');
+    Route::get('/purchase/statistics', [PurchaseDetailsController::class, 'statistics'])->name('purchase.statistics');
+    Route::put('/purchase/{id}/cancel', [PurchaseDetailsController::class, 'cancel'])->name('purchase.cancel');
+
+    // Employee Routes
+
+    Route::get('/staff/AddEmployee', function () {
+        return view('Employee.addEmployee');
+    })->name('add.employee');
+    Route::get('/staff/Records', [EmployeeController::class, 'show'])->name('staff.record');
+    Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
+    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+
+    // ROUTE FOR DATABASE
+    // Brand routes
+    Route::get('/brands', [BrandController::class, 'index'])->name('brands');
+    Route::post('/brands', [BrandController::class, 'store'])->name('brands.store');
+    Route::put('/brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
+
+    // Category routes
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories');
+    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+
+    // Product routes
+
+    Route::get('/product/add', [ProductController::class, 'create'])->name('product.add');
+    Route::get('/products', [ProductController::class, 'index'])->name('products');
+    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+    Route::put('/products/{product}/price', [ProductStocksController::class, 'updatePrice'])->name('products.update_price');
+    Route::put('/products/{product}/update-price', [ProductController::class, 'updatePrice'])->name('products.update_price');
+
+    // ============= API ROUTES (ACCESSIBLE BY ALL AUTHENTICATED USERS) =============
+    Route::get('/api/products/recent', [ProductController::class, 'getRecentProducts'])->name('products.recent');
+    Route::get('/api/products/check-serial', [ProductController::class, 'checkSerialNumber'])->name('products.check-serial');
+    Route::get('/api/customers/search', [CustomerController::class, 'searchCustomers'])->name('customers.search');
+    Route::get('/api/customers/search', [CustomerController::class, 'search']);
+    Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber']);
+
+    // ============= END CHECKOUT API ROUTE =============
+
+    Route::get('/PointOfSale', [BrandController::class, 'posBrand'])->name('pos.itemlist');
+    // Suppliers routes
+    Route::get('/suppliers', [SuppliersController::class, 'index'])->name('suppliers');
+    Route::post('/suppliers', [SuppliersController::class, 'store'])->name('suppliers.store');
+    Route::get('/suppliers/{id}', [SuppliersController::class, 'show']);
+    Route::post('/suppliers/{id}', [SuppliersController::class, 'update']);
+    Route::post('/suppliers/{supplier}/toggle-status', [SuppliersController::class, 'toggleStatus'])->name('suppliers.toggle-status');
+
+    // Inventory fetch 
+    Route::get('/inventory', [ProductController::class, 'show'])->name('inventory'); // For inventory view
+    Route::get('/inventory/brands', [BrandController::class, 'inventoryBrand'])->name('inventory.brands'); //dropdown brands
+    Route::get('/inventory/categories', [CategoryController::class, 'inventorygetCategories'])->name('inventory.categories'); //dropdown categories
+
+    // Inventory_list fetch PRODUCTS
+    Route::get('/inventory/list', [ProductController::class, 'inventoryList'])->name('inventory.list'); //inventory list with search and sorting
+    Route::get('/inventory/list/categories', [CategoryController::class, 'inventoryListgetCategories'])->name('inventory.list.categories'); //dropdown categories
+
+    // Brand History and Category History fetch
+    Route::get('/brandcategory/list', [CategoryController::class, 'brandHistory'])->name('brandcategory.brands'); //dropdown categories
+    Route::get('/brandcategory/list', [CategoryController::class, 'categoryHistory'])->name('brandcategory.categories'); //dropdown categories
+
+    // POS BRAND DROPDOWN
+    Route::get('/PointOfSale/brand', [BrandController::class, 'posBrand'])->name('pos.brands');
+    // POS CATEGORIES DROPDOWN (JSON API)
+    Route::get('/PointOfSale/categories', [CategoryController::class, 'posCategories'])->name('pos.categories');
+    // POS PRODUCTS LIST WITH GROUPED STOCK
+
+
+    // Purchase Details Routes
+
+
+    Route::get('/purchase/create', [PurchaseDetailsController::class, 'create'])->name('purchase.create');
+    Route::post('/purchase/store', [PurchaseDetailsController::class, 'store'])->name('purchase.store');
+
+
+    Route::post('/customers', [CustomerController::class, 'store'])->name('customer.store');
+    Route::get('/CustomerRecords', [CustomerController::class, 'index'])->name('customer.records');
+    Route::get('/customers/{id}', [CustomerController::class, 'show'])->name('customers.show');
+    Route::put('/customers/{id}', [CustomerController::class, 'update'])->name('customers.update');
+    Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
+    //kani sad josh
+
+
+    // POS Routes
+    Route::get('/pos', [ProductController::class, 'posList'])->name('pos.itemlist');
+    Route::get('/pos/receipt', [CheckoutController::class, 'showReceipt'])->name('pos.purchasereceipt');
+
+    // Checkout Route
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
+    // Customer Routes
+    Route::post('/customer', [CustomerController::class, 'store'])->name('customer.store');
 });
-
-Route::get('/Dashboard', function () {
-    return view('DASHBOARD.homepage');
-})->name('dashboard');
-
-Route::get('/POS', function () {
-    return view('DASHBOARD.Sales');
-})->name('Sales');
-
-Route::get('/staff/Records', function () {
-    return view('DASHBOARD.staff_record');
-})->name('staff.record');
-
-
-
-Route::get('/tester', function () {
-    return view('tester.testscanner');
-})->name('tester.testscanner');
-
-Route::get('/brandcategory', function () {
-    return view('INVENTORY.brandcategoryHistory');
-})->name('inventory.brandcategory');
-
-// Issue Receipt for Quotation and Purchase
-Route::get('/Receipt/Purchase', function () {
-    return view('POS_SYSTEM.PurchaseReceipt');
-})->name('pos.purchasereceipt');
-
-Route::get('/Receipt/Quotation', function () {
-    return view('POS_SYSTEM.QuotationReceipt');
-})->name('pos.quotationreceipt');
-
-Route::get('/PointOfSale', [BrandController::class, 'posBrand'])->name('pos.itemlist');
-
-// POS ITEM LIST
-Route::get('/Suppliers/Create_Orders', function () {
-    return view('SUPPLIERS.suppliers_purchase');
-})->name('Supplier.CreateOrders');
-
-
-
-
-Route::get('/Stock-Out', function () {
-    return view('INVENTORY.stock_out');
-})->name('inventory.stockout');
-
-Route::get('/Total Stocks', function () {
-    return view('partials.total_stock');
-})->name('inventory.stocktotal');
-
-Route::get('/Audit', function () {
-    return view('DASHBOARD.audit');
-})->name('audit.logs');
-
-Route::get('/CustomerRecords', function () {
-    return view('DASHBOARD.Customer_record');
-})->name('customer.records');
-
-
-
-// Purchase Orders List
-Route::get('/Suppliers/List', [PurchaseDetailsController::class, 'index'])->name('suppliers.list');
-// Confirm purchase order
-Route::put('/purchase/{id}/confirm', [PurchaseDetailsController::class, 'confirm'])->name('purchase.confirm');
-Route::get('/purchase/statistics', [PurchaseDetailsController::class, 'statistics'])->name('purchase.statistics');
-Route::put('/purchase/{id}/cancel', [PurchaseDetailsController::class, 'cancel'])->name('purchase.cancel');
-//na add ni cancel purchase josh
-
-
-
-// Employee Routes
-
-Route::get('/staff/AddEmployee', function () {
-    return view('Employee.addEmployee');
-})->name('add.employee');
-Route::get('/staff/Records', [EmployeeController::class, 'show'])->name('staff.record');
-Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
-Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
-Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
-
-
-Route::get('/PointOfSale/AddCustomer', function () {
-    return view('Customer.addCustomer');
-})->name('customer.addCustomer');
-
-
-
-Route::get('/PointOfSale/purchaseFrame', function () {
-    return view('POS_SYSTEM.purchaseFrame');
-})->name('pointofsale.purchaseframe');
-
-// ROUTE FOR DATABASE
-// Brand routes
-Route::get('/brands', [BrandController::class, 'index'])->name('brands');
-Route::post('/brands', [BrandController::class, 'store'])->name('brands.store');
-Route::put('/brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
-
-// Category routes
-Route::get('/categories', [CategoryController::class, 'index'])->name('categories');
-Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
-
-// Product routes
-Route::get('/product/add', [ProductController::class, 'create'])->name('product.add');
-Route::get('/products', [ProductController::class, 'index'])->name('products');
-Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-Route::put('/products/{product}/price', [ProductStocksController::class, 'updatePrice'])->name('products.update_price');
-Route::put('/products/{product}/update-price', [ProductController::class, 'updatePrice'])->name('products.update_price');
-
-
-// ============= AUTO-SUGGESTION API ROUTE =============
-// ============= API ROUTES (ACCESSIBLE BY ALL AUTHENTICATED USERS) =============
-Route::get('/api/products/recent', [ProductController::class, 'getRecentProducts'])->name('products.recent');
-Route::get('/api/customers/search', [CustomerController::class, 'search']);
-Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber']);
-// ============= END CUSTOMER AUTOSUGGESTION API ROUTE =============
-
-
-// ============= END CHECKOUT API ROUTE =============
-
-// Suppliers routes
-Route::get('/suppliers', [SuppliersController::class, 'index'])->name('suppliers');
-Route::post('/suppliers', [SuppliersController::class, 'store'])->name('suppliers.store');
-Route::get('/suppliers/{id}', [SuppliersController::class, 'show']);
-Route::post('/suppliers/{id}', [SuppliersController::class, 'update']);
-Route::post('/suppliers/{supplier}/toggle-status', [SuppliersController::class, 'toggleStatus'])->name('suppliers.toggle-status');
-
-// Inventory fetch 
-Route::get('/inventory', [ProductController::class, 'show'])->name('inventory'); // For inventory view
-Route::get('/inventory/brands', [BrandController::class, 'inventoryBrand'])->name('inventory.brands'); //dropdown brands
-Route::get('/inventory/categories', [CategoryController::class, 'inventorygetCategories'])->name('inventory.categories'); //dropdown categories
-
-// Inventory_list fetch PRODUCTS
-Route::get('/inventory/list', [ProductController::class, 'inventoryList'])->name('inventory.list'); //inventory list with search and sorting
-Route::get('/inventory/list/categories', [CategoryController::class, 'inventoryListgetCategories'])->name('inventory.list.categories'); //dropdown categories
-
-// Brand History and Category History fetch
-Route::get('/brandcategory/list', [CategoryController::class, 'brandHistory'])->name('brandcategory.brands'); //dropdown categories
-Route::get('/brandcategory/list', [CategoryController::class, 'categoryHistory'])->name('brandcategory.categories'); //dropdown categories
-
-// POS BRAND DROPDOWN
-Route::get('/PointOfSale/brand', [BrandController::class, 'posBrand'])->name('pos.brands');
-// POS CATEGORIES DROPDOWN (JSON API)
-Route::get('/PointOfSale/categories', [CategoryController::class, 'posCategories'])->name('pos.categories');
-// POS PRODUCTS LIST WITH GROUPED STOCK
-
-
-// Purchase Details Routes
-
-
-Route::get('/purchase/create', [PurchaseDetailsController::class, 'create'])->name('purchase.create');
-Route::post('/purchase/store', [PurchaseDetailsController::class, 'store'])->name('purchase.store');
-
-
-Route::post('/customers', [CustomerController::class, 'store'])->name('customer.store');
-Route::get('/CustomerRecords', [CustomerController::class, 'index'])->name('customer.records');
-Route::get('/customers/{id}', [CustomerController::class, 'show'])->name('customers.show');
-Route::put('/customers/{id}', [CustomerController::class, 'update'])->name('customers.update');
-Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
-//kani sad josh
-
-
-// POS Routes
-Route::get('/pos', [ProductController::class, 'posList'])->name('pos.itemlist');
-Route::get('/pos/receipt', [CheckoutController::class, 'showReceipt'])->name('pos.purchasereceipt');
-
-// Checkout Route
-Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-
-// Customer Routes
-Route::post('/customer', [CustomerController::class, 'store'])->name('customer.store');
-Route::get('/api/customers/search', [CustomerController::class, 'search']);
-
-// Product search by serial number for POS
-Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber']);
-
-// LOGIN FORM
-Route::get('/LOGIN_FORM', function () {
-    return view('LOGIN_FORM.login');
-})->name('login');
-
-    // Route::post('/login', [AuthController::class, 'login']);

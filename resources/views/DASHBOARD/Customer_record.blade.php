@@ -139,18 +139,18 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Street *</label>
-                            <input type="text" id="street" name="street" required
+                            <label class="block text-sm font-medium text-gray-700">Street</label>
+                            <input type="text" id="street" name="street"
                                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Barangay *</label>
-                            <input type="text" id="brgy" name="brgy" required
+                            <label class="block text-sm font-medium text-gray-700">Barangay</label>
+                            <input type="text" id="brgy" name="brgy"
                                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">City/Province *</label>
-                            <input type="text" id="cityProvince" name="city_province" required
+                            <label class="block text-sm font-medium text-gray-700">City/Province</label>
+                            <input type="text" id="cityProvince" name="city_province"
                                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                         </div>
 
