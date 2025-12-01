@@ -14,6 +14,8 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ServicesController;
+use App\Http\Controllers\ServiceReplacementController;
 
 use Illuminate\Support\Facades\DB;
 
@@ -53,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
         // Sales Dashboard Route
         Route::get('/sales', [SalesController::class, 'index'])->name('sales.dashboard');
 
+
         Route::get('/staff/Records', function () {
             return view('DASHBOARD.staff_record');
         })->name('staff.record');
@@ -64,11 +67,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/brandcategory', function () {
             return view('INVENTORY.brandcategoryHistory');
         })->name('inventory.brandcategory');
-
-        // Issue Receipt for Quotation and Purchase
-        Route::get('/Receipt/Purchase', function () {
-            return view('POS_SYSTEM.PurchaseReceipt');
-        })->name('pos.purchasereceipt');
 
         // POS ITEM LIST
         Route::get('/Suppliers/Create_Orders', function () {
@@ -101,6 +99,42 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/PointOfSale/purchaseFrame', function () {
             return view('POS_SYSTEM.purchaseFrame');
         })->name('pointofsale.purchaseframe');
+
+        Route::get('/Service', function () {
+            return view('ServicesOrder.Services');
+        })->name('services.dashboard');
+
+        // Acknowledgement Receipt Route (view only)
+        Route::get('/acknowledgement-receipt', function () {
+            $authenticatedUser = auth()->user();
+            $preparedBy = 'N/A';
+            if ($authenticatedUser) {
+                $preparedBy = trim($authenticatedUser->first_name . ' ' .
+                    ($authenticatedUser->middle_name ? $authenticatedUser->middle_name . ' ' : '') .
+                    $authenticatedUser->last_name);
+            }
+            return view('ServicesOrder.components.AcknowledgementReceipt', compact('preparedBy'));
+        })->name('acknowledgement.receipt');
+
+        // Service Receipt Route (view only)
+        Route::get('/service-receipt', function () {
+            $authenticatedUser = auth()->user();
+            $preparedBy = 'N/A';
+            if ($authenticatedUser) {
+                $preparedBy = trim($authenticatedUser->first_name . ' ' .
+                    ($authenticatedUser->middle_name ? $authenticatedUser->middle_name . ' ' : '') .
+                    $authenticatedUser->last_name);
+            }
+            return view('ServicesOrder.components.ServiceReceipt', compact('preparedBy'));
+        })->name('service.receipt');
+
+        // Issue Receipt for Quotation and Purchase
+        Route::get('/Receipt/Purchase', function () {
+            return view('POS_SYSTEM.PurchaseReceipt');
+        })->name('pos.purchasereceipt');
+
+        // Services/Job Order Routes
+        Route::resource('services', ServicesController::class);
     });
 
     // Purchase Orders List
@@ -146,6 +180,34 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/customers/search', [CustomerController::class, 'searchCustomers'])->name('customers.search');
     Route::get('/api/customers/search', [CustomerController::class, 'search']);
     Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber']);
+
+    // API: Brands
+    Route::get('/api/brands', [BrandController::class, 'index']);
+
+    // API: Customers
+    Route::get('/api/customers', [CustomerController::class, 'getApiList']);
+
+    // API: Service Types
+    Route::get('/api/service-types', function () {
+        $types = \App\Models\ServiceType::all();
+        return response()->json($types);
+    });
+
+    // API: Service Items (distinct types from services)
+    Route::get('/api/service-items', function () {
+        $items = \App\Models\Service::distinct()->whereNotNull('type')->pluck('type')->sort()->values();
+        return response()->json($items);
+    });
+
+    // Services API routes
+    Route::get('/api/services', [ServicesController::class, 'apiList'])->name('api.services.list');
+    Route::get('/api/services/{service}', [ServicesController::class, 'show'])->name('api.services.show');
+    Route::post('/api/services', [ServicesController::class, 'store'])->name('api.services.store');
+    Route::put('/api/services/{service}', [ServicesController::class, 'update'])->name('api.services.update');
+    Route::put('/api/services/{service}/archive', [ServicesController::class, 'archive'])->name('api.services.archive');
+    Route::post('/api/service-replacements', [ServiceReplacementController::class, 'store'])->name('api.service-replacements.store');
+    Route::put('/api/service-replacements/{serviceReplacement}', [ServiceReplacementController::class, 'update'])->name('api.service-replacements.update');
+    Route::delete('/api/service-replacements/{serviceReplacement}', [ServiceReplacementController::class, 'destroy'])->name('api.service-replacements.destroy');
 
     // ============= END CHECKOUT API ROUTE =============
 

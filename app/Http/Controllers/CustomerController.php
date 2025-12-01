@@ -88,4 +88,18 @@ class CustomerController extends Controller
 
         return response()->json($customers);
     }
+
+    // API endpoint for Services module - get all customers
+    public function getApiList()
+    {
+        $customers = Customer::all()->map(function ($customer) {
+            return [
+                'id' => $customer->id,
+                'first_name' => $customer->first_name,
+                'last_name' => $customer->last_name
+            ];
+        });
+
+        return response()->json($customers);
+    }
 }

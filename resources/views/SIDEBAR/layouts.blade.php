@@ -383,8 +383,8 @@
                 <a href="{{ route('customer.records') }}" class="sidebar-item">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 
-                                                           012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
-                                                           1.79 4 4H8c0-2.21 1.79-4 4-4z" />
+                                                                                       012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
+                                                                                       1.79 4 4H8c0-2.21 1.79-4 4-4z" />
                     </svg>
                     Customer Records
                 </a>
@@ -393,8 +393,8 @@
                     class="sidebar-item w-full text-left relative group">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 
-                                                           012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
-                                                           1.79 4 4H8c0-2.21 1.79-4 4-4z" />
+                                                                                       012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
+                                                                                       1.79 4 4H8c0-2.21 1.79-4 4-4z" />
                     </svg>
                     Customer Records
                     <span
@@ -433,6 +433,22 @@
             </div>
             {{-- TOPBAR NAVIGATION --}}
             <div class="topbar-nav">
+                <!-- Services Button -->
+                <div class="relative group">
+                    <a href="{{ route('services.dashboard') }}"
+                        class="sidebar-item flex items-center justify-center w-8 h-8 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                            </path>
+                        </svg>
+                    </a>
+                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
+                        title="Services">
+                        Services
+                    </div>
+                </div>
+
                 <!-- POS Button -->
                 <div class="relative group">
                     <a href="{{ route("pos.itemlist") }}"

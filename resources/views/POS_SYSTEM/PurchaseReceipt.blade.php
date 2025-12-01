@@ -102,17 +102,17 @@
 
             <!-- Company Info and Logo -->
             <div class="flex justify-between items-start mb-8">
-                <div>
+                <div class="w-3/5">
                     <h1 class="text-2xl font-bold text-blue-700 mb-2">VANTECH COMPUTERS TRADING</h1>
                     <p class="text-sm text-gray-700">Van Bryan C. Bardillas - Sole Proprietor</p>
                     <p class="text-sm text-gray-700">Non VAT Reg. TIN 505-374240-00000</p>
                     <p class="text-sm text-gray-700">758 F Purok 3, Brgy. Mintal</p>
                     <p class="text-sm text-gray-700">Davao City, Davao del Sur, 8000</p>
                 </div>
-                <div class="text-right">
-                    <img src="{{ asset('images/logo.png') }}" class="w-40 mx-auto py-3 mb-2" />
-                    <h3 class="text-lg font-bold text-blue-700">WARRANTY RECEIPT</h3>
-                    <p class="text-sm text-gray-700 mt-2">Date: <span
+                <div class="w-2/5 flex flex-col items-end justify-end">
+                    <img src="{{ asset('images/logo.png') }}" class="w-28 h-auto mb-2" />
+                    <h3 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">WARRANTY RECEIPT</h3>
+                    <p class="text-xs text-gray-600 mt-1 text-right">Date: <span
                             class="font-semibold">{{ now()->format('m/d/Y') }}</span></p>
                 </div>
             </div>
@@ -149,12 +149,12 @@
                     </thead>
                     <tbody>
                         @php
-                            $receiptSubtotal = 0;
+$receiptSubtotal = 0;
                         @endphp
                         @if(isset($receiptData['items']) && count($receiptData['items']) > 0)
                             @foreach($receiptData['items'] as $item)
                                 @php
-                                    $receiptSubtotal += $item['subtotal'];
+        $receiptSubtotal += $item['subtotal'];
                                 @endphp
                                 <tr class="border-b border-gray-200">
                                     <td class="py-2 text-sm">{{ $item['productName'] }}</td>
