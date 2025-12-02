@@ -28,20 +28,22 @@
             transition: all 0.3s ease;
             background-color: #151F28;
             /* Custom dark background color */
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 16rem;
+            z-index: 50;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         /* For mobile screens */
         @media (max-width: 1024px) {
             .sidebar {
-                position: fixed;
-                top: 0;
                 left: -100%;
-                height: 100vh;
-                width: 250px;
-                background-color: #151F28;
-                /* Ensure consistent background on mobile */
-                z-index: 50;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             }
 
             .sidebar.open {
@@ -70,11 +72,14 @@
             display: flex;
             align-items: center;
             padding: 0.75rem 1rem;
+            margin: 0 1rem;
             color: #e5e7eb;
             /* Light text for dark background */
             text-decoration: none;
             border-radius: 0.375rem;
             transition: background-color 0.2s, color 0.2s;
+            width: calc(100% - 2rem);
+            min-height: 2.75rem;
         }
 
         .sidebar-item:hover {
@@ -93,14 +98,18 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            width: 100%;
             padding: 0.75rem 1rem;
+            margin: 0 1rem;
             color: #e5e7eb;
             /* Light text */
             text-decoration: none;
             border-radius: 0.375rem;
             transition: background-color 0.2s, color 0.2s;
             cursor: pointer;
+            width: calc(100% - 2rem);
+            min-height: 2.75rem;
+            background: none;
+            border: none;
         }
 
         .dropdown-toggle:hover {
@@ -109,23 +118,102 @@
         }
 
         .dropdown-content {
-            margin-left: 1rem;
+            margin-left: 0;
             margin-top: 0.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
         }
 
         .dropdown-item {
-            display: block;
-            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin: 0 1rem;
             color: #d1d5db;
             /* Slightly lighter for sub-items */
             text-decoration: none;
             border-radius: 0.375rem;
             transition: background-color 0.2s, color 0.2s;
+            width: calc(100% - 2rem);
+            min-height: 2.5rem;
         }
 
         .dropdown-item:hover {
             background-color: #4b5563;
             color: #ffffff;
+        }
+
+        /* Sidebar nav container */
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0.5rem 0;
+        }
+
+        .sidebar nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar nav::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .sidebar nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+
+            .sidebar-item,
+            .dropdown-toggle,
+            .dropdown-item {
+                padding: 0.65rem 0.75rem;
+                min-height: 2.5rem;
+            }
+
+            .sidebar-item,
+            .dropdown-toggle {
+                margin: 0 0.25rem;
+                width: calc(100% - 0.5rem);
+            }
+
+            .dropdown-item {
+                margin: 0 0.25rem;
+                width: calc(100% - 0.5rem);
+            }
+
+            .icon {
+                width: 1.1rem;
+                height: 1.1rem;
+                margin-right: 0.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+
+            .sidebar-item,
+            .dropdown-toggle,
+            .dropdown-item {
+                padding: 0.65rem 0.75rem;
+                min-height: 2.4rem;
+                font-size: 0.95rem;
+            }
+
+            .icon {
+                width: 1rem;
+                height: 1rem;
+                margin-right: 0.5rem;
+            }
         }
 
         .icon {
@@ -135,12 +223,67 @@
             /* Icon color to match text */
         }
 
+        /* Welcome Card Styles */
+        .welcome-card {
+            background-color: #374151;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1rem;
+            align-items: center;
+            flex-shrink: 0;
+            margin: 1rem;
+            margin-top: auto;
+        }
+
+        .welcome-card-icon {
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            flex-shrink: 0;
+        }
+
+        .welcome-card-icon svg {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .welcome-card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 0;
+        }
+
+        .welcome-card-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+
+        .welcome-card-role {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
         /* Navbar styles */
         .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
+            padding: 1rem 1.5rem;
             background-color: white;
             border-bottom: 1px solid #e5e7eb;
             width: 100%;
@@ -168,6 +311,19 @@
         /* Prevent horizontal scrolling */
         body {
             overflow-x: hidden;
+            overflow-y: auto;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Hide scrollbar while allowing scroll */
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         /* Topbar specific styles */
@@ -175,16 +331,53 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
-            padding: 0.5rem 1rem;
+            position: fixed;
+            top: 0;
+            left: 16rem;
+            right: 0;
+            padding: 0.75rem 1.5rem;
             background-color: white;
             border-bottom: 1px solid #e5e7eb;
             box-sizing: border-box;
+            z-index: 40;
+            height: 4rem;
+        }
+
+        @media (max-width: 1024px) {
+            .topbar {
+                left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+                height: auto;
+                padding: 0.75rem 1rem;
+            }
+
+            .topbar-nav {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .topbar-title {
+                margin-left: 0;
+            }
+        }
+
+        .topbar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-left: 1rem;
+            white-space: nowrap;
         }
 
         .topbar-nav {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.75rem;
             align-items: center;
             flex-wrap: nowrap;
             overflow-x: auto;
@@ -200,42 +393,41 @@
             scrollbar-width: none;
         }
 
-        .topbar-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-left: 1rem;
-            white-space: nowrap;
+        /* Content area adjustment */
+        .content-area {
+            margin-left: 16rem;
+            margin-top: 4rem;
+            overflow-y: auto;
         }
 
-        @media (max-width: 768px) {
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.75rem;
-            }
+        /* Hide scrollbar for content area */
+        .content-area::-webkit-scrollbar {
+            display: none;
+        }
 
-            .topbar-nav {
-                width: 100%;
-                justify-content: flex-start;
-            }
+        .content-area {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
 
-            .topbar-title {
+        @media (max-width: 1024px) {
+            .content-area {
                 margin-left: 0;
             }
         }
     </style>
 </head>
 
-<body class="flex min-h-screen bg-gray-50">
+<body class="min-h-screen bg-gray-50">
 
-    <div id="sidebar" class="sidebar w-64 border-r border-gray-200 p-4 lg:static lg:block">
+    <div id="sidebar" class="sidebar border-r border-gray-200">
 
         <!-- VANTECH -->
-        <div class="image-container mb-6">
-            <img src="{{ asset('images/logo.svg') }}" alt="Logo" class="w-32 mx-auto mb-6">
+        <div class="image-container p-4 flex-shrink-0">
+            <img src="{{ asset('images/logo.svg') }}" alt="Logo" class="w-32 mx-auto">
         </div>
 
-        <nav class="space-y-4">
+        <nav class="space-y-4 px-2">
             <!-- Dashboard - Available to all authenticated users -->
             <a href="{{ route('dashboard') }}" class="sidebar-item">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,7 +439,7 @@
 
             <!-- Sales - Admin Only -->
             @if(Auth::user() && Auth::user()->role === 'admin')
-                <button onclick="checkAdminAccess('{{ route('Sales') }}')" class="sidebar-item w-full text-left">
+                <button onclick="checkAdminAccess('{{ route('Sales') }}')" class="sidebar-item">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
@@ -382,9 +574,8 @@
             @if(Auth::user() && Auth::user()->role === 'admin')
                 <a href="{{ route('customer.records') }}" class="sidebar-item">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 
-                                                                                       012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
-                                                                                       1.79 4 4H8c0-2.21 1.79-4 4-4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 1.79 4 4H8c0-2.21 1.79-4 4-4z" />
                     </svg>
                     Customer Records
                 </a>
@@ -392,9 +583,8 @@
                 <button onclick="showAdminVerificationModal('{{ route('customer.records') }}')"
                     class="sidebar-item w-full text-left relative group">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 
-                                                                                       012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 
-                                                                                       1.79 4 4H8c0-2.21 1.79-4 4-4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 2h6l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h2zm3 8a3 3 0 110 6 3 3 0 010-6zm0 6c2.21 0 4 1.79 4 4H8c0-2.21 1.79-4 4-4z" />
                     </svg>
                     Customer Records
                     <span
@@ -407,7 +597,7 @@
             <form id="logoutForm" action="{{ route('logout') }}" method="POST" class="hidden">
                 @csrf
             </form>
-            <button id="logout-btn" class="sidebar-item w-full text-left">
+            <button id="logout-btn" class="sidebar-item">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
@@ -416,61 +606,82 @@
                 Logout
             </button>
         </nav>
+        <!-- Welcome Card Footer -->
+        @if(Auth::check())
+            <div class="welcome-card">
+                <div class="welcome-card-icon">
+                    @if(Auth::user()->role === 'admin')
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                    @else
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    @endif
+                </div>
+                <div class="welcome-card-content">
+                    <div class="welcome-card-name">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</div>
+                    <div class="welcome-card-role">{{ Auth::user()->role }}</div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <div id="overlay" class="overlay hidden"></div>
-    <div class="flex-1 flex flex-col">
-        <div class="topbar">
-            <div class="flex items-center">
-                <button id="menu-toggle" class="menu-toggle">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="topbar">
+        <div class="flex items-center">
+            <button id="menu-toggle" class="menu-toggle">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                    </path>
+                </svg>
+            </button>
+            @yield('btn')
+            <h1 class="topbar-title">@yield('name')</h1>
+        </div>
+        {{-- TOPBAR NAVIGATION --}}
+        <div class="topbar-nav">
+            <!-- Services Button -->
+            <div class="relative group">
+                <a href="{{ route('services.dashboard') }}"
+                    class="flex items-center justify-center w-10 h-10 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16"></path>
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                        </path>
                     </svg>
-                </button>
-                @yield('btn')
-                <h1 class="topbar-title">@yield('name')</h1>
-            </div>
-            {{-- TOPBAR NAVIGATION --}}
-            <div class="topbar-nav">
-                <!-- Services Button -->
-                <div class="relative group">
-                    <a href="{{ route('services.dashboard') }}"
-                        class="sidebar-item flex items-center justify-center w-8 h-8 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-                            </path>
-                        </svg>
-                    </a>
-                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
-                        title="Services">
-                        Services
-                    </div>
-                </div>
-
-                <!-- POS Button -->
-                <div class="relative group">
-                    <a href="{{ route("pos.itemlist") }}"
-                        class="sidebar-item flex items-center justify-center w-8 h-8 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 p-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9M9 21h6">
-                            </path>
-                        </svg>
-                    </a>
-                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
-                        title="Point of Sale">
-                        Point of Sale
-                    </div>
+                </a>
+                <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
+                    title="Services">
+                    Services
                 </div>
             </div>
 
+            <!-- POS Button -->
+            <div class="relative group">
+                <a href="{{ route("pos.itemlist") }}"
+                    class="flex items-center justify-center w-10 h-10 bg-[#46647F] hover:bg-[#3a5469] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9M9 21h6">
+                        </path>
+                    </svg>
+                </a>
+                <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
+                    title="Point of Sale">
+                    Point of Sale
+                </div>
+            </div>
         </div>
 
-        <main class="content-area flex-1 p-4 lg:p-6 overflow-auto">
-            @yield('content')
-        </main>
+    </div>
+
+    <main class="content-area p-4 lg:p-6 overflow-auto">
+        @yield('content')
+    </main>
     </div>
 
     <!-- Scripts -->

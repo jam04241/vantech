@@ -202,14 +202,14 @@
             }
 
             const html = topProducts.map(product => `
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
-                                <div class="flex-1">
-                                    <p class="font-semibold text-gray-800 text-sm">${product.name}</p>
-                                    <p class="text-xs text-gray-500">${product.price} • ${product.sold} sold</p>
-                                </div>
-                                <div class="text-lg font-bold text-indigo-600">${product.sold}</div>
-                            </div>
-                        `).join('');
+                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
+                                            <div class="flex-1">
+                                                <p class="font-semibold text-gray-800 text-sm">${product.name}</p>
+                                                <p class="text-xs text-gray-500">${product.price} • ${product.sold} sold</p>
+                                            </div>
+                                            <div class="text-lg font-bold text-indigo-600">${product.sold}</div>
+                                        </div>
+                                    `).join('');
             container.innerHTML = html;
         }
 
@@ -222,14 +222,14 @@
             }
 
             const html = lowStockItems.map(item => `
-                            <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-colors">
-                                <div class="flex-1">
-                                    <p class="font-semibold text-gray-800 text-sm">${item.name}</p>
-                                    <p class="text-xs text-yellow-600">${item.price} • ${item.left} left in stock</p>
-                                </div>
-                                <div class="text-lg font-bold text-yellow-600">${item.left}</div>
-                            </div>
-                        `).join('');
+                                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-colors">
+                                            <div class="flex-1">
+                                                <p class="font-semibold text-gray-800 text-sm">${item.name}</p>
+                                                <p class="text-xs text-yellow-600">${item.price} • ${item.left} left in stock</p>
+                                            </div>
+                                            <div class="text-lg font-bold text-yellow-600">${item.left}</div>
+                                        </div>
+                                    `).join('');
             container.innerHTML = html;
         }
 
