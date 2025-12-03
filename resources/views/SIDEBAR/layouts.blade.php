@@ -353,20 +353,22 @@
 
         @media (max-width: 768px) {
             .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.75rem;
-                height: auto;
+                flex-direction: row;
+                align-items: center;
+                gap: 0.5rem;
+                height: 4rem;
                 padding: 0.75rem 1rem;
             }
 
             .topbar-nav {
-                width: 100%;
-                justify-content: flex-start;
+                width: auto;
+                justify-content: flex-end;
+                flex-wrap: nowrap;
+                flex-shrink: 0;
             }
 
             .topbar-title {
-                margin-left: 0;
+                margin-left: 0.5rem;
             }
         }
 
@@ -384,6 +386,8 @@
             flex-wrap: nowrap;
             overflow-x: auto;
             padding: 0.25rem 0;
+            min-width: 0;
+            flex-shrink: 0;
         }
 
         .topbar-nav::-webkit-scrollbar {
@@ -415,6 +419,21 @@
         @media (max-width: 1024px) {
             .content-area {
                 margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                gap: 0.5rem;
+            }
+
+            .topbar-nav {
+                flex-wrap: nowrap;
+                gap: 0.5rem;
+            }
+
+            .topbar-nav>div {
+                flex-shrink: 0;
             }
         }
     </style>
