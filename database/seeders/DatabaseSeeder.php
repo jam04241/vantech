@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ServiceTypeSeeder::class,
             ServiceReplacementSeeder::class,
+            AuditLogSeeder::class,
         ]);
     }
 }

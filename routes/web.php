@@ -18,6 +18,7 @@ use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ServiceReplacementController;
 use App\Http\Controllers\ServiceTypeController;
 use App\Http\Controllers\StockOutController;
+use App\Http\Controllers\AuditlogController;
 
 use Illuminate\Support\Facades\DB;
 
@@ -79,9 +80,7 @@ Route::middleware(['auth'])->group(function () {
             return view('partials.total_stock');
         })->name('inventory.stocktotal');
 
-        Route::get('/Audit', function () {
-            return view('DASHBOARD.audit');
-        })->name('audit.logs');
+        Route::get('/Audit', [AuditlogController::class, 'index'])->name('audit.logs');
 
         Route::get('/CustomerRecords', function () {
             return view('DASHBOARD.Customer_record');

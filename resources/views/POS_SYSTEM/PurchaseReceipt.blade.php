@@ -208,7 +208,7 @@ $receiptSubtotal = 0;
                     <p>3. All Vantech products carry standard one (1) year warranty except:</p>
                     <p class="pl-4">Fans, Lower Brand PSU, UPS, Peripherals (Keyboard, mouse, mousepad), AVR,<br>
                         Generic/Gaming Case, Headset, Speakers, WiFi Dongle, Webcam, LAN Wire, Flash drive,<br>
-                        Software (OS, MS Office, etc</p>
+                        Software (OS, MS Office, etc).</p>
                 </div>
             </div>
 

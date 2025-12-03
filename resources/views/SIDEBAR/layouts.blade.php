@@ -536,18 +536,7 @@
                     Audit Logs
                 </a>
             @elseif(Auth::user() && Auth::user()->role === 'staff')
-                <button onclick="showAdminVerificationModal('{{ route('audit.logs') }}')"
-                    class="sidebar-item relative group">
-                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 2h6l4 4v6m-4 10H7a2 2 0 01-2-2V4a2 2 0 012-2h2m5 14a4 4 0 100-8 4 4 0 000 8zm5 5l-3.5-3.5">
-                        </path>
-                    </svg>
-                    Audit Logs
-                    <span
-                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs bg-red-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Admin
-                        Only</span>
-                </button>
+
             @endif
 
             <!-- Staff Management - Admin Only -->

@@ -1,103 +1,100 @@
 @extends('SIDEBAR.layouts')
 @section('title', 'Audit Logs')
+@section('name', 'Audit Logs')
 
 @section('content')
-    <div class="p-6">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <!-- Filters Section -->
+        <div class="mb-6 space-y-4">
+            <!-- Search Bar -->
+            <div class="flex gap-4 items-end">
+                <div class="flex-1">
+                    <label class="text-gray-600 font-medium mb-2 block">Search:</label>
+                    <input type="text" id="search-input" name="search"
+                        placeholder="Search by user name, action, module, description, or date..."
+                        hx-get="{{ route('audit.logs') }}" hx-target="#logs-table" hx-swap="outerHTML"
+                        hx-trigger="input changed delay:500ms"
+                        hx-include="[name='module'], [name='action'], [name='sortBy'], [name='sortOrder']"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value="{{ $search ?? '' }}">
+                </div>
+            </div>
 
-        <!-- PAGE HEADER -->
-        <div class="flex justify-end items-center mb-6">
-            <button
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
-                <span class="material-icons text-sm">Download</span>
-                <span>Export Logs</span>
-            </button>
-        </div>
-
-        <!-- FILTER BAR -->
-        <div class="bg-white p-5 shadow-sm border border-gray-200 rounded-xl mb-6">
-            <form class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-
-                <!-- Left side: filters -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
-                    <!-- Search -->
-                    <div class="flex flex-col">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Search</label>
-                        <input type="search"
-                            class="p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400"
-                            placeholder="Search logs...">
-                    </div>
-
-                    <!-- Date From -->
-                    <div class="flex flex-col">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Date From</label>
-                        <input type="date"
-                            class="p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400">
-                    </div>
-
-                    <!-- Date To -->
-                    <div class="flex flex-col">
-                        <label class="text-sm font-medium text-gray-700 mb-1">Date To</label>
-                        <input type="date"
-                            class="p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400">
-                    </div>
+            <!-- Filters Row -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Filter by Module -->
+                <div>
+                    <label class="text-gray-600 font-medium mb-2 block">Module:</label>
+                    <select name="module" hx-get="{{ route('audit.logs') }}" hx-target="#logs-table" hx-swap="outerHTML"
+                        hx-include="[id='search-input'], [name='action'], [name='sortBy'], [name='sortOrder']"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Modules</option>
+                        <option value="Authentication" @selected(($module ?? '') === 'Authentication')>Authentication</option>
+                        <option value="POS" @selected(($module ?? '') === 'POS')>POS</option>
+                        <option value="Inventory" @selected(($module ?? '') === 'Inventory')>Inventory</option>
+                        <option value="Services" @selected(($module ?? '') === 'Services')>Services</option>
+                        <option value="Customer" @selected(($module ?? '') === 'Customer')>Customer</option>
+                        <option value="Supplier" @selected(($module ?? '') === 'Supplier')>Supplier</option>
+                        <option value="Staff" @selected(($module ?? '') === 'Staff')>Staff</option>
+                        <option value="Admin" @selected(($module ?? '') === 'Admin')>Admin</option>
+                    </select>
                 </div>
 
-                <!-- Right side: actions -->
-                <div class="flex justify-end gap-2">
-                    <button type="reset" class="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                        Clear Filters
-                    </button>
-                    <button type="submit" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Apply Filters
-                    </button>
+                <!-- Filter by Action -->
+                <div>
+                    <label class="text-gray-600 font-medium mb-2 block">Action:</label>
+                    <select name="action" hx-get="{{ route('audit.logs') }}" hx-target="#logs-table" hx-swap="outerHTML"
+                        hx-include="[id='search-input'], [name='module'], [name='sortBy'], [name='sortOrder']"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Actions</option>
+                        <option value="CREATE" @selected(($action ?? '') === 'CREATE')>Create</option>
+                        <option value="UPDATE" @selected(($action ?? '') === 'UPDATE')>Update</option>
+                        <option value="DELETE" @selected(($action ?? '') === 'DELETE')>Delete</option>
+                        <option value="LOGIN" @selected(($action ?? '') === 'LOGIN')>Login</option>
+                        <option value="LOGOUT" @selected(($action ?? '') === 'LOGOUT')>Logout</option>
+                        <option value="VIEW" @selected(($action ?? '') === 'VIEW')>View</option>
+                    </select>
                 </div>
 
-            </form>
-        </div>
+                <!-- Sort By -->
+                <div>
+                    <label class="text-gray-600 font-medium mb-2 block">Sort By:</label>
+                    <select name="sortBy" hx-get="{{ route('audit.logs') }}" hx-target="#logs-table" hx-swap="outerHTML"
+                        hx-include="[id='search-input'], [name='module'], [name='action'], [name='sortOrder']"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="created_at" @selected(($sortBy ?? 'created_at') === 'created_at')>Date & Time</option>
+                        <option value="action" @selected(($sortBy ?? 'created_at') === 'action')>Action</option>
+                        <option value="module" @selected(($sortBy ?? 'created_at') === 'module')>Module</option>
+                    </select>
+                </div>
 
-        <!-- TABLE -->
-        <div class="bg-white shadow-sm border border-gray-200 rounded-xl p-4">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">#</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Product</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Brand</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Category</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Supplier</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Price</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Previous Stocks</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">New Stocks</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Total</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-600">Date Updated</th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="divide-y divide-gray-200">
-                        <!-- SAMPLE RECORD -->
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 text-gray-700">1</td>
-                            <td class="px-4 py-3 text-gray-700">Shampoo</td>
-                            <td class="px-4 py-3 text-gray-700">Dove</td>
-                            <td class="px-4 py-3 text-gray-700">Hair Care</td>
-                            <td class="px-4 py-3 text-gray-700">ABC Supplier</td>
-                            <td class="px-4 py-3 text-gray-700">₱150</td>
-                            <td class="px-4 py-3 text-gray-700">50</td>
-                            <td class="px-4 py-3 text-gray-700">10</td>
-                            <td class="px-4 py-3 text-gray-700">60</td>
-                            <td class="px-4 py-3">
-                                <span class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
-                                    Updated
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-gray-700">2025-11-26 10:32 AM</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- Sort Order -->
+                <div>
+                    <label class="text-gray-600 font-medium mb-2 block">Order:</label>
+                    <select name="sortOrder" hx-get="{{ route('audit.logs') }}" hx-target="#logs-table" hx-swap="outerHTML"
+                        hx-include="[id='search-input'], [name='module'], [name='action'], [name='sortBy']"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="desc" @selected(($sortOrder ?? 'desc') === 'desc')>Newest First</option>
+                        <option value="asc" @selected(($sortOrder ?? 'desc') === 'asc')>Oldest First</option>
+                    </select>
+                </div>
             </div>
         </div>
 
+        <!-- Logs Table with HTMX -->
+        <div id="logs-table"
+            hx-include="[id='search-input'], [name='module'], [name='action'], [name='sortBy'], [name='sortOrder']">
+            @include('DASHBOARD.audit-table', compact('auditLogs', 'search', 'module', 'action', 'sortBy', 'sortOrder'))
+        </div>
     </div>
+
+    <script>
+        // Add search functionality with debounce
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                // HTMX will handle the debounce via hx-trigger
+            });
+        }
+    </script>
 @endsection
