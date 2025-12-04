@@ -14,54 +14,36 @@
     }
 </style>
 @section('content_items')
-    <div class="flex items-center space-between gap-2 w-full sm:w-auto flex-1 flex-wrap">
+    <div class="flex items-center space-between gap-2 w-full sm:w-auto flex-1 flex-wrap" id="filter-container">
 
         {{-- Search Bar --}}
-        <input type="text" id="productSearch" placeholder="Search products by name, brand, or category..."
+        <input type="text" id="productSearch" name="search" value="{{ request('search') }}"
+            placeholder="Search products by name, brand, or category..." hx-get="{{ route('pos.itemlist') }}"
+            hx-trigger="input changed delay:500ms, keyup[keyCode==13]" hx-target="#products-display"
+            hx-include="#filter-container"
             class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white flex-1 min-w-64" />
 
-        {{-- Category Filter --}}
-        <select id="categoryFilter"
-            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
-            <option value="" selected hidden>Select Category</option>
-            <option value="all">All Categories</option>
-            @isset($categories)
-                @foreach ($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->category_name }}</option>
-                @endforeach
-            @endisset
-        </select>
-
         {{-- Brand Filter --}}
-        <select id="brandFilter"
+        <select id="brandFilter" name="brand" hx-get="{{ route('pos.itemlist') }}" hx-trigger="change"
+            hx-target="#products-display" hx-include="#filter-container"
             class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
-            <option value="" selected hidden>Select Brand</option>
-            <option value="all">All Brands</option>
+            <option value="" {{ request('brand') == '' ? 'selected' : '' }}>All Brands</option>
             @isset($brands)
                 @foreach ($brands as $brand)
-                    <option value="{{ $brand->id }}">{{ $brand->brand_name }}</option>
+                    <option value="{{ $brand->id }}" {{ request('brand') == $brand->id ? 'selected' : '' }}>
+                        {{ $brand->brand_name }}
+                    </option>
                 @endforeach
             @endisset
         </select>
 
         {{-- Condition Filter --}}
-        <select id="conditionFilter"
+        <select id="conditionFilter" name="condition" hx-get="{{ route('pos.itemlist') }}" hx-trigger="change"
+            hx-target="#products-display" hx-include="#filter-container"
             class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
-            <option value="" selected hidden>Select Condition</option>
-            <option value="all">All Conditions</option>
-            <option value="Brand New">Brand New</option>
-            <option value="Second Hand">Second Hand</option>
-        </select>
-
-        {{-- Sort Filter --}}
-        <select id="sortFilter"
-            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white">
-            <option value="name_asc" selected>Sort by Name (A-Z)</option>
-            <option value="name_desc">Sort by Name (Z-A)</option>
-            <option value="price_asc">Sort by Price (Low to High)</option>
-            <option value="price_desc">Sort by Price (High to Low)</option>
-            <option value="qty_asc">Sort by Stock (Low to High)</option>
-            <option value="qty_desc">Sort by Stock (High to Low)</option>
+            <option value="" {{ request('condition') == '' ? 'selected' : '' }}>All Conditions</option>
+            <option value="Brand New" {{ request('condition') == 'Brand New' ? 'selected' : '' }}>Brand New</option>
+            <option value="Second Hand" {{ request('condition') == 'Second Hand' ? 'selected' : '' }}>Second Hand</option>
         </select>
 
         <div class="gap-3">
@@ -73,8 +55,10 @@
     </div>
     <div class="flex flex-col lg:flex-row gap-6 mt-6">
 
-        <!-- LEFT SIDE: PRODUCTS DISPLAY (Included from display_productFrame) -->
-        @include('POS_SYSTEM.display_productFrame')
+        <!-- LEFT SIDE: PRODUCTS DISPLAY (Updated with HTMX target) -->
+        <div id="products-display">
+            @include('POS_SYSTEM.display_productFrame')
+        </div>
 
         <!-- RIGHT SIDE: PURCHASE ORDER FORM (Component) -->
         @include('POS_SYSTEM.purchaseFrame')
@@ -328,35 +312,35 @@
                 });
 
                 html += `
-                                            <li class="py-3 px-3 hover:bg-gray-100 transition"
-                                                data-product-id="${item.id}"
-                                                data-serial-number="${item.serialNumber}"
-                                                data-unit-price="${item.price}"
-                                                data-quantity="${item.qty}"
-                                                data-total-price="${itemSubtotal}">
-                                                <div class="grid grid-cols-12 gap-1 items-center text-xs">
-                                                    <div class="col-span-1 text-center">
-                                                        <span class="font-semibold text-gray-900">${sequenceNumber}</span>
-                                                    </div>
-                                                    <div class="col-span-3">
-                                                        <p class="font-medium text-gray-900 truncate">${item.name}</p>
-                                                        <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
-                                                    </div>
-                                                    <div class="col-span-2 text-center">
-                                                        <span class="text-gray-700 text-xs">${item.warranty}</span>
-                                                    </div>
-                                                    <div class="col-span-2 text-center">
-                                                        <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
-                                                    </div>
-                                                    <div class="col-span-3 text-right">
-                                                        <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
-                                                    </div>
-                                                    <div class="col-span-1 text-center">
-                                                        <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        `;
+                                                        <li class="py-3 px-3 hover:bg-gray-100 transition"
+                                                            data-product-id="${item.id}"
+                                                            data-serial-number="${item.serialNumber}"
+                                                            data-unit-price="${item.price}"
+                                                            data-quantity="${item.qty}"
+                                                            data-total-price="${itemSubtotal}">
+                                                            <div class="grid grid-cols-12 gap-1 items-center text-xs">
+                                                                <div class="col-span-1 text-center">
+                                                                    <span class="font-semibold text-gray-900">${sequenceNumber}</span>
+                                                                </div>
+                                                                <div class="col-span-3">
+                                                                    <p class="font-medium text-gray-900 truncate">${item.name}</p>
+                                                                    <p class="text-gray-500 text-xs">SN: ${item.serialNumber}</p>
+                                                                </div>
+                                                                <div class="col-span-2 text-center">
+                                                                    <span class="text-gray-700 text-xs">${item.warranty}</span>
+                                                                </div>
+                                                                <div class="col-span-2 text-center">
+                                                                    <span class="text-gray-700 font-semibold">₱${item.price.toFixed(2)}</span>
+                                                                </div>
+                                                                <div class="col-span-3 text-right">
+                                                                    <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
+                                                                </div>
+                                                                <div class="col-span-1 text-center">
+                                                                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    `;
             });
 
             purchaseList.innerHTML = html;
@@ -403,12 +387,10 @@
             console.log('   Discount: ₱' + discount.toFixed(2));
         }
 
-        // Event listeners for filters and search
-        document.getElementById('categoryFilter').addEventListener('change', filterProducts);
-        document.getElementById('brandFilter').addEventListener('change', filterProducts);
-        document.getElementById('conditionFilter').addEventListener('change', filterProducts);
-        document.getElementById('sortFilter').addEventListener('change', filterProducts);
-        document.getElementById('productSearch').addEventListener('input', filterProducts);
+        // Global addToCart function for product cards
+        function addToCart(id, name, price, serial, brand, category, condition) {
+            addProductToOrder(null, serial, name, price);
+        }
 
         // Customer Modal Functions
         function openAddCustomerModal() {

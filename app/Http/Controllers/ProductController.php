@@ -91,8 +91,14 @@ class ProductController extends Controller
 
     protected function applyProductFilters($query, Request $request)
     {
-        // Category filter
-        if ($request->filled('category') && $request->category !== '') {
+        // Category filter - handle multiple categories
+        if ($request->filled('categories')) {
+            $categories = $request->input('categories', []);
+            if (!empty($categories) && is_array($categories)) {
+                $query->whereIn('category_id', $categories);
+            }
+        } elseif ($request->filled('category') && $request->category !== '') {
+            // Fallback for single category (backward compatibility)
             $query->where('category_id', $request->category);
         }
 
@@ -545,17 +551,24 @@ class ProductController extends Controller
             $query = $this->applyProductSearch($query, $request->search);
         }
 
-        // Apply sorting (consistent with other methods)
-        $query = $this->applySorting($query, $request);
+        // Default sorting by product name
+        $query->orderBy('product_name', 'asc');
 
         // Get individual products - Show all available products with pagination
         $products = $query->paginate(50)->withQueryString();
 
+        $suppliers = Suppliers::where('status', 'active')->orderBy('supplier_name')->get();
+
         $data = array_merge(
             $this->loadBrands(),
             $this->loadCategories(),
-            compact('products')
+            compact('products', 'suppliers')
         );
+
+        // If HTMX request, return only the product frame partial
+        if ($request->header('HX-Request')) {
+            return view('POS_SYSTEM.display_productFrame', $data);
+        }
 
         return view('POS_SYSTEM.item_list', $data);
     }

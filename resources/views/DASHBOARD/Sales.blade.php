@@ -108,7 +108,7 @@
                     <div>
                         <p class="text-gray-600 text-sm font-medium">Profit</p>
                         <p class="text-3xl font-bold text-gray-800 mt-2" id="profit">₱0.00</p>
-                        <p class="text-green-600 text-xs mt-2">Total profit (Revenue - Good Cost)</p>
+                        <p class="text-green-600 text-xs mt-2">Total Good Cost - Total Revenue</p>
                     </div>
                     <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -648,18 +648,18 @@
                 const productName = itemMatch ? itemMatch[2] : transaction.items;
 
                 row.innerHTML = `
-                                                        <td class="px-4 py-3">#${transaction.id}</td>
-                                                        <td class="px-4 py-3">${transaction.customer_name}</td>
-                                                        <td class="px-4 py-3 font-semibold">${formatCurrency(transaction.amount)}</td>
-                                                        <td class="px-4 py-3" title="${productName}">${productName.length > 20 ? productName.substring(0, 20) + '...' : productName}</td>
-                                                        <td class="px-4 py-3 text-center font-medium">${quantity}</td>
-                                                        <td class="px-4 py-3">${transaction.date}</td>
-                                                        <td class="px-4 py-3">
-                                                            <span class="px-2 py-1 text-xs rounded-full ${getStatusClass(transaction.status)}">
-                                                                ${transaction.status}
-                                                            </span>
-                                                        </td>
-                                                    `;
+                                                                <td class="px-4 py-3">#${transaction.id}</td>
+                                                                <td class="px-4 py-3">${transaction.customer_name}</td>
+                                                                <td class="px-4 py-3 font-semibold">${formatCurrency(transaction.amount)}</td>
+                                                                <td class="px-4 py-3" title="${productName}">${productName.length > 20 ? productName.substring(0, 20) + '...' : productName}</td>
+                                                                <td class="px-4 py-3 text-center font-medium">${quantity}</td>
+                                                                <td class="px-4 py-3">${transaction.date}</td>
+                                                                <td class="px-4 py-3">
+                                                                    <span class="px-2 py-1 text-xs rounded-full ${getStatusClass(transaction.status)}">
+                                                                        ${transaction.status}
+                                                                    </span>
+                                                                </td>
+                                                            `;
                 tbody.appendChild(row);
             });
 

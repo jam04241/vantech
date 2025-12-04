@@ -174,7 +174,8 @@
                                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                     </div>
-                                    <input type="text" name="username" placeholder="Enter your username" required class="w-full pl-10 pr-4 py-3 bg-gray-800/40 border border-gray-600/50 rounded-lg 
+                                    <input type="text" name="username" placeholder="Enter your username" required
+                                        autocomplete="off" class="w-full pl-10 pr-4 py-3 bg-gray-800/40 border border-gray-600/50 rounded-lg 
                                                text-white placeholder-gray-300 focus:outline-none focus:ring-2 
                                                focus:ring-blue-400 focus:border-transparent transition duration-200
                                                backdrop-blur-sm drop-shadow font-sans">
@@ -198,7 +199,7 @@
                                         </svg>
                                     </div>
                                     <input type="password" name="password" placeholder="Enter your password" required
-                                        class="w-full pl-10 pr-4 py-3 bg-gray-800/40 border border-gray-600/50 rounded-lg 
+                                        autocomplete="off" class="w-full pl-10 pr-4 py-3 bg-gray-800/40 border border-gray-600/50 rounded-lg 
                                                text-white placeholder-gray-300 focus:outline-none focus:ring-2 
                                                focus:ring-blue-400 focus:border-transparent transition duration-200
                                                backdrop-blur-sm drop-shadow font-sans">
