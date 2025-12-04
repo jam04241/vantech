@@ -16,58 +16,116 @@
             <!-- Search Bar -->
             <div class="relative">
                 <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                <input type="text" id="searchServices" placeholder="Search services..."
-                    class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-sm">
+                <input type="text" id="searchServices" name="search" placeholder="Search services..."
+                    class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-sm"
+                    hx-get="{{ route('api.services.list') }}" hx-trigger="input changed delay:250ms, search"
+                    hx-target="#servicesContainer" hx-swap="innerHTML"
+                    hx-include="[data-status-filter]:checked, input[name='sort']" hx-indicator="#search-loading">
+                <!-- Loading indicator -->
+                <div id="search-loading" class="htmx-indicator absolute right-3 top-2.5">
+                    <svg class="animate-spin h-4 w-4 text-[#151F28]" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </div>
             </div>
 
             <!-- Filter by Status -->
             <div class="flex gap-2 flex-wrap">
-                <button
-                    class="px-3 py-1.5 bg-[#151F28] text-white rounded-full text-xs font-semibold transition hover:bg-[#0f161e]"
-                    data-filter="all">
-                    <i class="fas fa-list mr-1"></i>All
-                </button>
-                <button
-                    class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full text-xs font-semibold transition"
-                    data-filter="Pending">
-                    <i class="fas fa-clock mr-1"></i>Pending
-                </button>
-                <button
-                    class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full text-xs font-semibold transition"
-                    data-filter="In Progress">
-                    <i class="fas fa-spinner mr-1"></i>In Progress
-                </button>
-                <button
-                    class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full text-xs font-semibold transition"
-                    data-filter="Completed">
-                    <i class="fas fa-check mr-1"></i>Completed
-                </button>
-                <button
-                    class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full text-xs font-semibold transition"
-                    data-filter="On Hold">
-                    <i class="fas fa-pause mr-1"></i>On Hold
-                </button>
+                <!-- Hidden form inputs for HTMX -->
+                <input type="hidden" name="status[]" value="all" data-status-filter="all" id="status-all" checked>
+                <input type="checkbox" name="status[]" value="Pending" data-status-filter="Pending" id="status-pending"
+                    class="hidden">
+                <input type="checkbox" name="status[]" value="In Progress" data-status-filter="In Progress"
+                    id="status-in-progress" class="hidden">
+                <input type="checkbox" name="status[]" value="On Hold" data-status-filter="On Hold" id="status-on-hold"
+                    class="hidden">
+
+                <!-- Sort order hidden input -->
+                <input type="hidden" name="sort" value="newest" id="sortOrder">
+
+                <!-- Status Filter Buttons -->
+                <ul class="status-navbar flex gap-2 flex-wrap">
+                    <li value="ALL">
+                        <button type="button" onclick="clearAllStatuses()"
+                            class="status-btn px-3 py-1.5 border-2 border-[#151F28] rounded-full text-xs font-semibold text-white bg-[#151F28] hover:bg-[#0f161e] hover:text-white transition-all duration-150 ease-in-out"
+                            data-filter="all" hx-get="{{ route('api.services.list') }}" hx-trigger="click"
+                            hx-target="#servicesContainer" hx-swap="innerHTML"
+                            hx-include="input[name='search'], [data-status-filter]:checked, input[name='sort']"
+                            aria-current="true">
+                            <i class="fas fa-list mr-1"></i>ALL
+                        </button>
+                    </li>
+                    <li value="Pending">
+                        <button type="button" data-status-id="Pending" onclick="toggleStatus('Pending', this)"
+                            class="status-btn px-3 py-1.5 border-2 border-[#151F28] rounded-full text-xs font-semibold text-[#151F28] bg-white hover:bg-[#151F28] hover:text-white transition-all duration-150 ease-in-out"
+                            data-filter="Pending" hx-get="{{ route('api.services.list') }}" hx-trigger="click"
+                            hx-target="#servicesContainer" hx-swap="innerHTML"
+                            hx-include="input[name='search'], [data-status-filter]:checked, input[name='sort']"
+                            aria-current="false">
+                            <i class="fas fa-clock mr-1"></i>Pending
+                        </button>
+                    </li>
+                    <li value="In Progress">
+                        <button type="button" data-status-id="In Progress" onclick="toggleStatus('In Progress', this)"
+                            class="status-btn px-3 py-1.5 border-2 border-[#151F28] rounded-full text-xs font-semibold text-[#151F28] bg-white hover:bg-[#151F28] hover:text-white transition-all duration-150 ease-in-out"
+                            data-filter="In Progress" hx-get="{{ route('api.services.list') }}" hx-trigger="click"
+                            hx-target="#servicesContainer" hx-swap="innerHTML"
+                            hx-include="input[name='search'], [data-status-filter]:checked, input[name='sort']"
+                            aria-current="false">
+                            <i class="fas fa-spinner mr-1"></i>In Progress
+                        </button>
+                    </li>
+                    <li value="On Hold">
+                        <button type="button" data-status-id="On Hold" onclick="toggleStatus('On Hold', this)"
+                            class="status-btn px-3 py-1.5 border-2 border-[#151F28] rounded-full text-xs font-semibold text-[#151F28] bg-white hover:bg-[#151F28] hover:text-white transition-all duration-150 ease-in-out"
+                            data-filter="On Hold" hx-get="{{ route('api.services.list') }}" hx-trigger="click"
+                            hx-target="#servicesContainer" hx-swap="innerHTML"
+                            hx-include="input[name='search'], [data-status-filter]:checked, input[name='sort']"
+                            aria-current="false">
+                            <i class="fas fa-pause mr-1"></i>On Hold
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Sort Toggle Buttons (Separate UL) -->
+                <ul class="sort-navbar flex gap-2">
+                    <li>
+                        <button type="button" onclick="toggleSort('newest', this)" id="sortNewest"
+                            class="sort-btn px-3 py-1.5 border-2 border-blue-500 rounded-full text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 transition-all duration-150 ease-in-out"
+                            hx-get="{{ route('api.services.list') }}" hx-trigger="click" hx-target="#servicesContainer"
+                            hx-swap="innerHTML"
+                            hx-include="input[name='search'], [data-status-filter]:checked, input[name='sort']">
+                            <i class="fas fa-sort-amount-down mr-1"></i>Newest
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" onclick="toggleSort('oldest', this)" id="sortOldest"
+                            class="sort-btn px-3 py-1.5 border-2 border-blue-500 rounded-full text-xs font-semibold text-blue-500 bg-white hover:bg-blue-500 hover:text-white transition-all duration-150 ease-in-out"
+                            hx-get="{{ route('api.services.list') }}" hx-trigger="click" hx-target="#servicesContainer"
+                            hx-swap="innerHTML"
+                            hx-include="input[name='search'], [data-status-filter]:checked, input[name='sort']">
+                            <i class="fas fa-sort-amount-up mr-1"></i>Oldest
+                        </button>
+                    </li>
+                </ul>
             </div>
         </div>
 
         <!-- Services Container (Scrollable) -->
         <div class="flex-1 overflow-y-auto scrollbar-hide p-6">
-            <div class="grid grid-cols-2 gap-4" id="servicesContainer">
-                <!-- Empty State -->
+            <div class="grid grid-cols-2 gap-4" id="servicesContainer" hx-get="{{ route('api.services.list') }}"
+                hx-trigger="load, refreshServices from:body"
+                hx-include="[data-status-filter]:checked, input[name='sort']" hx-swap="innerHTML">
+                <!-- Loading state -->
                 <div class="col-span-2 text-center py-16 text-gray-400">
                     <div class="mb-4">
-                        <i class="fas fa-inbox text-6xl mb-4 center opacity-40"></i>
+                        <i class="fas fa-spinner fa-spin text-4xl opacity-50"></i>
                     </div>
-                    <p class="text-lg font-bold text-gray-600 mb-2">No Services Found</p>
-                    <p class="text-sm text-gray-500 mb-3">There are no active services to display</p>
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left text-xs text-blue-700">
-                        <p class="font-semibold mb-2"><i class="fas fa-lightbulb mr-2"></i>Tips:</p>
-                        <ul class="space-y-1 ml-4">
-                            <li>• Create a new service using the form on the right</li>
-                            <li>• Check your filters - "Completed" services are hidden by default</li>
-                            <li>• Try using the search bar to find existing services</li>
-                        </ul>
-                    </div>
+                    <p class="text-sm text-gray-500">Loading services...</p>
                 </div>
             </div>
         </div>
@@ -430,3 +488,151 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Multi-status selection with HTMX (similar to POS system)
+    let selectedStatuses = [];
+    let currentSort = 'newest'; // Default to newest first
+
+    // Initialize with any pre-selected status
+    document.addEventListener('DOMContentLoaded', function () {
+        // Start with 'all' selected by default
+        selectedStatuses = [];
+        console.log('Services filter loaded with multi-selection functionality');
+    });
+
+    // Toggle sort order
+    function toggleSort(sortType, buttonElement) {
+        currentSort = sortType;
+
+        // Update hidden input
+        document.getElementById('sortOrder').value = sortType;
+
+        // Update button states
+        const newestBtn = document.getElementById('sortNewest');
+        const oldestBtn = document.getElementById('sortOldest');
+
+        if (sortType === 'newest') {
+            newestBtn.classList.remove('text-blue-500', 'bg-white');
+            newestBtn.classList.add('text-white', 'bg-blue-500');
+            oldestBtn.classList.remove('text-white', 'bg-blue-500');
+            oldestBtn.classList.add('text-blue-500', 'bg-white');
+        } else {
+            oldestBtn.classList.remove('text-blue-500', 'bg-white');
+            oldestBtn.classList.add('text-white', 'bg-blue-500');
+            newestBtn.classList.remove('text-white', 'bg-blue-500');
+            newestBtn.classList.add('text-blue-500', 'bg-white');
+        }
+
+        // Update services display
+        updateServicesDisplay();
+    }
+
+    // Toggle individual status
+    function toggleStatus(statusId, buttonElement) {
+        const index = selectedStatuses.indexOf(statusId.toString());
+
+        if (index > -1) {
+            // Remove status
+            selectedStatuses.splice(index, 1);
+            buttonElement.classList.remove('bg-[#151F28]', 'text-white');
+            buttonElement.classList.add('bg-white', 'text-[#151F28]');
+            buttonElement.setAttribute('aria-current', 'false');
+
+            // Update hidden checkbox
+            const checkbox = document.querySelector(`[data-status-filter="${statusId}"]`);
+            if (checkbox && checkbox.type === 'checkbox') {
+                checkbox.removeAttribute('checked');
+            }
+        } else {
+            // Add status
+            selectedStatuses.push(statusId.toString());
+            buttonElement.classList.remove('bg-white', 'text-[#151F28]');
+            buttonElement.classList.add('bg-[#151F28]', 'text-white');
+            buttonElement.setAttribute('aria-current', 'true');
+
+            // Update hidden checkbox
+            const checkbox = document.querySelector(`[data-status-filter="${statusId}"]`);
+            if (checkbox && checkbox.type === 'checkbox') {
+                checkbox.setAttribute('checked', 'checked');
+            }
+        }
+
+        // Deactivate ALL button when any specific status is selected
+        if (selectedStatuses.length > 0) {
+            const allButton = document.querySelector('li[value="ALL"] button');
+            const allInput = document.querySelector('[data-status-filter="all"]');
+
+            allButton.classList.remove('bg-[#151F28]', 'text-white');
+            allButton.classList.add('bg-white', 'text-[#151F28]');
+            allButton.setAttribute('aria-current', 'false');
+            allInput.removeAttribute('checked');
+        }
+
+        // Update services display
+        updateServicesDisplay();
+    }
+
+    // Clear all statuses (activate ALL)
+    function clearAllStatuses() {
+        selectedStatuses = [];
+
+        // Reset all status buttons
+        document.querySelectorAll('.status-btn').forEach(btn => {
+            if (btn.getAttribute('data-status-id')) {
+                btn.classList.remove('bg-[#151F28]', 'text-white');
+                btn.classList.add('bg-white', 'text-[#151F28]');
+                btn.setAttribute('aria-current', 'false');
+            }
+        });
+
+        // Reset all checkboxes
+        document.querySelectorAll('[data-status-filter]:not([data-status-filter="all"])').forEach(checkbox => {
+            checkbox.removeAttribute('checked');
+        });
+
+        // Update ALL button state
+        const allButton = document.querySelector('li[value="ALL"] button');
+        const allInput = document.querySelector('[data-status-filter="all"]');
+
+        allButton.classList.remove('bg-white', 'text-[#151F28]');
+        allButton.classList.add('bg-[#151F28]', 'text-white');
+        allButton.setAttribute('aria-current', 'true');
+        allInput.setAttribute('checked', 'checked');
+
+        // Update services display
+        updateServicesDisplay();
+    }
+
+    // Update services display via HTMX
+    function updateServicesDisplay() {
+        const params = new URLSearchParams();
+
+        // Add search filter
+        const searchInput = document.getElementById('searchServices');
+        if (searchInput && searchInput.value) {
+            params.append('search', searchInput.value);
+        }
+
+        // Add selected statuses
+        if (selectedStatuses.length > 0) {
+            selectedStatuses.forEach(status => {
+                params.append('status[]', status);
+            });
+        } else {
+            // If no specific statuses selected, use 'all'
+            params.append('status[]', 'all');
+        }
+
+        // Add sort parameter
+        params.append('sort', currentSort);
+
+        // Make HTMX request
+        const url = '{{ route("api.services.list") }}' + (params.toString() ? '?' + params.toString() : '');
+
+        htmx.ajax('GET', url, {
+            target: '#servicesContainer',
+            swap: 'innerHTML'
+        });
+    }
+</script>

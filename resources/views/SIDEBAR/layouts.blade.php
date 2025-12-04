@@ -590,6 +590,29 @@
                 Customer Records
             </a>
 
+            <!-- Service Records - Admin Only -->
+            @if(Auth::user() && Auth::user()->role === 'admin')
+                <a href="{{ route('service.records') }}" class="sidebar-item">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5.121 17.804A7 7 0 0112 14a7 7 0 016.879 3.804M12 12a5 5 0 100-10 5 5 0 000 10z" />
+                    </svg>
+                    Service Records
+                </a>
+            @elseif(Auth::user() && Auth::user()->role === 'staff')
+                <button onclick="showAdminVerificationModal('{{ route('service.records') }}')"
+                    class="sidebar-item relative group">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5.121 17.804A7 7 0 0112 14a7 7 0 016.879 3.804M12 12a5 5 0 100-10 5 5 0 000 10z" />
+                    </svg>
+                    Service Records
+                    <span
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs bg-red-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Admin
+                        Only</span>
+                </button>
+            @endif
+
             <!-- Logout -->
             <form id="logoutForm" action="{{ route('logout') }}" method="POST" class="hidden">
                 @csrf
