@@ -129,7 +129,7 @@
 
                                             {{-- Supplier Info --}}
                                             <td class="p-4">
-                                                <div class="flex items-center justify-center">
+                                                <div class="flex items-center justify-start">
                                                     <div
                                                         class="h-14 w-14 bg-indigo-500 text-white text-lg font-bold rounded-lg flex items-center justify-center">
                                                         {{ substr($supplier->supplier_name, 0, 1) }}
@@ -146,7 +146,7 @@
 
                                             {{-- Contact --}}
                                             <td class="p-4">
-                                                <div class="flex items-center justify-center gap-3 text-md text-gray-900">
+                                                <div class="flex items-center justify-start gap-3 text-md text-gray-900">
                                                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -159,7 +159,7 @@
                                             {{-- Address --}}
                                             <td class="p-4">
                                                 @if($supplier->address)
-                                                    <div class="flex justify-center gap-3 max-w-md mx-auto">
+                                                    <div class="flex justify-start gap-3 max-w-md mx-auto">
                                                         <svg class="w-5 h-5 text-gray-500 mt-1 flex-shrink-0" fill="none" stroke="currentColor"
                                                             viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -179,12 +179,12 @@
                                             {{-- Status --}}
                                             <td class="p-4">
                                                 <span id="status-badge-{{ $supplier->id }}" class="inline-flex items-center px-4 py-2 rounded-full text-md font-medium 
-                                                                                    {{ $supplier->status === 'active'
+                                                                                                                                                {{ $supplier->status === 'active'
                             ? 'bg-green-100 text-green-800 border border-green-200'
                             : 'bg-red-100 text-red-800 border border-red-200' }}">
                                                     <span
                                                         class="w-2 h-2 rounded-full mr-2 
-                                                                                        {{ $supplier->status === 'active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                                                                                                                                                    {{ $supplier->status === 'active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
                                                     {{ ucfirst($supplier->status) }}
                                                 </span>
                                             </td>
@@ -195,7 +195,7 @@
                                                     {{-- Toggle Status Button --}}
                                                     <button id="toggle-btn-{{ $supplier->id }}"
                                                         onclick="toggleStatus('{{ $supplier->id }}')" class="p-3 rounded-lg transition duration-200 
-                                                                                    {{ $supplier->status === 'active'
+                                                                                                                                                {{ $supplier->status === 'active'
                             ? 'bg-orange-50 text-orange-600 hover:bg-orange-100'
                             : 'bg-green-50 text-green-600 hover:bg-green-100' }}"
                                                         title="{{ $supplier->status === 'active' ? 'Deactivate' : 'Activate' }}">

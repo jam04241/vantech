@@ -28,7 +28,115 @@ class ServicesController extends Controller
             'customers' => $customers,
         ]);
     }
+    public function getserviceRecords(Request $request)
+    {
+        // Base query for services with relationships
+        $query = Service::with(['customer', 'serviceType'])
+            ->whereIn('status', ['Completed', 'Pending', 'On Hold', 'In Progress']);
 
+        // Date range filtering
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59']);
+        }
+
+        // Status filtering
+        if ($request->has('status') && $request->status != 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Enhanced search filtering (all table content)
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                // Search customer names (first name, last name, full name)
+                $q->whereHas('customer', function ($customerQuery) use ($search) {
+                    $customerQuery->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                })
+                    // Search service type
+                    ->orWhereHas('serviceType', function ($serviceQuery) use ($search) {
+                        $serviceQuery->where('name', 'like', "%{$search}%");
+                    })
+                    // Search item details
+                    ->orWhere('type', 'like', "%{$search}%")
+                    ->orWhere('brand', 'like', "%{$search}%")
+                    ->orWhere('model', 'like', "%{$search}%")
+                    // Search status
+                    ->orWhere('status', 'like', "%{$search}%")
+                    // Search total price (if numeric)
+                    ->orWhere('total_price', 'like', "%{$search}%");
+            });
+        }
+
+        // Sorting
+        $sort = $request->input('sort', 'newest');
+        if ($sort === 'oldest') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Get statistics based on current filters
+        $statsQuery = Service::query()
+            ->whereIn('status', ['Completed', 'Pending', 'On Hold', 'In Progress']);
+
+        if ($startDate && $endDate) {
+            $statsQuery->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59']);
+        }
+
+        $statistics = [
+            'total' => $statsQuery->count(),
+            'pending' => $statsQuery->clone()->where('status', 'Pending')->count(),
+            'completed' => $statsQuery->clone()->where('status', 'Completed')->count(),
+            'in_progress' => $statsQuery->clone()->where('status', 'In Progress')->count(),
+            'on_hold' => $statsQuery->clone()->where('status', 'On Hold')->count(),
+            'total_revenue' => $statsQuery->clone()->where('status', 'Completed')->sum('total_price')
+        ];
+
+        // Check if this is an HTMX request
+        if ($request->header('HX-Request')) {
+            // For HTMX requests, paginate and return partial view
+            $services = $query->paginate(25);
+
+            // Prepare variables for the partial views
+            $search = $request->input('customer_search', '');
+            $status = $request->input('status_filter', '');
+            $sortOrder = $request->input('sort_order', 'newest');
+
+            // Return partial view for table only
+            if ($request->has('target') && $request->target === 'table') {
+                return view('partials.service_recordTable', compact('services'));
+            }
+
+            // Return partial view for statistics only
+            if ($request->has('target') && $request->target === 'stats') {
+                return view('partials.service_recordStats', compact('statistics', 'startDate', 'endDate'));
+            }
+
+            // Default: return table view for HTMX requests
+            return view('partials.service_recordTable', compact('services'));
+        }
+
+        // For regular requests, return full page
+        $services = $query->paginate(25);
+        $search = $request->input('customer_search', '');
+        $status = $request->input('status_filter', '');
+        $sortOrder = $request->input('sort_order', 'newest');
+
+        return view('DASHBOARD.service_record', compact(
+            'services',
+            'statistics',
+            'startDate',
+            'endDate',
+            'search',
+            'status',
+            'sortOrder'
+        ));
+    }
     /**
      * Store a newly created service in database.
      */

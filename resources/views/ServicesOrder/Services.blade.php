@@ -825,6 +825,11 @@
         function refreshServicesList() {
             // Trigger custom event to refresh services container
             document.body.dispatchEvent(new CustomEvent('refreshServices'));
+
+            // Cross-tab/window communication for real-time updates
+            if (typeof (Storage) !== "undefined") {
+                localStorage.setItem('serviceUpdated', Date.now().toString());
+            }
         }        // Save all replacements to database
         async function saveReplacements(serviceId) {
             const replacementItems = document.querySelectorAll('#replacementsList > div[data-item-name]');

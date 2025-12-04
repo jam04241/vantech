@@ -156,6 +156,12 @@ Route::middleware(['auth'])->group(function () {
         // Service audit logging routes
         Route::post('/services/{service}/log-acknowledgment', [ServicesController::class, 'logAcknowledgmentReceipt'])->name('services.log-acknowledgment');
         Route::post('/services/{service}/log-receipt', [ServicesController::class, 'logServiceReceipt'])->name('services.log-receipt');
+
+        // Service Records HTMX Routes
+        Route::get('/service-records', function () {
+            return view('DASHBOARD.service_record');
+        })->name('servicerecords.index');
+        Route::get('/service-records/data', [ServicesController::class, 'getserviceRecords'])->name('services.getserviceRecords');
     });
 
     // Purchase Orders List
