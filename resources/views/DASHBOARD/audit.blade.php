@@ -12,11 +12,24 @@
                     <input type="text" id="search-input" name="search" value="{{ $search ?? '' }}"
                         placeholder="Search by user, action, module..."
                         class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 shadow-sm"
-                        aria-label="Search audit logs">
+                        aria-label="Search audit logs" hx-get="{{ route('audit.logs') }}"
+                        hx-trigger="input changed delay:500ms, search" hx-target="#logs-table" hx-swap="outerHTML"
+                        hx-include="select[name='module'], select[name='action'], select[name='sortOrder'], input[name='date_from'], input[name='date_to']"
+                        hx-indicator="#search-loading">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <!-- Loading indicator -->
+                    <div id="search-loading" class="htmx-indicator absolute inset-y-0 right-8 pr-3 flex items-center">
+                        <svg class="animate-spin h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
                         </svg>
                     </div>
                     @if($search)
@@ -51,7 +64,7 @@
                     <label class="block text-xs font-medium text-gray-700 mb-2">Module</label>
                     <select name="module" hx-get="{{ route('audit.logs') }}" hx-trigger="change" hx-target="#logs-table"
                         hx-swap="outerHTML"
-                        hx-include="[id='search-input'], [name='action'], [name='sortBy'], [name='sortOrder']"
+                        hx-include="input[name='search'], select[name='action'], select[name='sortOrder'], input[name='date_from'], input[name='date_to']"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
                         <option value="">All Modules</option>
                         <option value="Authentication" @selected(($module ?? '') === 'Authentication')>Authentication</option>
@@ -70,7 +83,7 @@
                     <label class="block text-xs font-medium text-gray-700 mb-2">Action</label>
                     <select name="action" hx-get="{{ route('audit.logs') }}" hx-trigger="change" hx-target="#logs-table"
                         hx-swap="outerHTML"
-                        hx-include="[id='search-input'], [name='module'], [name='sortBy'], [name='sortOrder']"
+                        hx-include="input[name='search'], select[name='module'], select[name='sortOrder'], input[name='date_from'], input[name='date_to']"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
                         <option value="">All Actions</option>
                         <option value="CREATE" @selected(($action ?? '') === 'CREATE')>Create</option>
@@ -85,29 +98,33 @@
                     </select>
                 </div>
 
-                {{-- Sort By --}}
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-2">Sort By</label>
-                    <select name="sortBy" hx-get="{{ route('audit.logs') }}" hx-trigger="change" hx-target="#logs-table"
-                        hx-swap="outerHTML"
-                        hx-include="[id='search-input'], [name='module'], [name='action'], [name='sortOrder']"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
-                        <option value="created_at" @selected(($sortBy ?? 'created_at') === 'created_at')>Date & Time</option>
-                        <option value="action" @selected(($sortBy ?? 'created_at') === 'action')>Action</option>
-                        <option value="module" @selected(($sortBy ?? 'created_at') === 'module')>Module</option>
-                    </select>
-                </div>
-
                 {{-- Sort Order --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-2">Order</label>
                     <select name="sortOrder" hx-get="{{ route('audit.logs') }}" hx-trigger="change" hx-target="#logs-table"
                         hx-swap="outerHTML"
-                        hx-include="[id='search-input'], [name='module'], [name='action'], [name='sortBy']"
+                        hx-include="input[name='search'], select[name='module'], select[name='action'], input[name='date_from'], input[name='date_to']"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
                         <option value="desc" @selected(($sortOrder ?? 'desc') === 'desc')>Newest First</option>
                         <option value="asc" @selected(($sortOrder ?? 'desc') === 'asc')>Oldest First</option>
                     </select>
+                </div>
+
+                {{-- Date Range --}}
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-2">Date Range</label>
+                    <div class="flex gap-2">
+                        <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" hx-get="{{ route('audit.logs') }}"
+                            hx-trigger="change" hx-target="#logs-table" hx-swap="outerHTML"
+                            hx-include="input[name='search'], select[name='module'], select[name='action'], select[name='sortOrder'], input[name='date_to']"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+                            title="From Date">
+                        <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" hx-get="{{ route('audit.logs') }}"
+                            hx-trigger="change" hx-target="#logs-table" hx-swap="outerHTML"
+                            hx-include="input[name='search'], select[name='module'], select[name='action'], select[name='sortOrder'], input[name='date_from']"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+                            title="To Date">
+                    </div>
                 </div>
             </div>
         </div>
@@ -115,8 +132,8 @@
         {{-- Audit Logs Table in Card Container --}}
         <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
             <div id="logs-table"
-                hx-include="[id='search-input'], [name='module'], [name='action'], [name='sortBy'], [name='sortOrder']">
-                @include('DASHBOARD.audit-table', compact('auditLogs', 'search', 'module', 'action', 'sortBy', 'sortOrder'))
+                hx-include="[id='search-input'], [name='module'], [name='action'], [name='sortOrder'], [name='date_from'], [name='date_to']">
+                @include('DASHBOARD.audit-table', compact('auditLogs', 'search', 'module', 'action', 'sortOrder', 'dateFrom', 'dateTo'))
             </div>
         </div>
     </div>

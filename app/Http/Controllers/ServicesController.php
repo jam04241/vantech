@@ -187,21 +187,39 @@ class ServicesController extends Controller
         // Load customer, serviceType, and replacements relationships
         $query = Service::with(['customer', 'serviceType', 'replacements']);
 
-        // Filter by status (exclude Canceled from "All" filter)
-        if ($request->has('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
-        } else if ($request->has('status') && $request->status === 'all') {
-            // For "All" filter, exclude Canceled status
-            $query->whereNotIn('status', ['Canceled']);
+        // Handle sorting
+        $sort = $request->input('sort', 'newest');
+        if ($sort === 'oldest') {
+            $query->orderBy('created_at', 'asc'); // Oldest first
+        } else {
+            $query->orderBy('created_at', 'desc'); // Newest first (default)
         }
 
-        // Search by multiple fields
+        // Handle multi-status filtering
+        $statuses = $request->input('status', []);
+
+        if (in_array('all', $statuses) || empty($statuses)) {
+            // For "All" filter, exclude Completed and Canceled status
+            $query->whereNotIn('status', ['Completed', 'Canceled']);
+        } else {
+            // Filter by selected statuses (exclude Completed and Canceled)
+            $allowedStatuses = array_intersect($statuses, ['Pending', 'In Progress', 'On Hold']);
+            if (!empty($allowedStatuses)) {
+                $query->whereIn('status', $allowedStatuses);
+            } else {
+                // If no valid statuses, show default (exclude Completed and Canceled)
+                $query->whereNotIn('status', ['Completed', 'Canceled']);
+            }
+        }
+
+        // Search by multiple fields - including customer name, service type, type, brand, model, and description
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->whereHas('customer', function ($cq) use ($search) {
                     $cq->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%");
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
                 })
                     ->orWhereHas('serviceType', function ($cq) use ($search) {
                         $cq->where('name', 'like', "%{$search}%");
@@ -249,6 +267,67 @@ class ServicesController extends Controller
             'first_service' => $services->first(),
         ]);
 
+        // Check if this is an HTMX request
+        if ($request->header('HX-Request')) {
+            // Return HTML for HTMX
+            if ($services->isEmpty()) {
+                return response('<div class="col-span-2 text-center py-16 text-gray-400">
+                    <div class="mb-4">
+                        <i class="fas fa-search text-6xl opacity-30"></i>
+                    </div>
+                    <p class="text-lg font-bold text-gray-600 mb-2">No Services Found</p>
+                    <p class="text-sm text-gray-500">Try adjusting your search or filters</p>
+                </div>');
+            }
+
+            $html = '';
+            foreach ($services as $index => $service) {
+                $customerName = $service['customer'] ? $service['customer']['first_name'] . ' ' . $service['customer']['last_name'] : 'No Customer';
+                $serviceTypeName = $service['serviceType'] ? $service['serviceType']['name'] : 'No Service Type';
+                $statusColor = $this->getStatusColor($service['status']);
+
+                $html .= '<div class="service-card bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition cursor-pointer" data-service-id="' . $service['id'] . '">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-800 text-sm mb-1">#' . ($index + 1) . ' - ' . htmlspecialchars($serviceTypeName) . '</h3>
+                            <p class="text-xs text-gray-600 mb-1"><i class="fas fa-user mr-1"></i>' . htmlspecialchars($customerName) . '</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ' . $statusColor . '">
+                            <i class="fas fa-info-circle mr-1"></i>' . htmlspecialchars($service['status']) . '
+                        </span>
+                    </div>
+                    <div class="text-xs space-y-1 mb-2">
+                        <p class="text-gray-600"><span class="font-semibold">Type of Item:</span> ' . htmlspecialchars($service['type'] ?? '-') . '</p>
+                        <p class="text-gray-600"><span class="font-semibold">Brand:</span> ' . htmlspecialchars($service['brand'] ?? '-') . '</p>
+                        <p class="text-gray-600"><span class="font-semibold">Model:</span> ' . htmlspecialchars($service['model'] ?? '-') . '</p>
+                        <p class="text-gray-600"><span class="font-semibold">Service Fee:</span> ₱' . number_format($service['total_price'] ?? 0, 2) . '</p>
+                    </div>
+                    <p class="text-xs text-gray-700 border-t pt-2 line-clamp-2">' . htmlspecialchars($service['description'] ?? '-') . '</p>
+                </div>';
+            }
+
+            return response($html);
+        }
+
+        // Return JSON for API calls
         return response()->json($services);
+    }
+
+    private function getStatusColor($status)
+    {
+        switch ($status) {
+            case 'Pending':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'In Progress':
+                return 'bg-blue-100 text-blue-800';
+            case 'On Hold':
+                return 'bg-orange-100 text-orange-800';
+            case 'Completed':
+                return 'bg-green-100 text-green-800';
+            case 'Canceled':
+                return 'bg-red-100 text-red-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
     }
 }

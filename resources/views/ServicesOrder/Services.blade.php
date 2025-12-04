@@ -56,7 +56,6 @@
         let serviceTypesData = [];
         let brandsData = [];
         let modelsData = [];
-        let allServices = []; // Store all loaded services for search
         let replacementCount = 0;
         const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -66,8 +65,34 @@
             loadServiceTypes();
             loadBrands();
             loadServiceItems();
-            loadAllServices(); // Load all services from backend
             setupEventListeners();
+
+            // HTMX service card click event listener using event delegation
+            document.addEventListener('click', function (e) {
+                const card = e.target.closest('.service-card[data-service-id]');
+                if (card && !e.target.closest('button')) {
+                    const serviceId = card.dataset.serviceId;
+                    toggleServiceSelection(serviceId, card);
+                }
+            });
+        });
+
+        // Function to handle new HTMX loaded content
+        document.body.addEventListener('htmx:afterSwap', function (evt) {
+            // Re-apply click handlers to new service cards loaded by HTMX
+            if (evt.detail.target.id === 'servicesContainer') {
+                console.log('🔄 HTMX content loaded, service cards ready for interaction');
+                // Service card click handlers are now handled by event delegation above
+            }
+        });
+
+        // Function to handle new HTMX loaded content
+        document.body.addEventListener('htmx:afterSwap', function (evt) {
+            // Re-apply click handlers to new service cards loaded by HTMX
+            if (evt.detail.target.id === 'servicesContainer') {
+                console.log('🔄 HTMX content loaded, service cards ready for interaction');
+                // Service card click handlers are now handled by event delegation above
+            }
         });
 
         // ============ FETCH DATA FUNCTIONS ============
@@ -122,44 +147,6 @@
                     console.log('✅ Service items loaded:', modelsData.length);
                 })
                 .catch(error => console.error('❌ Error loading service items:', error));
-        }
-
-        // Load all services from backend (NEW)
-        function loadAllServices(status = 'all') {
-            const url = status === 'all'
-                ? '/api/services'
-                : `/api/services?status=${status}`;
-
-            console.log('🔄 Loading services from:', url);
-
-            fetch(url)
-                .then(response => {
-                    console.log('📥 API Response Status:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('✅ Services loaded:', { count: Array.isArray(data) ? data.length : 0, data: data });
-                    console.log('📦 First service structure:', Array.isArray(data) && data.length > 0 ? data[0] : 'No services');
-                    allServices = Array.isArray(data) ? data : []; // Store services globally
-                    console.log('📦 Global allServices updated:', allServices.length, 'services');
-                    displayServices(allServices);
-                })
-                .catch(error => {
-                    console.error('❌ Error loading services:', error);
-                    document.getElementById('servicesContainer').innerHTML = `
-                        <div class="col-span-2 text-center py-8 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-4xl mb-2"></i>
-                            <p class="font-semibold">Error Loading Services</p>
-                            <p class="text-xs mt-1">${error.message}</p>
-                            <button onclick="loadAllServices('all')" class="mt-3 px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">
-                                Retry
-                            </button>
-                        </div>
-                    `;
-                });
         }
 
         // Load services based on selected filters (for multiple status selection)
@@ -408,130 +395,8 @@
 
         // ============ EVENT LISTENERS SETUP ============
         function setupEventListeners() {
-            // Service card click handler
-            document.addEventListener('click', function (e) {
-                const card = e.target.closest('[data-service-id]');
-                if (card && !e.target.closest('button')) {
-                    const serviceId = card.dataset.serviceId;
-                    toggleServiceSelection(serviceId, card);
-                }
-            });
-
-            // Filter buttons
-            document.querySelectorAll('[data-filter]').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const filter = this.dataset.filter;
-
-                    if (filter === 'all') {
-                        // "All" button: deselect ALL other buttons and ensure "All" is selected
-                        document.querySelectorAll('[data-filter]:not([data-filter="all"])').forEach(b => {
-                            b.classList.remove('bg-[#151F28]', 'text-white');
-                            b.classList.add('bg-gray-200', 'text-gray-800');
-                        });
-                        // Ensure "All" button is properly activated
-                        this.classList.remove('bg-gray-200', 'text-gray-800');
-                        this.classList.add('bg-[#151F28]', 'text-white');
-                        loadAllServices('all');
-                    } else {
-                        // Other buttons: toggle individual status
-                        const isCurrentlyActive = this.classList.contains('bg-[#151F28]');
-
-                        if (isCurrentlyActive) {
-                            // Deactivating this button
-                            this.classList.remove('bg-[#151F28]', 'text-white');
-                            this.classList.add('bg-gray-200', 'text-gray-800');
-                        } else {
-                            // Activating this button
-                            this.classList.add('bg-[#151F28]', 'text-white');
-                            this.classList.remove('bg-gray-200', 'text-gray-800');
-                        }
-
-                        // Check if ANY status button is active
-                        const allBtn = document.querySelector('[data-filter="all"]');
-                        const anyStatusActive = document.querySelectorAll('[data-filter]:not([data-filter="all"]).bg-[#151F28]').length > 0;
-
-                        if (anyStatusActive) {
-                            // At least one status button is active: deselect "All"
-                            allBtn.classList.remove('bg-[#151F28]', 'text-white');
-                            allBtn.classList.add('bg-gray-200', 'text-gray-800');
-                            // Load combined filters
-                            loadFilteredServices();
-                        } else {
-                            // No status buttons are active: activate "All"
-                            allBtn.classList.remove('bg-gray-200', 'text-gray-800');
-                            allBtn.classList.add('bg-[#151F28]', 'text-white');
-                            loadAllServices('all');
-                        }
-                    }
-                });
-            });
-
-            // Search bar - Multi-field search
-            const searchInput = document.getElementById('searchServices');
-            if (searchInput) {
-                searchInput.addEventListener('input', debounce(function (e) {
-                    const searchTerm = e.target.value.toLowerCase().trim();
-                    console.log('🔍 Search triggered:', { searchTerm, allServicesCount: allServices.length });
-
-                    if (searchTerm.length > 0) {
-                        console.log('🔍 Searching for:', searchTerm);
-
-                        // Get current active status filter
-                        const activeStatusBtn = document.querySelector('[data-filter].bg-[#151F28]');
-                        const currentFilter = activeStatusBtn?.getAttribute('data-filter') || 'all';
-                        console.log('📊 Current filter:', currentFilter);
-
-                        // Filter from allServices based on search and status
-                        let filtered = allServices;
-                        console.log('📦 Starting with:', filtered.length, 'services');
-
-                        // Apply status filter
-                        if (currentFilter === 'all') {
-                            filtered = allServices.filter(s => !['Completed', 'Canceled'].includes(s.status));
-                        } else {
-                            filtered = allServices.filter(s => s.status === currentFilter);
-                        }
-                        console.log('📊 After status filter:', filtered.length, 'services');
-
-                        // Apply multi-field search
-                        filtered = filtered.filter(service => {
-                            const fullName = `${service.customer?.first_name || ''} ${service.customer?.last_name || ''}`.toLowerCase();
-                            const serviceType = (service.serviceType?.name || '').toLowerCase();
-                            const typeOfItem = (service.type || '').toLowerCase();
-                            const brand = (service.brand || '').toLowerCase();
-                            const model = (service.model || '').toLowerCase();
-                            const price = (service.total_price || '').toString();
-                            const description = (service.description || '').toLowerCase();
-
-                            const matches = (
-                                fullName.includes(searchTerm) ||
-                                serviceType.includes(searchTerm) ||
-                                typeOfItem.includes(searchTerm) ||
-                                brand.includes(searchTerm) ||
-                                model.includes(searchTerm) ||
-                                price.includes(searchTerm) ||
-                                description.includes(searchTerm)
-                            );
-
-                            if (matches) {
-                                console.log('✓ Match found:', { fullName, serviceType, typeOfItem });
-                            }
-
-                            return matches;
-                        });
-
-                        console.log('✅ Search results:', filtered.length);
-                        displayServices(filtered);
-                    } else {
-                        // If search is cleared, reload based on current status filter
-                        const activeStatusBtn = document.querySelector('[data-filter].bg-[#151F28]');
-                        console.log('🔄 Search cleared, reloading with filter:', activeStatusBtn?.getAttribute('data-filter'));
-                        if (activeStatusBtn) {
-                            activeStatusBtn.click();
-                        }
-                    }
-                }, 300));
-            }
+            // Note: Service card click handler is now handled by event delegation in DOMContentLoaded
+            // Note: Filter buttons and search bar now use HTMX for real-time functionality
 
             // Status change (hidden input)
             document.getElementById('status').addEventListener('change', function (e) {
@@ -941,7 +806,8 @@
                     confirmButtonColor: '#151F28'
                 }).then(() => {
                     clearServiceForm();
-                    loadAllServices('all');
+                    // Real-time update: Refresh services list via HTMX maintaining current filters
+                    refreshServicesList();
                 });
 
             } catch (error) {
@@ -955,7 +821,11 @@
             }
         }
 
-        // Save all replacements to database
+        // Function to refresh services list via HTMX (maintains current filters)
+        function refreshServicesList() {
+            // Trigger custom event to refresh services container
+            document.body.dispatchEvent(new CustomEvent('refreshServices'));
+        }        // Save all replacements to database
         async function saveReplacements(serviceId) {
             const replacementItems = document.querySelectorAll('#replacementsList > div[data-item-name]');
 
@@ -1545,7 +1415,8 @@
                     confirmButtonColor: '#151F28'
                 }).then(() => {
                     clearServiceForm();
-                    loadAllServices('all');
+                    // Real-time update: Refresh services list via HTMX maintaining current filters
+                    refreshServicesList();
                 });
 
             } catch (error) {

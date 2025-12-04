@@ -101,6 +101,11 @@ Route::middleware(['auth'])->group(function () {
             return view('ServicesOrder.Services');
         })->name('services.dashboard');
 
+        // Service Record Route
+        Route::get('/Service_Records', function () {
+            return view('DASHBOARD.service_record');
+        })->name('service.records');
+
         // Acknowledgement Receipt Route (view only)
         Route::get('/acknowledgement-receipt', function () {
             $authenticatedUser = auth()->user();

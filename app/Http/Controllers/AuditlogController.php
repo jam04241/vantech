@@ -24,8 +24,9 @@ class AuditlogController extends Controller
         $search = $request->get('search', '');
         $module = $request->get('module', '');
         $action = $request->get('action', '');
-        $sortBy = $request->get('sortBy', 'created_at');
         $sortOrder = $request->get('sortOrder', 'desc');
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
         $perPage = $request->get('perPage', 15);
 
         // Build query
@@ -45,36 +46,42 @@ class AuditlogController extends Controller
                     ->orWhere('module', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
-
-            // When doing a search, ignore the module and action filters
-            // This allows searching across all modules and actions for a specific user
-        } else {
-            // Only apply module and action filters when NOT searching
-            if (!empty($module)) {
-                $query->where('module', $module);
-            }
-
-            if (!empty($action)) {
-                $query->where('action', $action);
-            }
         }
 
-        // Apply sorting
-        if (in_array($sortBy, ['created_at', 'action', 'module'])) {
-            $query->orderBy($sortBy, $sortOrder);
-        } else {
-            $query->orderBy('created_at', 'desc');
+        // Apply module filter (works with or without search)
+        if (!empty($module)) {
+            $query->where('module', $module);
         }
+
+        // Apply action filter (works with or without search)
+        if (!empty($action)) {
+            $query->where('action', $action);
+        }
+
+        // Apply date range filter
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
+
+        if (!empty($dateFrom)) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if (!empty($dateTo)) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        // Apply sorting (always by created_at)
+        $query->orderBy('created_at', $sortOrder);
 
         // Paginate results
         $auditLogs = $query->paginate($perPage);
 
         // If HTMX request, return only table partial
         if ($request->header('HX-Request')) {
-            return view('DASHBOARD.audit-table', compact('auditLogs', 'search', 'module', 'action', 'sortBy', 'sortOrder'));
+            return view('DASHBOARD.audit-table', compact('auditLogs', 'search', 'module', 'action', 'sortOrder', 'dateFrom', 'dateTo'));
         }
 
         // Regular request, return full page
-        return view('DASHBOARD.audit', compact('auditLogs', 'search', 'module', 'action', 'sortBy', 'sortOrder'));
+        return view('DASHBOARD.audit', compact('auditLogs', 'search', 'module', 'action', 'sortOrder', 'dateFrom', 'dateTo'));
     }
 }
