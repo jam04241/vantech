@@ -114,20 +114,27 @@ class SalesController extends Controller
     /**
      * Calculate Profit (Revenue - Total Good Cost)
      * Formula: Profit = SUM(customer_purchase_orders.total_price) - SUM(purchase_details.total_price where status='Received')
+     * Note: Only calculates profit when there are received items to ensure accurate cost basis
      */
     private function getProfit($startDate, $endDate)
     {
-        // Get total revenue from customer purchase orders
-        $totalRevenue = CustomerPurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
-            ->where('status', 'Success')
-            ->sum('total_price');
-
         // Get total good cost from purchase details (only Received)
         $totalGoodCost = Purchase_Details::whereBetween('order_date', [$startDate, $endDate])
             ->where('status', 'Received')
             ->sum('total_price');
 
-        return round($totalRevenue - $totalGoodCost, 2);
+        // Only calculate profit if there are received items (cost basis exists)
+        if ($totalGoodCost > 0) {
+            // Get total revenue from customer purchase orders
+            $totalRevenue = CustomerPurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
+                ->where('status', 'Success')
+                ->sum('total_price');
+
+            return round($totalRevenue - $totalGoodCost, 2);
+        }
+
+        // Return 0 if no received items (no cost basis for profit calculation)
+        return 0;
     }
 
     /**
