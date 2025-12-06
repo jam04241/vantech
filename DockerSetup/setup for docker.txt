@@ -1,19 +1,23 @@
+# IF project clone in github
+cd .env.example .env
+php artisan key:generate
+
 # 1. Build images
->docker-compose build --no-cache
+docker-compose build --no-cache
 
 # 2. Start containers
->docker-compose up -d
+docker-compose up -d
 
 # 3. Run migrations
->docker-compose exec laravel.test php artisan migrate
+docker-compose exec laravel.test php artisan migrate
 
 # 4. Install npm packages
->docker-compose exec laravel.test npm install
+docker-compose exec laravel.test npm install
 
 # 5. Optimize Laravel
->docker-compose exec laravel.test php artisan config:cache
->docker-compose exec laravel.test php artisan route:cache
->docker-compose exec laravel.test php artisan view:cache
+docker-compose exec laravel.test php artisan config:cache
+docker-compose exec laravel.test php artisan route:cache
+docker-compose exec laravel.test php artisan view:cache
 
 # Check running containers
->docker-compose ps
+docker-compose ps
