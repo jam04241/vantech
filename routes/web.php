@@ -189,7 +189,7 @@ Route::middleware(['auth'])->group(function () {
     // ============= API ROUTES (ACCESSIBLE BY ALL AUTHENTICATED USERS) =============
     Route::get('/api/products/recent', [ProductController::class, 'getRecentProducts'])->name('products.recent');
     Route::get('/api/products/check-serial', [ProductController::class, 'checkSerialNumber'])->name('products.check-serial');
-    Route::get('/api/customers/search', [CustomerController::class, 'searchCustomers'])->name('customers.search');
+    Route::get('/api/customers/search', [CustomerController::class, 'search'])->name('api.customers.search');
     Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber']);
 
     // API: Brands

@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Product_Stocks;
 use App\Traits\LogsAuditTrail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -157,7 +158,7 @@ class CheckoutController extends Controller
         }
 
         // Get authenticated user's full name and role
-        $authenticatedUser = auth()->user();
+        $authenticatedUser = Auth::user();
         $preparedBy = 'N/A';
         $preparedByRole = 'N/A';
         if ($authenticatedUser) {

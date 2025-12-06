@@ -8,6 +8,7 @@ use App\Models\Suppliers;
 use App\Models\Bundles;
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -73,7 +74,7 @@ class PurchaseDetailsController extends Controller
     public function store(Request $request)
     {
         // STEP 0: Check Authentication
-        $user = auth()->user();
+        $user = Auth::user();
 
         if (!$user) {
             Log::warning('❌ AUTHENTICATION FAILED - User not authenticated');
@@ -157,7 +158,7 @@ class PurchaseDetailsController extends Controller
 
             // STEP 5: Handle items - support both array format and JSON string format
             $items = null;
-            
+
             if (is_array($request->items)) {
                 // Array format (middleware-friendly): items[0][bundle_name], items[1][bundle_name], etc.
                 // Laravel automatically converts form array notation to PHP array
@@ -172,7 +173,7 @@ class PurchaseDetailsController extends Controller
                     'json_length' => strlen($request->items),
                     'json_preview' => substr($request->items, 0, 100)
                 ]);
-                
+
                 $items = json_decode($request->items, true);
                 $jsonError = json_last_error_msg();
 
