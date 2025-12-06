@@ -20,13 +20,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Dashboard API Routes
-Route::prefix('dashboard')->group(function () {
+// Dashboard API Routes (accessible from web with session auth)
+Route::middleware('web')->prefix('dashboard')->group(function () {
     Route::get('/data', [DashboardController::class, 'getDashboardData']);
 });
 
-// Sales Analytics API Routes
-Route::prefix('sales')->group(function () {
+// Sales Analytics API Routes (accessible from web with session auth)
+Route::middleware('web')->prefix('sales')->group(function () {
     Route::get('/data', [SalesController::class, 'getSalesData']);
     Route::get('/summary', [SalesController::class, 'getSalesSummary']);
     Route::get('/realtime', [SalesController::class, 'getRealTimeSales']);
