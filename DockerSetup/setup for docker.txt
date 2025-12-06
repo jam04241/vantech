@@ -21,3 +21,6 @@ docker-compose exec laravel.test php artisan view:cache
 
 # Check running containers
 docker-compose ps
+
+#if need reset for permission issue
+docker-compose restart
