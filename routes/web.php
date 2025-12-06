@@ -58,11 +58,6 @@ Route::middleware(['auth'])->group(function () {
         // Sales Dashboard Route
         Route::get('/sales', [SalesController::class, 'index'])->name('sales.dashboard');
 
-
-        Route::get('/staff/Records', function () {
-            return view('DASHBOARD.staff_record');
-        })->name('staff.record');
-
         Route::get('/tester', function () {
             return view('tester.testscanner');
         })->name('tester.testscanner');
@@ -81,10 +76,6 @@ Route::middleware(['auth'])->group(function () {
         })->name('inventory.stocktotal');
 
         Route::get('/Audit', [AuditlogController::class, 'index'])->name('audit.logs');
-
-        Route::get('/CustomerRecords', function () {
-            return view('DASHBOARD.Customer_record');
-        })->name('customer.records');
     });
     // ============= STAFF AND ADMIN SHARED ROUTES =============
     Route::middleware(['staff.only'])->group(function () {
@@ -108,7 +99,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Acknowledgement Receipt Route (view only)
         Route::get('/acknowledgement-receipt', function () {
-            $authenticatedUser = auth()->user();
+            $authenticatedUser = Auth::user();
             $preparedBy = 'N/A';
             $preparedByRole = 'N/A';
             if ($authenticatedUser) {
@@ -128,7 +119,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Service Receipt Route (view only)
         Route::get('/service-receipt', function () {
-            $authenticatedUser = auth()->user();
+            $authenticatedUser = Auth::user();
             $preparedBy = 'N/A';
             $preparedByRole = 'N/A';
             if ($authenticatedUser) {
@@ -145,11 +136,6 @@ Route::middleware(['auth'])->group(function () {
             }
             return view('ServicesOrder.components.ServiceReceipt', compact('preparedBy', 'preparedByRole'));
         })->name('service.receipt');
-
-        // Issue Receipt for Quotation and Purchase
-        Route::get('/Receipt/Purchase', function () {
-            return view('POS_SYSTEM.PurchaseReceipt');
-        })->name('pos.purchasereceipt');
 
         // Services/Job Order Routes
         Route::resource('services', ServicesController::class);
@@ -199,13 +185,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::put('/products/{product}/price', [ProductStocksController::class, 'updatePrice'])->name('products.update_price');
-    Route::put('/products/{product}/update-price', [ProductController::class, 'updatePrice'])->name('products.update_price');
 
     // ============= API ROUTES (ACCESSIBLE BY ALL AUTHENTICATED USERS) =============
     Route::get('/api/products/recent', [ProductController::class, 'getRecentProducts'])->name('products.recent');
     Route::get('/api/products/check-serial', [ProductController::class, 'checkSerialNumber'])->name('products.check-serial');
     Route::get('/api/customers/search', [CustomerController::class, 'searchCustomers'])->name('customers.search');
-    Route::get('/api/customers/search', [CustomerController::class, 'search']);
     Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber']);
 
     // API: Brands
@@ -237,7 +221,6 @@ Route::middleware(['auth'])->group(function () {
 
     // ============= END CHECKOUT API ROUTE =============
 
-    Route::get('/PointOfSale', [BrandController::class, 'posBrand'])->name('pos.itemlist');
     // Suppliers routes
     Route::get('/suppliers', [SuppliersController::class, 'index'])->name('suppliers');
     Route::post('/suppliers', [SuppliersController::class, 'store'])->name('suppliers.store');
@@ -258,8 +241,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/inventory/stock-out', [StockOutController::class, 'index'])->name('inventory.stock-out');
 
     // Brand History and Category History fetch
-    Route::get('/brandcategory/list', [CategoryController::class, 'brandHistory'])->name('brandcategory.brands'); //dropdown categories
-    Route::get('/brandcategory/list', [CategoryController::class, 'categoryHistory'])->name('brandcategory.categories'); //dropdown categories
+    Route::get('/brandcategory/brands', [CategoryController::class, 'brandHistory'])->name('brandcategory.brands');
+    Route::get('/brandcategory/categories', [CategoryController::class, 'categoryHistory'])->name('brandcategory.categories');
 
     // POS BRAND DROPDOWN
     Route::get('/PointOfSale/brand', [BrandController::class, 'posBrand'])->name('pos.brands');
@@ -289,7 +272,4 @@ Route::middleware(['auth'])->group(function () {
 
     // Checkout Route
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-
-    // Customer Routes
-    Route::post('/customer', [CustomerController::class, 'store'])->name('customer.store');
 });

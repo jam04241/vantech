@@ -717,6 +717,8 @@
 
     <!-- Scripts -->
     <script>
+
+
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
         const menuToggle = document.getElementById('menu-toggle');

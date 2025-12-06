@@ -179,12 +179,12 @@
                                             {{-- Status --}}
                                             <td class="p-4">
                                                 <span id="status-badge-{{ $supplier->id }}" class="inline-flex items-center px-4 py-2 rounded-full text-md font-medium 
-                                                                                                                                                {{ $supplier->status === 'active'
+                                                                                                                                                                                                                                {{ $supplier->status === 'active'
                             ? 'bg-green-100 text-green-800 border border-green-200'
                             : 'bg-red-100 text-red-800 border border-red-200' }}">
                                                     <span
                                                         class="w-2 h-2 rounded-full mr-2 
-                                                                                                                                                    {{ $supplier->status === 'active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                                                                                                                                                                                                                                    {{ $supplier->status === 'active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
                                                     {{ ucfirst($supplier->status) }}
                                                 </span>
                                             </td>
@@ -195,7 +195,7 @@
                                                     {{-- Toggle Status Button --}}
                                                     <button id="toggle-btn-{{ $supplier->id }}"
                                                         onclick="toggleStatus('{{ $supplier->id }}')" class="p-3 rounded-lg transition duration-200 
-                                                                                                                                                {{ $supplier->status === 'active'
+                                                                                                                                                                                                                                {{ $supplier->status === 'active'
                             ? 'bg-orange-50 text-orange-600 hover:bg-orange-100'
                             : 'bg-green-50 text-green-600 hover:bg-green-100' }}"
                                                         title="{{ $supplier->status === 'active' ? 'Deactivate' : 'Activate' }}">
@@ -562,6 +562,11 @@
     </style>
 
     <script>
+        // HTMX Performance Configuration
+        htmx.config.timeout = 10000;
+        htmx.config.defaultSwapDelay = 100;
+        htmx.config.defaultSettleDelay = 100;
+
         // Modal elements
         const supplierModal = document.getElementById('supplierModal');
         const editSupplierModal = document.getElementById('editSupplierModal');

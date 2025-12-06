@@ -206,72 +206,78 @@
 
     {{-- Include HTMX --}}
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    @push('scripts')
+        <script>
+            // HTMX Performance Configuration
+            htmx.config.timeout = 10000;
+            htmx.config.defaultSwapDelay = 100;
+            htmx.config.defaultSettleDelay = 100;
 
-    <script>
-        // Enable debugging for real-time updates
-        const DEBUG_REALTIME = true;
+            // Enable debugging for real-time updates
+            const DEBUG_REALTIME = true;
 
-        function debugLog(message, data = null) {
-            if (DEBUG_REALTIME) {
-                console.log(`🔄 [Service Records] ${message}`, data || '');
+            function debugLog(message, data = null) {
+                if (DEBUG_REALTIME) {
+                    console.log(`🔄 [Service Records] ${message}`, data || '');
+                }
             }
-        }
 
-        // Listen for filter changes to refresh stats
-        document.addEventListener('htmx:afterRequest', function (evt) {
-            if (evt.detail.target.id === 'service-records-table') {
-                debugLog('Service records table updated via HTMX - triggering stats refresh');
-                document.body.dispatchEvent(new CustomEvent('refreshStats'));
-            }
-        });
-
-        // Listen for service updates from CardServices component
-        document.addEventListener('refreshServices', function (evt) {
-            debugLog('Received refreshServices event from CardServices - updating table and stats');
-            // Refresh the service records table
-            document.body.dispatchEvent(new CustomEvent('refreshServiceRecords'));
-            // Refresh the statistics cards  
-            document.body.dispatchEvent(new CustomEvent('refreshStats'));
-        });
-
-        // Listen for service record updates and propagate to other components
-        document.addEventListener('htmx:afterRequest', function (evt) {
-            // If service records table was updated, notify other components
-            if (evt.detail.target.id === 'service-records-table' ||
-                evt.detail.target.id === 'statistics-cards') {
-                debugLog('Service records/stats updated - broadcasting refresh events to other components');
-                // Notify CardServices component if it exists on the same page
-                document.body.dispatchEvent(new CustomEvent('refreshServices'));
-            }
-        });
-
-        // Cross-tab/window communication for real-time updates
-        if (typeof (Storage) !== "undefined") {
-            window.addEventListener('storage', function (e) {
-                if (e.key === 'serviceUpdated') {
-                    debugLog('Service updated in another tab/window - refreshing data');
-                    document.body.dispatchEvent(new CustomEvent('refreshServiceRecords'));
+            // Listen for filter changes to refresh stats
+            document.addEventListener('htmx:afterRequest', function (evt) {
+                if (evt.detail.target.id === 'service-records-table') {
+                    debugLog('Service records table updated via HTMX - triggering stats refresh');
                     document.body.dispatchEvent(new CustomEvent('refreshStats'));
-                    // Clear the storage event
-                    localStorage.removeItem('serviceUpdated');
                 }
             });
-        }
 
-        // Global refresh function for manual triggers
-        window.refreshServiceRecords = function () {
-            debugLog('Manual refresh triggered via window.refreshServiceRecords()');
-            document.body.dispatchEvent(new CustomEvent('refreshServiceRecords'));
-            document.body.dispatchEvent(new CustomEvent('refreshStats'));
-        };
+            // Listen for service updates from CardServices component
+            document.addEventListener('refreshServices', function (evt) {
+                debugLog('Received refreshServices event from CardServices - updating table and stats');
+                // Refresh the service records table
+                document.body.dispatchEvent(new CustomEvent('refreshServiceRecords'));
+                // Refresh the statistics cards  
+                document.body.dispatchEvent(new CustomEvent('refreshStats'));
+            });
 
-        // Test function to verify real-time updates are working
-        window.testRealTimeUpdates = function () {
-            debugLog('Testing real-time updates...');
-            window.refreshServiceRecords();
-            return 'Test completed - check console for debug messages';
-        };
+            // Listen for service record updates and propagate to other components
+            document.addEventListener('htmx:afterRequest', function (evt) {
+                // If service records table was updated, notify other components
+                if (evt.detail.target.id === 'service-records-table' ||
+                    evt.detail.target.id === 'statistics-cards') {
+                    debugLog('Service records/stats updated - broadcasting refresh events to other components');
+                    // Notify CardServices component if it exists on the same page
+                    document.body.dispatchEvent(new CustomEvent('refreshServices'));
+                }
+            });
 
-        debugLog('Service Records real-time system initialized successfully');
-    </script>
+            // Cross-tab/window communication for real-time updates
+            if (typeof (Storage) !== "undefined") {
+                window.addEventListener('storage', function (e) {
+                    if (e.key === 'serviceUpdated') {
+                        debugLog('Service updated in another tab/window - refreshing data');
+                        document.body.dispatchEvent(new CustomEvent('refreshServiceRecords'));
+                        document.body.dispatchEvent(new CustomEvent('refreshStats'));
+                        // Clear the storage event
+                        localStorage.removeItem('serviceUpdated');
+                    }
+                });
+            }
+
+            // Global refresh function for manual triggers
+            window.refreshServiceRecords = function () {
+                debugLog('Manual refresh triggered via window.refreshServiceRecords()');
+                document.body.dispatchEvent(new CustomEvent('refreshServiceRecords'));
+                document.body.dispatchEvent(new CustomEvent('refreshStats'));
+            };
+
+            // Test function to verify real-time updates are working
+            window.testRealTimeUpdates = function () {
+                debugLog('Testing real-time updates...');
+                window.refreshServiceRecords();
+                return 'Test completed - check console for debug messages';
+            };
+
+            debugLog('Service Records real-time system initialized successfully');
+        </script>
+    @endpush
 @endsection

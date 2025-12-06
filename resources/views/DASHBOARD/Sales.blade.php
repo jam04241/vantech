@@ -648,6 +648,7 @@
                 const productName = itemMatch ? itemMatch[2] : transaction.items;
 
                 row.innerHTML = `
+<<<<<<< Updated upstream
                                                                         <td class="px-4 py-3">#${transaction.id}</td>
                                                                         <td class="px-4 py-3">${transaction.customer_name}</td>
                                                                         <td class="px-4 py-3 font-semibold">${formatCurrency(transaction.amount)}</td>
@@ -660,6 +661,20 @@
                                                                             </span>
                                                                         </td>
                                                                     `;
+=======
+                                                                                <td class="px-4 py-3">#${transaction.id}</td>
+                                                                                <td class="px-4 py-3">${transaction.customer_name}</td>
+                                                                                <td class="px-4 py-3 font-semibold">${formatCurrency(transaction.amount)}</td>
+                                                                                <td class="px-4 py-3" title="${productName}">${productName.length > 20 ? productName.substring(0, 20) + '...' : productName}</td>
+                                                                                <td class="px-4 py-3 text-center font-medium">${quantity}</td>
+                                                                                <td class="px-4 py-3">${transaction.date}</td>
+                                                                                <td class="px-4 py-3">
+                                                                                    <span class="px-2 py-1 text-xs rounded-full ${getStatusClass(transaction.status)}">
+                                                                                        ${transaction.status}
+                                                                                    </span>
+                                                                                </td>
+                                                                            `;
+>>>>>>> Stashed changes
                 tbody.appendChild(row);
             });
 

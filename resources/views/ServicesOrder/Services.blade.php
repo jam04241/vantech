@@ -50,6 +50,12 @@
 
     <!-- Scripts -->
     <script>
+
+        // HTMX Performance Configuration
+        htmx.config.timeout = 10000;
+        htmx.config.defaultSwapDelay = 100;
+        htmx.config.defaultSettleDelay = 100;
+
         let selectedServiceId = null;
         let selectedServiceData = null;
         let customersData = [];
