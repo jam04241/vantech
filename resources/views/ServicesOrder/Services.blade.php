@@ -695,6 +695,25 @@
             document.getElementById('status').value = data.status || '';
             document.getElementById('totalPrice').value = data.total_price || '';
 
+            // ✅ Make specific fields read-only in Progress Service mode
+            document.getElementById('customerName').setAttribute('readonly', true);
+            document.getElementById('customerName').classList.add('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('serviceType').setAttribute('disabled', true);
+            document.getElementById('serviceType').classList.add('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('type').setAttribute('readonly', true);
+            document.getElementById('type').classList.add('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('brand').setAttribute('readonly', true);
+            document.getElementById('brand').classList.add('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('model').setAttribute('readonly', true);
+            document.getElementById('model').classList.add('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('dateIn').setAttribute('readonly', true);
+            document.getElementById('dateIn').classList.add('bg-gray-100', 'cursor-not-allowed');
+
             document.getElementById('formTitle').innerHTML = '<i class="fas fa-pencil-alt"></i> Progress Service';
             document.getElementById('deleteBtn').style.display = 'block';
             document.getElementById('saveBtn').style.display = 'flex';
@@ -728,6 +747,29 @@
             document.getElementById('replacementsList').innerHTML = '';
             replacementCount = 0;
             selectedServiceData = null;
+
+            // ✅ Set current date for Date In field
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateIn').value = today;
+            
+            // ✅ Remove readonly attributes when creating new service
+            document.getElementById('customerName').removeAttribute('readonly');
+            document.getElementById('customerName').classList.remove('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('serviceType').removeAttribute('disabled');
+            document.getElementById('serviceType').classList.remove('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('type').removeAttribute('readonly');
+            document.getElementById('type').classList.remove('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('brand').removeAttribute('readonly');
+            document.getElementById('brand').classList.remove('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('model').removeAttribute('readonly');
+            document.getElementById('model').classList.remove('bg-gray-100', 'cursor-not-allowed');
+            
+            document.getElementById('dateIn').removeAttribute('readonly');
+            document.getElementById('dateIn').classList.remove('bg-gray-100', 'cursor-not-allowed');
         }
 
         function toggleReceiptButtons(status) {
@@ -1015,26 +1057,26 @@
                 <div class="p-3 space-y-2 text-xs">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <p class="font-semibold text-gray-700 mb-0.5">Item to Replace</p>
-                            <p class="text-gray-800 font-semibold">${itemName}</p>
+                            <p class="font-bold text-gray-700 mb-0.5">Item to Replace</p>
+                            <p class="text-gray-800">${itemName}</p>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-700 mb-0.5">New Item</p>
-                            <p class="text-gray-800 font-semibold">${newItem || '-'}</p>
+                            <p class="font-bold text-gray-700 mb-0.5">New Item</p>
+                            <p class="text-gray-800">${newItem || '-'}</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <p class="font-semibold text-gray-700 mb-0.5">Condition</p>
+                            <p class="font-bold text-gray-700 mb-0.5">Condition</p>
                             <p class="text-gray-600">${oldCondition || '-'}</p>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-700 mb-0.5">Warranty</p>
+                            <p class="font-bold text-gray-700 mb-0.5">Warranty</p>
                             <p class="text-gray-600">${warranty || '-'}</p>
                         </div>
                     </div>
                     <div>
-                        <p class="font-semibold text-gray-700 mb-0.5">Price</p>
+                        <p class="font-bold text-gray-700 mb-0.5">Price</p>
                         <p class="text-gray-800 font-semibold">₱${parseFloat(newPrice || 0).toFixed(2)}</p>
                     </div>
                 </div>
