@@ -34,8 +34,8 @@ Route::middleware('web')->prefix('sales')->group(function () {
 });
 
 // DR Transaction API Routes (public API access)
-Route::prefix('dr')->group(function () {
-    Route::get('/next-number', [DrTransactionController::class, 'getNextDRNumber']);
+Route::middleware('web')->prefix('dr')->group(function () {
+    Route::get('/next-number', [DRTransactionController::class, 'getNextDRNumber']);
 });
 
 // Test endpoints for debugging
