@@ -292,6 +292,13 @@ class ServicesController extends Controller
      */
     public function apiList(Request $request)
     {
+        Log::info('🔍 API Services List Called', [
+            'is_htmx' => $request->header('HX-Request') ? 'yes' : 'no',
+            'status_filter' => $request->input('status', []),
+            'sort' => $request->input('sort', 'newest'),
+            'search' => $request->input('search', ''),
+        ]);
+
         // Load customer, serviceType, and replacements relationships
         $query = Service::with(['customer', 'serviceType', 'replacements']);
 
@@ -377,44 +384,25 @@ class ServicesController extends Controller
 
         // Check if this is an HTMX request
         if ($request->header('HX-Request')) {
-            // Return HTML for HTMX
-            if ($services->isEmpty()) {
-                return response('<div class="col-span-2 text-center py-16 text-gray-400">
-                    <div class="mb-4">
-                        <i class="fas fa-search text-6xl opacity-30"></i>
-                    </div>
-                    <p class="text-lg font-bold text-gray-600 mb-2">No Services Found</p>
-                    <p class="text-sm text-gray-500">Try adjusting your search or filters</p>
-                </div>');
-            }
+            // Convert mapped array back to collection with objects for Blade compatibility
+            $servicesCollection = collect($services)->map(function ($serviceArray) {
+                return (object) [
+                    'id' => $serviceArray['id'],
+                    'customer' => $serviceArray['customer'] ? (object) $serviceArray['customer'] : null,
+                    'serviceType' => $serviceArray['serviceType'] ? (object) $serviceArray['serviceType'] : null,
+                    'type' => $serviceArray['type'],
+                    'brand' => $serviceArray['brand'],
+                    'model' => $serviceArray['model'],
+                    'description' => $serviceArray['description'],
+                    'status' => $serviceArray['status'],
+                    'total_price' => $serviceArray['total_price'],
+                ];
+            });
 
-            $html = '';
-            foreach ($services as $index => $service) {
-                $customerName = $service['customer'] ? $service['customer']['first_name'] . ' ' . $service['customer']['last_name'] : 'No Customer';
-                $serviceTypeName = $service['serviceType'] ? $service['serviceType']['name'] : 'No Service Type';
-                $statusColor = $this->getStatusColor($service['status']);
-
-                $html .= '<div class="service-card bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition cursor-pointer" data-service-id="' . $service['id'] . '">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <h3 class="font-bold text-gray-800 text-sm mb-1">#' . ($index + 1) . ' - ' . htmlspecialchars($serviceTypeName) . '</h3>
-                            <p class="text-xs text-gray-600 mb-1"><i class="fas fa-user mr-1"></i>' . htmlspecialchars($customerName) . '</p>
-                        </div>
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full ' . $statusColor . '">
-                            <i class="fas fa-info-circle mr-1"></i>' . htmlspecialchars($service['status']) . '
-                        </span>
-                    </div>
-                    <div class="text-xs space-y-1 mb-2">
-                        <p class="text-gray-600"><span class="font-semibold">Type of Item:</span> ' . htmlspecialchars($service['type'] ?? '-') . '</p>
-                        <p class="text-gray-600"><span class="font-semibold">Brand:</span> ' . htmlspecialchars($service['brand'] ?? '-') . '</p>
-                        <p class="text-gray-600"><span class="font-semibold">Model:</span> ' . htmlspecialchars($service['model'] ?? '-') . '</p>
-                        <p class="text-gray-600"><span class="font-semibold">Service Fee:</span> ₱' . number_format($service['total_price'] ?? 0, 2) . '</p>
-                    </div>
-                    <p class="text-xs text-gray-700 border-t pt-2 line-clamp-2">' . htmlspecialchars($service['description'] ?? '-') . '</p>
-                </div>';
-            }
-
-            return response($html);
+            // Return Blade partial for HTMX
+            return view('ServicesOrder.partials.ServiceCards', [
+                'services' => $servicesCollection
+            ]);
         }
 
         // Return JSON for API calls

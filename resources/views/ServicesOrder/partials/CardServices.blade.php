@@ -444,14 +444,14 @@
                 <!-- Item to Replace -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Item *</label>
-                    <input type="text" id="itemName" placeholder="Hard Drive"
+                    <input type="text" id="itemName" placeholder="eg. RTX 3060 8GB"
                         class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-xs">
                 </div>
 
                 <!-- Old Item Condition -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Condition</label>
-                    <input type="text" id="oldCondition" placeholder="Damaged"
+                    <input type="text" id="oldCondition" placeholder="eg. Damaged"
                         class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-xs">
                 </div>
             </div>
@@ -461,7 +461,7 @@
                 <!-- New Item -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">New Item</label>
-                    <input type="text" id="newItem" placeholder="1TB SSD"
+                    <input type="text" id="newItem" placeholder="eg. 1TB SSD"
                         class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-xs">
                 </div>
 
@@ -476,9 +476,16 @@
                 <!-- Warranty -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Warranty</label>
-                    <input type="text" id="warranty" placeholder="1 Year"
-                        class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-xs">
-                </div>
+                    <select type="text" id="warranty" placeholder="1 Year" class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-xs">
+                        <option value="" selected hidden>Select Warranty</option>
+                        <option value="3 days">3 days</option>
+                        <option value="7 days">7 days</option>
+                        <option value="10 days">10 days</option>
+                        <option value="15 days">15 days</option>
+                        <option value="30 days">30 days</option>
+                        <option value="1 year">1 year</option>
+                    </select>
+              </div>
             </div>
 
             <!-- Replacements List - Scrollable Container -->

@@ -215,7 +215,7 @@
             <div class="flex justify-between mt-6 pt-3 border-t border-gray-300">
                 <div>
                     <p class="text-sm mb-8">Received by:</p>
-                    <div class="w-24 border-t border-gray-400"></div>
+                    <div class="w-24 border-t border-gray-600"></div>
                     <p class="text-sm text-gray-600 mt-0.5">Customer Signature</p>
                 </div>
                 <div class="text-right">

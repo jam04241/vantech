@@ -1,0 +1,226 @@
+======================================
+Laravel Docker Setup Commands
+======================================
+
+# Docker Commands Reference for Laravel
+
+## 🚀 Starting & Stopping
+
+```bash
+# Start all containers
+docker compose up -d
+
+# Stop all containers
+docker compose down
+
+# Restart containers
+docker compose restart
+
+# View container status
+docker compose ps
+```
+
+## 🔧 Common Laravel Commands
+
+```bash
+# Run artisan commands
+docker compose exec laravel.test php artisan migrate
+docker compose exec laravel.test php artisan db:seed
+docker compose exec laravel.test php artisan cache:clear
+docker compose exec laravel.test php artisan config:clear
+docker compose exec laravel.test php artisan route:list
+
+# Run migrations
+docker compose exec laravel.test php artisan migrate
+docker compose exec laravel.test php artisan migrate:fresh --seed
+
+# Access Laravel Tinker
+docker compose exec laravel.test php artisan tinker
+
+# Queue workers
+docker compose exec laravel.test php artisan queue:work
+```
+
+## 📦 Composer & NPM
+
+```bash
+# Composer commands
+docker compose exec laravel.test composer install
+docker compose exec laravel.test composer update
+docker compose exec laravel.test composer require package-name
+
+# NPM commands (run on host, not in container)
+npm install
+npm run dev
+npm run build
+```
+
+## 🗄️ Database Commands
+
+```bash
+# Access MySQL
+docker compose exec mysql mysql -u sail -ppassword vantechdb
+
+# Backup database
+docker compose exec mysql mysqldump -u sail -ppassword vantechdb > backup.sql
+
+# Restore database
+docker compose exec -T mysql mysql -u sail -ppassword vantechdb < backup.sql
+```
+
+## 🐛 Debugging & Logs
+
+```bash
+# View all container logs
+docker compose logs -f
+
+# View specific container logs
+docker compose logs -f laravel.test
+docker compose logs -f mysql
+docker compose logs -f redis
+
+# Access container shell
+docker compose exec laravel.test bash
+
+# Check Laravel logs
+docker compose exec laravel.test tail -f storage/logs/laravel.log
+```
+
+## 🔐 Permission Issues
+
+```bash
+# Fix storage permissions (if you get permission errors)
+./fix-permissions.sh
+
+# Or manually:
+docker compose exec laravel.test chmod -R 775 storage bootstrap/cache
+docker compose exec laravel.test chown -R www-data:www-data storage bootstrap/cache
+```
+
+## 🔄 Reset Everything
+
+```bash
+# Stop and remove all containers + volumes (CAUTION: Deletes database!)
+docker compose down -v
+
+# Rebuild containers from scratch
+docker compose build --no-cache
+docker compose up -d
+
+# Fresh installation
+docker compose down -v
+docker compose up -d
+docker compose exec laravel.test composer install
+docker compose exec laravel.test php artisan key:generate
+docker compose exec laravel.test php artisan migrate:fresh --seed
+npm install
+npm run build
+```
+
+## 📊 Container Management
+
+```bash
+# View resource usage
+docker stats
+
+# Remove unused images
+docker image prune
+
+# Remove all stopped containers
+docker container prune
+
+# Check disk usage
+docker system df
+```
+
+======================================
+Your app should be running at:
+http://localhost:8000
+
+Database (from Windows):
+Host: localhost
+Port: 3307
+User: sail
+Password: password
+Database: vantechdb
+======================================
+
+## 🌐 Access Points
+
+- **Laravel App**: http://localhost:8000
+- **Vite Dev Server**: http://localhost:5173
+- **MySQL**: localhost:3307 (from host)
+- **Redis**: localhost:6379 (from host)
+
+## ⚙️ Environment Variables
+
+Make sure your `.env` file has these Docker-specific settings:
+
+```env
+DB_HOST=mysql
+DB_PORT=3306
+REDIS_HOST=redis
+CACHE_DRIVER=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+```
+
+## 🆘 Troubleshooting
+
+### Container won't start
+```bash
+docker compose logs laravel.test
+docker compose down
+docker compose up -d
+```
+
+### Permission errors
+```bash
+./fix-permissions.sh
+```
+
+### Database connection errors
+```bash
+# Check if MySQL is ready
+docker compose exec mysql mysqladmin ping -ppassword
+
+# Restart MySQL
+docker compose restart mysql
+```
+
+### Port already in use
+```bash
+# Check what's using port 8000
+sudo lsof -i :8000
+
+# Change APP_PORT in .env
+APP_PORT=8001
+docker compose down
+docker compose up -d
+
+DAILY COMMANDS:
+---------------
+# Start containers
+docker-compose up -d
+
+# Stop containers
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Run artisan commands
+docker-compose exec laravel.test php artisan [command]
+
+# Fix permissions if needed
+docker-compose exec laravel.test chmod -R 775 storage bootstrap/cache
+docker-compose exec laravel.test chown -R www-data:www-data storage bootstrap/cache
+
+# Clear cache
+docker-compose exec laravel.test php artisan cache:clear
+docker compose exec laravel.test composer dump-autoload -o
+
+# Optimize for production
+docker-compose exec laravel.test php artisan optimize
+
+```

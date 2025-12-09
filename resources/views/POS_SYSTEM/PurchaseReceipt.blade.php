@@ -149,19 +149,20 @@
                     </thead>
                     <tbody>
                         @php
-$receiptSubtotal = 0;
+                            $receiptSubtotal = 0;
                         @endphp
                         @if(isset($receiptData['items']) && count($receiptData['items']) > 0)
                             @foreach($receiptData['items'] as $item)
                                 @php
-        $receiptSubtotal += $item['subtotal'];
+                                    $receiptSubtotal += $item['subtotal'];
                                 @endphp
                                 <tr class="border-b border-gray-200">
                                     <td class="py-2 text-sm">{{ $item['productName'] }}</td>
                                     <td class="text-center py-2 text-sm">{{ $item['warranty'] ?? '-' }}</td>
                                     <td class="text-center py-2 text-sm">{{ $item['quantity'] }}</td>
                                     <td class="text-right py-2 text-sm priceColumn">₱{{ number_format($item['price'], 2) }}</td>
-                                    <td class="text-right py-2 text-sm totalPriceColumn">₱{{ number_format($item['subtotal'], 2) }}</td>
+                                    <td class="text-right py-2 text-sm totalPriceColumn">
+                                        ₱{{ number_format($item['subtotal'], 2) }}</td>
                                 </tr>
                             @endforeach
                         @else
@@ -269,7 +270,7 @@ $receiptSubtotal = 0;
         // Auto focus on print button when page loads
         document.addEventListener('DOMContentLoaded', function () {
             console.log('Receipt data loaded:', @json($receiptData));
-            
+
             // Hide unit price and total price columns if displayTotalOnly is true
             const receiptData = @json($receiptData);
             if (receiptData.displayTotalOnly) {
@@ -278,7 +279,7 @@ $receiptSubtotal = 0;
                 const totalPriceHeader = document.getElementById('totalPriceHeader');
                 if (priceHeader) priceHeader.style.display = 'none';
                 if (totalPriceHeader) totalPriceHeader.style.display = 'none';
-                
+
                 // Hide all price cells in the table
                 const priceColumns = document.querySelectorAll('.priceColumn');
                 const totalPriceColumns = document.querySelectorAll('.totalPriceColumn');

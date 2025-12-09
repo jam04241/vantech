@@ -104,6 +104,7 @@
                 <table class="w-full text-left">
                     <thead class="bg-gray-100 text-gray-700 text-base">
                         <tr>
+                            <th class="px-6 py-4 font-semibold text-gray-700">#</th>
                             <th class="px-6 py-4 font-semibold text-gray-700">First Name</th>
                             <th class="px-6 py-4 font-semibold text-gray-700">Last Name</th>
                             <th class="px-6 py-4 font-semibold text-gray-700">Contact</th>
@@ -114,16 +115,17 @@
                             <th class="px-6 py-4 text-center font-semibold text-gray-700">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200 text-center">
-                        @forelse($customers as $customer)
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @forelse($customers as $index => $customer)
                             <tr class="hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ $customer->first_name }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ $customer->last_name }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ $customer->contact_no }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ $customer->gender }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ $customer->street }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ $customer->brgy }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ $customer->city_province }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">{{ $index + 1 }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900 text-left">{{ $customer->first_name }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900 text-left">{{ $customer->last_name }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->contact_no ? 'text-left' : 'text-center' }}">{{ $customer->contact_no ?: '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->gender ? 'text-left' : 'text-center' }}">{{ $customer->gender ?: '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->street ? 'text-left' : 'text-center' }}">{{ $customer->street ?: '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->brgy ? 'text-left' : 'text-center' }}">{{ $customer->brgy ?: '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->city_province ? 'text-left' : 'text-center' }}">{{ $customer->city_province ?: '-' }}</td>
 
                                 <td class="px-6 py-4 text-center">
                                     <button onclick="editCustomer({{ $customer->id }})"
@@ -138,7 +140,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                                <td colspan="9" class="px-6 py-8 text-center text-gray-500">
                                     <p class="text-sm">No customers found</p>
                                 </td>
                             </tr>

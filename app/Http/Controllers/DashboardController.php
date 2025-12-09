@@ -11,6 +11,7 @@ use App\Models\CustomerPurchaseOrder;
 use App\Models\Suppliers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -24,18 +25,22 @@ class DashboardController extends Controller
 
     /**
      * Get dashboard analytics data (API endpoint)
+     * Cached for 5 minutes (300 seconds)
      */
     public function getDashboardData()
     {
         try {
-            $data = [
-                'metrics' => $this->getKeyMetrics(),
-                'top_products' => $this->getTopSellingProducts(),
-                'low_stock_alerts' => $this->getLowStockAlerts(),
-                'supplier_status' => $this->getSupplierStatus(),
-                'inventory_status' => $this->getInventoryStatus(),
-                'last_updated' => Carbon::now()->format('Y-m-d H:i:s')
-            ];
+            // Cache dashboard data for 5 minutes
+            $data = Cache::remember('dashboard_data', 300, function () {
+                return [
+                    'metrics' => $this->getKeyMetrics(),
+                    'top_products' => $this->getTopSellingProducts(),
+                    'low_stock_alerts' => $this->getLowStockAlerts(),
+                    'supplier_status' => $this->getSupplierStatus(),
+                    'inventory_status' => $this->getInventoryStatus(),
+                    'last_updated' => Carbon::now()->format('Y-m-d H:i:s')
+                ];
+            });
 
             return response()->json([
                 'success' => true,
@@ -51,31 +56,34 @@ class DashboardController extends Controller
 
     /**
      * Get key metrics for dashboard cards
+     * Cached for 5 minutes
      */
     private function getKeyMetrics()
     {
-        // Employee count
-        $employeeCount = Employee::count();
+        return Cache::remember('dashboard_metrics', 300, function () {
+            // Employee count
+            $employeeCount = Employee::count();
 
-        // Customer count
-        $customerCount = Customer::count();
+            // Customer count
+            $customerCount = Customer::count();
 
-        // Total products in stock (stock_quantity > 0)
-        $productCount = Product_Stocks::where('stock_quantity', '>', 0)
-            ->distinct('product_id')
-            ->count('product_id');
+            // Total products in stock (stock_quantity > 0)
+            $productCount = Product_Stocks::where('stock_quantity', '>', 0)
+                ->distinct('product_id')
+                ->count('product_id');
 
-        // Daily sales (today's total from customer_purchase_orders)
-        $dailySales = CustomerPurchaseOrder::whereDate('order_date', Carbon::today())
-            ->where('status', 'Success')
-            ->sum('total_price');
+            // Daily sales (today's total from customer_purchase_orders)
+            $dailySales = CustomerPurchaseOrder::whereDate('order_date', Carbon::today())
+                ->where('status', 'Success')
+                ->sum('total_price');
 
-        return [
-            'employees' => $employeeCount,
-            'customers' => $customerCount,
-            'products' => $productCount,
-            'daily_sales' => round($dailySales, 2)
-        ];
+            return [
+                'employees' => $employeeCount,
+                'customers' => $customerCount,
+                'products' => $productCount,
+                'daily_sales' => round($dailySales, 2)
+            ];
+        });
     }
 
     /**

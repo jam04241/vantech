@@ -40,7 +40,21 @@ class Service extends Model
         return $this->belongsTo(ServiceType::class);
     }
 
+    /**
+     * Get only active (non-disabled) replacements for this service
+     * This is the default relationship used when fetching service details
+     * is_disabled = 0 means active/visible
+     * is_disabled = 1 means soft-deleted/hidden
+     */
     public function replacements()
+    {
+        return $this->hasMany(ServiceReplacement::class)->where('is_disabled', 0);
+    }
+
+    /**
+     * Get all replacements including disabled ones (for admin/management purposes)
+     */
+    public function allReplacements()
     {
         return $this->hasMany(ServiceReplacement::class);
     }

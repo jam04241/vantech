@@ -445,7 +445,7 @@
 
         <!-- VANTECH -->
         <div class="image-container p-4 flex-shrink-0">
-            <img src="{{ asset('images/logo.svg') }}" alt="Logo" class="w-32 mx-auto">
+            <img src="{{ asset('images/logo.svg') }}" alt="Logo" loading="lazy" class="w-32 mx-auto">
         </div>
 
         <nav class="space-y-4 px-2">

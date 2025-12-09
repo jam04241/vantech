@@ -67,7 +67,7 @@ class CustomerController extends Controller
     {
         $query = $request->input('query', '');
 
-        if (strlen($query) < 2) {
+        if (strlen($query) < 1) {
             return response()->json([]);
         }
 

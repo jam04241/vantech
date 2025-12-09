@@ -453,7 +453,7 @@
             clearTimeout(customerSearchDebounceTimer);
             const query = e.target.value.trim();
 
-            if (query.length < 2) {
+            if (query.length < 1) {
                 customerSuggestionsContainer.classList.add('hidden');
                 return;
             }
