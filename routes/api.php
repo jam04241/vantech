@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DRTransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,11 @@ Route::middleware('web')->prefix('sales')->group(function () {
     Route::get('/data', [SalesController::class, 'getSalesData']);
     Route::get('/summary', [SalesController::class, 'getSalesSummary']);
     Route::get('/realtime', [SalesController::class, 'getRealTimeSales']);
+});
+
+// DR Transaction API Routes (accessible from web with session auth)
+Route::middleware('web')->prefix('dr')->group(function () {
+    Route::get('/next-number', [DRTransactionController::class, 'getNextDRNumber']);
 });
 
 // Test endpoints for debugging

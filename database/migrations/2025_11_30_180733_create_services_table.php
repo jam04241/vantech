@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('dr_receipt_id')->constrained('dr_transactions', 'id')->onDelete('cascade');
             $table->foreignId('customer_id')->constrained('customers', 'id')->onDelete('cascade');
             $table->foreignId('service_type_id')->constrained('service_types', 'id')->onDelete('cascade');
             $table->string('type');

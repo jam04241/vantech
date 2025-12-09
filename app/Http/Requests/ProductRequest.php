@@ -19,7 +19,8 @@ class ProductRequest extends FormRequest
             'brand_id' => 'nullable|exists:brands,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'is_used' => 'boolean', // Checkbox to indicate if the product is used
-            'price' => 'required|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/' // Added price validation
+            'price' => 'nullable|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/', // Optional - only for price edit modal
+            'product_condition' => 'nullable|string|in:Brand New,Second Hand' // Product condition
         ];
     }
 

@@ -12,6 +12,7 @@ class CustomerPurchaseOrder extends Model
     protected $table = 'customer_purchase_orders';
 
     protected $fillable = [
+        'dr_receipt_id',
         'customer_id',
         'product_id',
         'serial_number',
@@ -21,6 +22,11 @@ class CustomerPurchaseOrder extends Model
         'order_date',
         'status'
     ];
+
+    public function drTransaction()
+    {
+        return $this->belongsTo(DRTransaction::class, 'dr_receipt_id');
+    }
 
     public function customer()
     {

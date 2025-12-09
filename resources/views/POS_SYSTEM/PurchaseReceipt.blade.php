@@ -92,11 +92,6 @@
     <div class="container mx-auto p-6 scrollbar-hide" style="max-height: calc(100vh - 80px); overflow-y: auto;">
         <div class="print-container bg-white shadow-lg mx-auto" style="width: 210mm; min-height: 200mm; padding: 10mm;">
 
-            <!-- Print Message (Only shows when printing) -->
-            <div class="print-only text-center text-sm text-gray-500 mb-4">
-                Printed on: {{ now()->format('M d, Y h:i A') }}
-            </div>
-
             <!-- Header with Blue Line -->
             <div class="border-t-8 border-blue-600 mb-6"></div>
 
@@ -112,8 +107,22 @@
                 <div class="w-2/5 flex flex-col items-end justify-end">
                     <img src="{{ asset('images/logo.png') }}" class="w-28 h-auto mb-2" />
                     <h3 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">WARRANTY RECEIPT</h3>
-                    <p class="text-xs text-gray-600 mt-1 text-right">Date: <span
-                            class="font-semibold">{{ now()->format('m/d/Y') }}</span></p>
+                    
+                    @php
+                        use Picqer\Barcode\BarcodeGeneratorPNG;
+                        $generator = new BarcodeGeneratorPNG();
+                        $drNumber = $receiptData['drNumber'] ?? 'NO-RECEIPT-GENERATED'; // Get from receipt data or default
+                        $barcode = base64_encode($generator->getBarcode($drNumber, $generator::TYPE_CODE_128, 1, 30));
+                    @endphp
+                    
+                    <!-- Barcode -->
+                    <div class="mb-1">
+                        <img src="data:image/png;base64,{{ $barcode }}" alt="Barcode" class="h-11 w-auto" />
+                    </div>
+                    
+                    <p class="text-xs text-gray-600 text-right font-semibold">Sales Invoice: {{ $drNumber }}</p>
+                    <p class="text-xs text-gray-600 mt-1 text-right">Date & Time: <span
+                            class="font-semibold">{{ now()->format('m/d/Y h:i A') }}</span></p>
                 </div>
             </div>
 
@@ -121,7 +130,7 @@
             <div class="mb-6">
                 <div class="flex justify-between mb-4">
                     <div>
-                        <p class="text-sm"><span class="font-semibold">Name:</span> <span
+                        <p class="text-sm"><span class="font-semibold">Customer:</span> <span
                                 id="receiptCustomerName">{{ $receiptData['customerName'] ?? 'N/A' }}</span></p>
                         <p class="text-sm"><span class="font-semibold">Contact No.:</span> <span
                                 id="receiptContactNo">{{ $customerContact ?? 'N/A' }}</span></p>
@@ -149,12 +158,12 @@
                     </thead>
                     <tbody>
                         @php
-                            $receiptSubtotal = 0;
+$receiptSubtotal = 0;
                         @endphp
                         @if(isset($receiptData['items']) && count($receiptData['items']) > 0)
                             @foreach($receiptData['items'] as $item)
                                 @php
-                                    $receiptSubtotal += $item['subtotal'];
+        $receiptSubtotal += $item['subtotal'];
                                 @endphp
                                 <tr class="border-b border-gray-200">
                                     <td class="py-2 text-sm">{{ $item['productName'] }}</td>
@@ -181,11 +190,8 @@
                     <p class="text-sm text-gray-600 mt-1">Thank you for your purchase!</p>
                 </div>
                 <div class="w-1/2">
-                    <div class="flex justify-between mb-2 border-t border-gray-300 pt-2">
-                        <span class="text-sm font-bold">Total Price</span>
-                        <span class="text-sm font-semibold">₱{{ number_format($receiptSubtotal, 2) }}</span>
-                    </div>
-                    <div class="flex justify-between mb-2">
+
+                    <div class="flex justify-between mb-2 pt-2">
                         <span class="text-sm italic text-red-700">Discount</span>
                         <span
                             class="text-sm text-red-700 font-semibold">-₱{{ number_format($receiptData['discount'] ?? 0, 2) }}</span>

@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Customer_Purchase_Order;
-use App\Models\Payment_Method;
+use App\Models\CustomerPurchaseOrder;
+use App\Models\PaymentMethod;
 use App\Models\Product_Stocks;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -75,7 +75,7 @@ class CheckoutService
 
             Log::info("Creating purchase order {$itemNumber}", $item);
 
-            $purchaseOrder = Customer_Purchase_Order::create([
+            $purchaseOrder = CustomerPurchaseOrder::create([
                 'customer_id' => $customerId,
                 'product_id' => $item['product_id'],
                 'serial_number' => $item['serial_number'],
@@ -106,7 +106,7 @@ class CheckoutService
             'amount' => $amount
         ]);
 
-        $paymentMethod = Payment_Method::create([
+        $paymentMethod = PaymentMethod::create([
             'customer_purchase_order_id' => $purchaseOrderId,
             'method_name' => $methodName,
             'payment_date' => now()->toDateString(),

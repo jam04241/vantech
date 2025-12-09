@@ -20,13 +20,13 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'Van Bryan',
                 'middle_name' => 'C.',
-                'last_name' => 'Bardillas',
+                'last_name' => 'Bardilas',
                 'username' => 'vantech123',
                 'password' => Hash::make('password123'),
                 'role' => 'admin',
             ],
             [
-                'first_name' => 'Andrew',
+                'first_name' => 'Andrew John',
                 'middle_name' => '',
                 'last_name' => 'Suico',
                 'username' => 'doydoy123',

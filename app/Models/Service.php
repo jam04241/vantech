@@ -10,6 +10,7 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
+        'dr_receipt_id',
         'customer_id',
         'service_type_id',
         'type',
@@ -35,6 +36,10 @@ class Service extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function drReceipt()
+    {
+        return $this->belongsTo(DRTransaction::class, 'dr_receipt_id');
+    }
     public function serviceType()
     {
         return $this->belongsTo(ServiceType::class);

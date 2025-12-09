@@ -417,6 +417,13 @@
                             grid: {
                                 display: true,
                                 color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0,
+                                callback: function (value) {
+                                    return Math.floor(value);
+                                }
                             }
                         },
                         y: {
@@ -649,18 +656,18 @@
 
                 row.innerHTML = `
 
-                        <td class="px-4 py-3">#${transaction.id}</td>
-                        <td class="px-4 py-3">${transaction.customer_name}</td>
-                        <td class="px-4 py-3 font-semibold">${formatCurrency(transaction.amount)}</td>
-                        <td class="px-4 py-3" title="${productName}">${productName.length > 20 ? productName.substring(0, 20) + '...' : productName}</td>
-                        <td class="px-4 py-3 text-center font-medium">${quantity}</td>
-                        <td class="px-4 py-3">${transaction.date}</td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-1 text-xs rounded-full ${getStatusClass(transaction.status)}">
-                                ${transaction.status}
-                            </span>
-                        </td>
-                        `;
+                                    <td class="px-4 py-3">#${transaction.id}</td>
+                                    <td class="px-4 py-3">${transaction.customer_name}</td>
+                                    <td class="px-4 py-3 font-semibold">${formatCurrency(transaction.amount)}</td>
+                                    <td class="px-4 py-3" title="${productName}">${productName.length > 20 ? productName.substring(0, 20) + '...' : productName}</td>
+                                    <td class="px-4 py-3 text-center font-medium">${quantity}</td>
+                                    <td class="px-4 py-3">${transaction.date}</td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 text-xs rounded-full ${getStatusClass(transaction.status)}">
+                                            ${transaction.status}
+                                        </span>
+                                    </td>
+                                    `;
 
                 tbody.appendChild(row);
             });

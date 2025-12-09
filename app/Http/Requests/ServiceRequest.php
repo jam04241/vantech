@@ -35,6 +35,7 @@ class ServiceRequest extends FormRequest
             'total_price' => 'required|numeric|min:0',
             'date_in' => 'nullable|date_format:Y-m-d',
             'date_out' => 'nullable|date_format:Y-m-d',
+            'dr_receipt_id' => 'nullable|exists:dr_transactions,id',
         ];
     }
 

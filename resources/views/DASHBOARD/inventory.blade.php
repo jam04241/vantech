@@ -53,7 +53,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">Inventory Management</h2>
-                <p class="text-gray-600 mt-1">Manage all products</p>
+                <p class="text-gray-600 mt-1">Manage all Available Products</p>
             </div>
         </div>
 
@@ -199,14 +199,14 @@
                             required>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-500 mb-2">Serial Number (Read Only)</label>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Serial Number</label>
 
                         <input type="text" name="serial_number"
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
                     </div>
                 </div>
 
-                <div class="grid md:grid-cols-3 gap-6 mb-6">
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
                         <select name="brand_id"
@@ -227,6 +227,9 @@
                             @endforeach
                         </select>
                     </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Warranty</label>
                         <select name="warranty_period"
@@ -239,15 +242,6 @@
                             <option value="30 days">30 days</option>
                             <option value="1 year">1 year</option>
                         </select>
-                    </div>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Price (₱)</label>
-                        <input type="number" name="price" step="0.01" min="0"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                            required>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Company</label>
@@ -374,7 +368,7 @@
 
             const productModal = document.getElementById('productEditModal');
             const productForm = document.getElementById('productEditForm');
-            // ============= PRODUCT FORM FIELDS (PRICE NOW INCLUDED) =============
+            // ============= PRODUCT FORM FIELDS =============
             const productFields = {
                 product_name: productForm.querySelector('[name="product_name"]'),
                 serial_number: productForm.querySelector('[name="serial_number"]'),
@@ -382,9 +376,72 @@
                 category_id: productForm.querySelector('[name="category_id"]'),
                 supplier_id: productForm.querySelector('[name="supplier_id"]'),
                 warranty_period: productForm.querySelector('[name="warranty_period"]'),
-                price: productForm.querySelector('[name="price"]'),
             };
             // ============= END PRODUCT FORM FIELDS =============
+
+            // Handle product form submission with SweetAlert
+            productForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const submitUrl = this.action;
+
+                // Show loading
+                Swal.fire({
+                    title: 'Updating Product...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Submit via fetch
+                fetch(submitUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success || data.message) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: data.message || 'Product updated successfully.',
+                                confirmButtonColor: '#4F46E5'
+                            }).then(() => {
+                                toggleModal(productModal, false);
+                                // Refresh the table
+                                htmx.ajax('GET', '{{ route("inventory") }}', {
+                                    target: '#product-table-container',
+                                    swap: 'innerHTML'
+                                });
+                            });
+                        } else {
+                            throw new Error(data.error || 'Update failed');
+                        }
+                    })
+                    .catch(error => {
+                        let errorMessage = 'Failed to update product.';
+
+                        // Check if it's a serial number conflict
+                        if (error.message && error.message.includes('serial')) {
+                            errorMessage = 'This serial number is already in use. Please use a different serial number.';
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Update Failed',
+                            text: errorMessage,
+                            confirmButtonColor: '#E11D48'
+                        });
+                    });
+            });
 
             const bindProductButtons = () => {
                 document.querySelectorAll('[data-product-modal]').forEach(button => {
@@ -402,7 +459,6 @@
                             productFields.category_id.value = payload.category_id || '';
                             productFields.supplier_id.value = payload.supplier_id || '';
                             productFields.warranty_period.value = payload.warranty_period || '';
-                            productFields.price.value = payload.price || 0;
 
                             // Update product condition based on supplier_id
                             const supplierValue = productFields.supplier_id.value;
@@ -528,6 +584,64 @@
                         toggle(true);
                     });
                 });
+
+                // Handle price form submission with SweetAlert
+                if (!form.dataset.submitBound) {
+                    form.dataset.submitBound = 'true';
+                    form.addEventListener('submit', function (e) {
+                        e.preventDefault();
+
+                        const formData = new FormData(this);
+                        const submitUrl = this.action;
+
+                        // Show loading
+                        Swal.fire({
+                            title: 'Updating Price...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        // Submit via fetch
+                        fetch(submitUrl, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success || data.message) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success!',
+                                        text: data.message || 'Price updated successfully.',
+                                        confirmButtonColor: '#4F46E5'
+                                    }).then(() => {
+                                        toggle(false);
+                                        // Refresh the table
+                                        htmx.ajax('GET', '{{ route("inventory") }}', {
+                                            target: '#product-table-container',
+                                            swap: 'innerHTML'
+                                        });
+                                    });
+                                } else {
+                                    throw new Error(data.error || 'Update failed');
+                                }
+                            })
+                            .catch(error => {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Update Failed',
+                                    text: error.message || 'Failed to update price.',
+                                    confirmButtonColor: '#E11D48'
+                                });
+                            });
+                    });
+                }
 
                 document.querySelectorAll('[data-price-modal-close]').forEach((btn) => {
                     if (btn.dataset.bound === 'true') {

@@ -12,6 +12,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "owenvoke/blade-fontawesome": "^2.4",
+        "picqer/php-barcode-generator": "^3.2",
         "predis/predis": "^3.3"
     },
     "require-dev": {

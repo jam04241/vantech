@@ -476,7 +476,8 @@
                 <!-- Warranty -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Warranty</label>
-                    <select type="text" id="warranty" placeholder="1 Year" class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-xs">
+                    <select type="text" id="warranty" placeholder="1 Year"
+                        class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#151F28] transition text-xs">
                         <option value="" selected hidden>Select Warranty</option>
                         <option value="3 days">3 days</option>
                         <option value="7 days">7 days</option>
@@ -485,7 +486,7 @@
                         <option value="30 days">30 days</option>
                         <option value="1 year">1 year</option>
                     </select>
-              </div>
+                </div>
             </div>
 
             <!-- Replacements List - Scrollable Container -->

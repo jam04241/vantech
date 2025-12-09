@@ -38,6 +38,7 @@
 
                 <!-- Order Info -->
                 <div class="mb-4 text-xs text-gray-600 space-y-1">
+                    <p>DR No.: <span class="font-medium text-gray-900" id="drNumber">Loading...</span></p>
                     <p>Date: <span class="font-medium text-gray-900">{{ now()->format('M d, Y h:i A') }}</span></p>
                 </div>
 
@@ -75,8 +76,8 @@
                             <input type="number" id="purchaseDiscountInput" value="0"
                                 class="w-20 px-2 py-1 border border-gray-300 rounded text-right text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 step="0.01" oninput="updatePurchaseTotal()" placeholder="0.00" />
-                            <span class="text-red-500 font-medium w-24 text-right text-sm">-₱<span
-                                    id="purchaseDiscountDisplay">0.00</span></span>
+                            <span class="text-red-500 font-medium w-24 text-right text-sm" hidden>-₱<span
+                                    id="purchaseDiscountDisplay" hidden>0.00</span></span>
                         </div>
                     </div>
                     <div class="flex justify-between items-center border-t border-gray-200 pt-2 mt-2">
@@ -205,7 +206,29 @@
                 successMessage.style.display = 'none';
             }, 1750);
         }
+
+        // Fetch next DR number on page load
+        fetchNextDRNumber();
     });
+
+    /**
+     * Fetch next DR number to display
+     */
+    async function fetchNextDRNumber() {
+        try {
+            const response = await fetch('/api/dr/next-number');
+            const data = await response.json();
+
+            if (data.success && data.dr_number) {
+                document.getElementById('drNumber').textContent = data.dr_number;
+            } else {
+                document.getElementById('drNumber').textContent = 'Error loading';
+            }
+        } catch (error) {
+            console.error('Error fetching DR number:', error);
+            document.getElementById('drNumber').textContent = 'Error loading';
+        }
+    }
 
     // Debounce timer to prevent rapid API calls
     let scanDebounceTimer = null;

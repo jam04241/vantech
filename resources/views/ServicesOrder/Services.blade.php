@@ -698,19 +698,22 @@
             // ✅ Make specific fields read-only in Progress Service mode
             document.getElementById('customerName').setAttribute('readonly', true);
             document.getElementById('customerName').classList.add('bg-gray-100', 'cursor-not-allowed');
-            
+
             document.getElementById('serviceType').setAttribute('disabled', true);
             document.getElementById('serviceType').classList.add('bg-gray-100', 'cursor-not-allowed');
-            
+
             document.getElementById('type').setAttribute('readonly', true);
             document.getElementById('type').classList.add('bg-gray-100', 'cursor-not-allowed');
-            
+
+            document.getElementById('totalPrice').setAttribute('readonly', true);
+            document.getElementById('totalPrice').classList.add('bg-gray-100', 'cursor-not-allowed');
+
             document.getElementById('brand').setAttribute('readonly', true);
             document.getElementById('brand').classList.add('bg-gray-100', 'cursor-not-allowed');
-            
+
             document.getElementById('model').setAttribute('readonly', true);
             document.getElementById('model').classList.add('bg-gray-100', 'cursor-not-allowed');
-            
+
             document.getElementById('dateIn').setAttribute('readonly', true);
             document.getElementById('dateIn').classList.add('bg-gray-100', 'cursor-not-allowed');
 
@@ -751,23 +754,26 @@
             // ✅ Set current date for Date In field
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('dateIn').value = today;
-            
+
             // ✅ Remove readonly attributes when creating new service
             document.getElementById('customerName').removeAttribute('readonly');
             document.getElementById('customerName').classList.remove('bg-gray-100', 'cursor-not-allowed');
-            
+
             document.getElementById('serviceType').removeAttribute('disabled');
             document.getElementById('serviceType').classList.remove('bg-gray-100', 'cursor-not-allowed');
-            
+
             document.getElementById('type').removeAttribute('readonly');
             document.getElementById('type').classList.remove('bg-gray-100', 'cursor-not-allowed');
-            
+
+            document.getElementById('totalPrice').removeAttribute('readonly');
+            document.getElementById('totalPrice').classList.remove('bg-gray-100', 'cursor-not-allowed');
+
             document.getElementById('brand').removeAttribute('readonly');
             document.getElementById('brand').classList.remove('bg-gray-100', 'cursor-not-allowed');
-            
+
             document.getElementById('model').removeAttribute('readonly');
             document.getElementById('model').classList.remove('bg-gray-100', 'cursor-not-allowed');
-            
+
             document.getElementById('dateIn').removeAttribute('readonly');
             document.getElementById('dateIn').classList.remove('bg-gray-100', 'cursor-not-allowed');
         }
@@ -1217,222 +1223,258 @@
         // ============ RECEIPT HANDLERS ============
         function handleAcknowledgmentReceipt(e) {
             e.preventDefault();
-
-            const customerName = document.getElementById('customerName').value.trim();
-            const serviceType = document.getElementById('serviceType').value;
-            const type = document.getElementById('type').value.trim();
-            const description = document.getElementById('description').value.trim();
-            const serviceId = document.getElementById('serviceIdInput').value;
-
-            if (!customerName || !serviceType || !type || !description) {
+            // Only allow if acknowledgment not yet released for this service (simulate with a flag or backend check)
+            if (window.selectedServiceData && window.selectedServiceData.acknowledgment_released) {
                 Swal.fire({
-                    icon: 'warning',
-                    title: 'Missing Information',
-                    text: 'Please fill in all required fields before viewing acknowledgement',
+                    icon: 'info',
+                    title: 'Already Released',
+                    text: 'Acknowledgment receipt has already been released for this service.',
                     confirmButtonColor: '#151F28'
                 });
                 return;
             }
+            Swal.fire({
+                title: 'Generate Acknowledgment Receipt?',
+                text: 'Are you sure you want to generate an Acknowledgment Receipt for this service?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Generate',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
 
-            if (!serviceId) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Service Not Saved',
-                    text: 'Please save the service first before issuing acknowledgement receipt',
-                    confirmButtonColor: '#151F28'
-                });
-                return;
-            }
+                const customerName = document.getElementById('customerName').value.trim();
+                const serviceType = document.getElementById('serviceType').value;
+                const type = document.getElementById('type').value.trim();
+                const description = document.getElementById('description').value.trim();
+                const serviceId = document.getElementById('serviceIdInput').value;
 
-            const serviceTypeSelect = document.getElementById('serviceType');
-            const serviceTypeName = serviceTypeSelect.options[serviceTypeSelect.selectedIndex]?.text || '-';
-
-            const serviceData = {
-                customerName: customerName,
-                dateIn: document.getElementById('dateIn').value || '-',
-                dateOut: document.getElementById('dateOut').value || '-',
-                status: document.getElementById('status').value || 'Pending',
-                type: type,
-                brand: document.getElementById('brand').value || '-',
-                model: document.getElementById('model').value || '-',
-                serviceTypeName: serviceTypeName,
-                description: description,
-                totalPrice: document.getElementById('totalPrice').value || '0.00'
-            };
-
-            sessionStorage.setItem('serviceData', JSON.stringify(serviceData));
-
-            // Call audit logging endpoint
-            fetch(`/services/${serviceId}/log-acknowledgment`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to log acknowledgment');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('✅ Acknowledgment logged:', data);
-                    window.location.href = '/acknowledgement-receipt';
-                })
-                .catch(error => {
-                    console.error('❌ Error logging acknowledgment:', error);
+                if (!customerName || !serviceType || !type || !description) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Logging Warning',
-                        text: 'Acknowledgment receipt will be issued but logging may have failed',
+                        title: 'Missing Information',
+                        text: 'Please fill in all required fields before viewing acknowledgement',
                         confirmButtonColor: '#151F28'
-                    }).then(() => {
-                        window.location.href = '/acknowledgement-receipt';
                     });
-                });
+                    return;
+                }
+
+                if (!serviceId) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Service Not Saved',
+                        text: 'Please save the service first before issuing acknowledgement receipt',
+                        confirmButtonColor: '#151F28'
+                    });
+                    return;
+                }
+
+                const serviceTypeSelect = document.getElementById('serviceType');
+                const serviceTypeName = serviceTypeSelect.options[serviceTypeSelect.selectedIndex]?.text || '-';
+
+                const serviceData = {
+                    customerName: customerName,
+                    dateIn: document.getElementById('dateIn').value || '-',
+                    dateOut: document.getElementById('dateOut').value || '-',
+                    status: document.getElementById('status').value || 'Pending',
+                    type: type,
+                    brand: document.getElementById('brand').value || '-',
+                    model: document.getElementById('model').value || '-',
+                    serviceTypeName: serviceTypeName,
+                    description: description,
+                    totalPrice: document.getElementById('totalPrice').value || '0.00'
+                };
+
+                sessionStorage.setItem('serviceData', JSON.stringify(serviceData));
+
+                // Call audit logging endpoint
+                fetch(`/services/${serviceId}/log-acknowledgment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': CSRF_TOKEN
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to log acknowledgment');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('✅ Acknowledgment logged:', data);
+                        window.location.href = '/acknowledgement-receipt';
+                    })
+                    .catch(error => {
+                        console.error('❌ Error logging acknowledgment:', error);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Logging Warning',
+                            text: 'Acknowledgment receipt will be issued but logging may have failed',
+                            confirmButtonColor: '#151F28'
+                        }).then(() => {
+                            window.location.href = '/acknowledgement-receipt';
+                        });
+                    });
+            });
         }
 
         async function handleServiceReceipt(e) {
             e.preventDefault();
+            Swal.fire({
+                title: 'Generate Service Receipt?',
+                text: 'Are you sure you want to generate a new Service Receipt? This will create a new receipt number.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Generate',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280'
+            }).then(async (result) => {
+                if (!result.isConfirmed) return;
 
-            const customerName = document.getElementById('customerName').value.trim();
-            const serviceType = document.getElementById('serviceType').value;
-            const type = document.getElementById('type').value.trim();
-            const description = document.getElementById('description').value.trim();
-            const serviceId = document.getElementById('serviceIdInput').value;
+                const customerName = document.getElementById('customerName').value.trim();
+                const serviceType = document.getElementById('serviceType').value;
+                const type = document.getElementById('type').value.trim();
+                const description = document.getElementById('description').value.trim();
+                const serviceId = document.getElementById('serviceIdInput').value;
 
-            if (!customerName || !serviceType || !type || !description) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Missing Information',
-                    text: 'Please fill in all required fields before viewing service receipt',
-                    confirmButtonColor: '#151F28'
-                });
-                return;
-            }
-
-            if (!serviceId) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Service Not Saved',
-                    text: 'Please save the service first before issuing service receipt',
-                    confirmButtonColor: '#151F28'
-                });
-                return;
-            }
-
-            try {
-                // First, update service status to Completed
-                if (serviceId) {
-                    const serviceUpdateData = {
-                        customer_id: parseInt(document.getElementById('customerId').value),
-                        service_type_id: parseInt(document.getElementById('serviceType').value),
-                        type: type,
-                        brand: document.getElementById('brand').value || null,
-                        model: document.getElementById('model').value || null,
-                        date_in: document.getElementById('dateIn').value || null,
-                        date_out: document.getElementById('dateOut').value || null,
-                        description: description,
-                        action: document.getElementById('action').value || null,
-                        status: 'Completed',
-                        total_price: parseFloat(document.getElementById('totalPrice').value)
-                    };
-
-                    const response = await fetch(`/api/services/${serviceId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': CSRF_TOKEN
-                        },
-                        body: JSON.stringify(serviceUpdateData)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to update service');
-                    }
-                }
-            } catch (error) {
-                console.error('Error updating service:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Failed to update service status',
-                    confirmButtonColor: '#151F28'
-                });
-                return;
-            }
-
-            const serviceTypeSelect = document.getElementById('serviceType');
-            const serviceTypeName = serviceTypeSelect.options[serviceTypeSelect.selectedIndex]?.text || '-';
-
-            const actionTaken = document.getElementById('action')?.value || '-';
-
-            // Get part replacements
-            const replacementItems = document.querySelectorAll('#replacementsList > div[data-item-name]');
-            let partReplacementText = '-';
-            if (replacementItems.length > 0) {
-                const parts = [];
-                replacementItems.forEach((item, index) => {
-                    const itemName = item.getAttribute('data-item-name') || '';
-                    const newItem = item.getAttribute('data-new-item') || '';
-                    const price = item.getAttribute('data-price') || '0.00';
-
-                    if (itemName.trim()) {
-                        parts.push(`${(index + 1)}. ${itemName} → ${newItem} (₱${parseFloat(price).toFixed(2)})`);
-                    }
-                });
-                if (parts.length > 0) {
-                    partReplacementText = parts.join('\n');
-                }
-            }
-
-            const receiptData = {
-                customerName: customerName,
-                dateIn: document.getElementById('dateIn').value || '-',
-                dateOut: document.getElementById('dateOut').value || '-',
-                status: 'Completed',
-                type: type,
-                brand: document.getElementById('brand').value || '-',
-                model: document.getElementById('model').value || '-',
-                serviceTypeName: serviceTypeName,
-                description: description,
-                actionTaken: actionTaken,
-                partReplacement: partReplacementText,
-                totalPrice: document.getElementById('totalPrice').value || '0.00'
-            };
-
-            sessionStorage.setItem('serviceData', JSON.stringify(receiptData));
-
-            // Call audit logging endpoint
-            fetch(`/services/${serviceId}/log-receipt`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to log service receipt');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('✅ Service receipt logged:', data);
-                    window.location.href = '/service-receipt';
-                })
-                .catch(error => {
-                    console.error('❌ Error logging service receipt:', error);
+                if (!customerName || !serviceType || !type || !description) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Logging Warning',
-                        text: 'Service receipt will be issued but logging may have failed',
+                        title: 'Missing Information',
+                        text: 'Please fill in all required fields before viewing service receipt',
                         confirmButtonColor: '#151F28'
-                    }).then(() => {
-                        window.location.href = '/service-receipt';
                     });
-                });
+                    return;
+                }
+
+                if (!serviceId) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Service Not Saved',
+                        text: 'Please save the service first before issuing service receipt',
+                        confirmButtonColor: '#151F28'
+                    });
+                    return;
+                }
+
+                try {
+                    // First, update service status to Completed
+                    if (serviceId) {
+                        const serviceUpdateData = {
+                            customer_id: parseInt(document.getElementById('customerId').value),
+                            service_type_id: parseInt(document.getElementById('serviceType').value),
+                            type: type,
+                            brand: document.getElementById('brand').value || null,
+                            model: document.getElementById('model').value || null,
+                            date_in: document.getElementById('dateIn').value || null,
+                            date_out: document.getElementById('dateOut').value || null,
+                            description: description,
+                            action: document.getElementById('action').value || null,
+                            status: 'Completed',
+                            total_price: parseFloat(document.getElementById('totalPrice').value)
+                        };
+
+                        const response = await fetch(`/api/services/${serviceId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': CSRF_TOKEN
+                            },
+                            body: JSON.stringify(serviceUpdateData)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to update service');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error updating service:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to update service status',
+                        confirmButtonColor: '#151F28'
+                    });
+                    return;
+                }
+
+                const serviceTypeSelect = document.getElementById('serviceType');
+                const serviceTypeName = serviceTypeSelect.options[serviceTypeSelect.selectedIndex]?.text || '-';
+                const actionTaken = document.getElementById('action')?.value || '-';
+
+                // Get part replacements
+                const replacementItems = document.querySelectorAll('#replacementsList > div[data-item-name]');
+                let partReplacementText = '-';
+                if (replacementItems.length > 0) {
+                    const parts = [];
+                    replacementItems.forEach((item, index) => {
+                        const itemName = item.getAttribute('data-item-name') || '';
+                        const newItem = item.getAttribute('data-new-item') || '';
+                        const price = item.getAttribute('data-price') || '0.00';
+                        if (itemName.trim()) {
+                            parts.push(`${(index + 1)}. ${itemName} → ${newItem} (₱${parseFloat(price).toFixed(2)})`);
+                        }
+                    });
+                    if (parts.length > 0) {
+                        partReplacementText = parts.join('\n');
+                    }
+                }
+
+                // Always generate a new, unique receipt number for service receipt
+                let newReceiptNo = 'SR-' + Date.now();
+
+                const receiptData = {
+                    customerName: customerName,
+                    dateIn: document.getElementById('dateIn').value || '-',
+                    dateOut: document.getElementById('dateOut').value || '-',
+                    status: 'Completed',
+                    type: type,
+                    brand: document.getElementById('brand').value || '-',
+                    model: document.getElementById('model').value || '-',
+                    serviceTypeName: serviceTypeName,
+                    description: description,
+                    actionTaken: actionTaken,
+                    partReplacement: partReplacementText,
+                    totalPrice: document.getElementById('totalPrice').value || '0.00',
+                    serviceReceiptNo: newReceiptNo
+                };
+
+                sessionStorage.setItem('serviceData', JSON.stringify(receiptData));
+
+                // Call audit logging endpoint
+                fetch(`/services/${serviceId}/log-receipt`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': CSRF_TOKEN
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to log service receipt');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('✅ Service receipt logged:', data);
+                        window.location.href = '/service-receipt';
+                    })
+                    .catch(error => {
+                        console.error('❌ Error logging service receipt:', error);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Logging Warning',
+                            text: 'Service receipt will be issued but logging may have failed',
+                            confirmButtonColor: '#151F28'
+                        }).then(() => {
+                            window.location.href = '/service-receipt';
+                        });
+                    });
+            });
         }
 
         async function handleArchiveService(e) {

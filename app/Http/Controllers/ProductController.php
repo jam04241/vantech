@@ -13,6 +13,7 @@ use App\Traits\LogsAuditTrail;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -234,6 +235,11 @@ class ProductController extends Controller
     {
         $query = Product::with('brand', 'category', 'supplier', 'stock');
 
+        // Hide products with 0 stock quantity
+        $query->whereHas('stock', function ($q) {
+            $q->where('stock_quantity', '>', 0);
+        });
+
         // Apply filters
         $query = $this->applyProductFilters($query, $request);
 
@@ -426,12 +432,27 @@ class ProductController extends Controller
             });
 
             // Log the price update
-            $description = "Update Price for {$product->product_name}: {$oldPrice} -> {$newPrice}";
+            $priceAction = $oldPrice > $newPrice ? 'Decrease' : 'Increase';
+            $description = "{$priceAction} all price for {$product->product_name} = ₱{$oldPrice} => ₱{$newPrice}";
             $this->logUpdateAudit('UPDATE', 'Inventory', $description, ['price' => $oldPrice], ['price' => $newPrice], $request);
 
+            // Return JSON for AJAX requests
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Price updated successfully.'
+                ]);
+            }
+
             return redirect()->route('inventory.list')
-                ->with('success');
+                ->with('success', 'Price updated successfully.');
         } catch (\Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Failed to update price: ' . $e->getMessage()
+                ], 500);
+            }
             return redirect()->route('inventory.list')
                 ->with('error', 'Failed to update price: ' . $e->getMessage());
         }
@@ -443,47 +464,121 @@ class ProductController extends Controller
         $oldProduct = $product->toArray();
         $oldStock = $product->stock ? $product->stock->toArray() : null;
 
-        DB::transaction(function () use ($product, $data) {
-            $productData = collect($data)->except(['price', 'product_condition'])->toArray();
-            $productData['serial_number'] = $productData['serial_number'] ?? ($product->serial_number ?? 'N/A');
+        try {
+            // Check if serial number is being changed and if it's already in use
+            if (isset($data['serial_number']) && $data['serial_number'] !== $product->serial_number) {
+                $existingProduct = Product::where('serial_number', $data['serial_number'])
+                    ->where('id', '!=', $product->id)
+                    ->first();
 
-            // Determine product condition based on supplier_id
-            $productData['product_condition'] = (empty($productData['supplier_id']) || $productData['supplier_id'] === null)
-                ? 'Second Hand'
-                : 'Brand New';
+                if ($existingProduct) {
+                    if ($request->wantsJson() || $request->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'This serial number is already in use by another product.'
+                        ], 422);
+                    }
+                    return redirect()->route('inventory')->with('error', 'This serial number is already in use by another product.');
+                }
+            }
 
-            $product->update($productData);
+            DB::transaction(function () use ($product, $data) {
+                $productData = collect($data)->except(['price', 'product_condition'])->toArray();
+                $productData['serial_number'] = $productData['serial_number'] ?? ($product->serial_number ?? 'N/A');
 
-            $stock = Product_Stocks::firstOrNew(['product_id' => $product->id]);
-            $stock->price = $data['price'];
-            $stock->stock_quantity = $stock->stock_quantity ?? 1;
-            $stock->save();
-        });
+                // Determine product condition based on supplier_id
+                $productData['product_condition'] = (empty($productData['supplier_id']) || $productData['supplier_id'] === null)
+                    ? 'Second Hand'
+                    : 'Brand New';
 
-        // Determine what was updated and log accordingly
-        $oldData = $oldProduct;
-        $newData = $product->fresh()->toArray();
+                $product->update($productData);
 
-        // Check which field was actually updated (price or serial_number or other details)
-        if (isset($data['price']) && $oldStock && $oldStock['price'] != $data['price']) {
-            $condition = 'Price';
-            $lastValue = $oldStock['price'];
-            $updatedValue = $data['price'];
-        } elseif (isset($data['serial_number']) && $oldData['serial_number'] != $data['serial_number']) {
-            $condition = 'Serial No.';
-            $lastValue = $oldData['serial_number'];
-            $updatedValue = $data['serial_number'];
-        } else {
-            // For other fields, just label as 'Detail'
-            $condition = 'Detail';
-            $lastValue = json_encode($oldData);
-            $updatedValue = json_encode($newData);
+                // Only update stock price if price is provided
+                if (isset($data['price'])) {
+                    $stock = Product_Stocks::firstOrNew(['product_id' => $product->id]);
+                    $stock->price = $data['price'];
+                    $stock->stock_quantity = $stock->stock_quantity ?? 1;
+                    $stock->save();
+                }
+            });
+
+            // Determine what was updated and log accordingly
+            $oldData = $oldProduct;
+            $newData = $product->fresh()->toArray();
+
+            // Detect what actually changed
+            $changedFields = [];
+
+            // Check if serial number changed
+            if (isset($data['serial_number']) && $oldData['serial_number'] != $data['serial_number']) {
+                $changedFields[] = "Serial No.: {$oldData['serial_number']} → {$data['serial_number']}";
+            }
+
+            // Check if product name changed
+            if (isset($data['product_name']) && $oldData['product_name'] != $data['product_name']) {
+                $changedFields[] = "Name: {$oldData['product_name']} → {$data['product_name']}";
+            }
+
+            // Check if brand changed
+            if (isset($data['brand_id']) && $oldData['brand_id'] != $data['brand_id']) {
+                $oldBrand = \App\Models\Brand::find($oldData['brand_id']);
+                $newBrand = \App\Models\Brand::find($data['brand_id']);
+                $oldBrandName = $oldBrand ? $oldBrand->brand_name : 'Unknown';
+                $newBrandName = $newBrand ? $newBrand->brand_name : 'Unknown';
+                $changedFields[] = "Brand: {$oldBrandName} → {$newBrandName}";
+            }
+
+            // Check if category changed
+            if (isset($data['category_id']) && $oldData['category_id'] != $data['category_id']) {
+                $oldCategory = \App\Models\Category::find($oldData['category_id']);
+                $newCategory = \App\Models\Category::find($data['category_id']);
+                $oldCategoryName = $oldCategory ? $oldCategory->category_name : 'Unknown';
+                $newCategoryName = $newCategory ? $newCategory->category_name : 'Unknown';
+                $changedFields[] = "Category: {$oldCategoryName} → {$newCategoryName}";
+            }
+
+            // Check if warranty changed
+            if (isset($data['warranty_period']) && $oldData['warranty_period'] != $data['warranty_period']) {
+                $changedFields[] = "Warranty: {$oldData['warranty_period']} → {$data['warranty_period']}";
+            }
+
+            // Check if supplier changed
+            if (array_key_exists('supplier_id', $data) && $oldData['supplier_id'] != $data['supplier_id']) {
+                $oldSupplier = $oldData['supplier_id'] ? \App\Models\Suppliers::find($oldData['supplier_id']) : null;
+                $newSupplier = $data['supplier_id'] ? \App\Models\Suppliers::find($data['supplier_id']) : null;
+                $oldSupplierName = $oldSupplier ? ($oldSupplier->company_name ?? $oldSupplier->supplier_name) : 'None';
+                $newSupplierName = $newSupplier ? ($newSupplier->company_name ?? $newSupplier->supplier_name) : 'None';
+                $changedFields[] = "Supplier: {$oldSupplierName} → {$newSupplierName}";
+            }
+
+            // Check if price was actually provided and changed
+            if (isset($data['price']) && $oldStock && $oldStock['price'] != $data['price']) {
+                $changedFields[] = "Price: ₱{$oldStock['price']} → ₱{$data['price']}";
+            }
+            $description = empty($changedFields)
+                ? "Updated {$product->product_name} (no changes detected)"
+                : "Updated {$product->product_name}: " . implode(', ', $changedFields);
+
+            $this->logUpdateAudit('UPDATE', 'Inventory', $description, $oldData, $newData, $request);
+
+            // Return JSON for AJAX requests
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product updated successfully.'
+                ]);
+            }
+
+            return redirect()->route('inventory')->with('success', 'Product updated successfully.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Failed to update product: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->route('inventory')->with('error', 'Failed to update product: ' . $e->getMessage());
         }
-
-        $description = "Update {$condition} for {$product->product_name}: {$lastValue} -> {$updatedValue}";
-        $this->logUpdateAudit('Update', 'Inventory', $description, $oldData, $newData, $request);
-
-        return redirect()->route('inventory')->with('success', 'Product updated successfully.');
     }
 
     public function getRecentProducts(Request $request)

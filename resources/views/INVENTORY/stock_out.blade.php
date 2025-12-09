@@ -18,7 +18,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">Stock-Out Management</h2>
-                <p class="text-gray-600 mt-1">Track and manage sold products</p>
+                <p class="text-gray-600 mt-1">Track and manage Sold Products</p>
             </div>
         </div>
 

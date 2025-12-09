@@ -142,23 +142,42 @@ class ServicesController extends Controller
      */
     public function store(ServiceRequest $request)
     {
-        $service = Service::create($request->validated());
+        try {
+            // Determine DR type based on status
+            $status = $request->input('status');
+            $drType = $status === 'Completed' ? 'service_completed' : 'acknowledgment';
+            $totalSum = $request->input('total_price', 0);
 
-        // Load relationships
-        $service->load(['customer', 'serviceType']);
+            // Create DR transaction
+            $drService = app(\App\Services\DRTransactionService::class);
+            $drTransaction = $drService->createDRTransaction($drType, $totalSum);
 
-        // Log the audit trail for adding service
-        $customerName = $service->customer ? $service->customer->first_name . ' ' . $service->customer->last_name : 'Unknown';
-        $serviceName = $service->serviceType ? $service->serviceType->name : 'Unknown';
-        $fee = $service->serviceType ? $service->serviceType->price : 0;
+            // Merge dr_receipt_id into validated data
+            $data = $request->validated();
+            $data['dr_receipt_id'] = $drTransaction->id;
 
-        $this->logAddServiceListAudit($customerName, $serviceName, $fee, $request);
+            $service = Service::create($data);
+            $service->load(['customer', 'serviceType']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Service created successfully.',
-            'service' => $service
-        ]);
+            // Log the audit trail for adding service
+            $customerName = $service->customer ? $service->customer->first_name . ' ' . $service->customer->last_name : 'Unknown';
+            $serviceName = $service->serviceType ? $service->serviceType->name : 'Unknown';
+            $fee = $service->serviceType ? $service->serviceType->price : 0;
+            $this->logAddServiceListAudit($customerName, $serviceName, $fee, $request);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Service created successfully.',
+                'service' => $service,
+                'receipt_no' => $drTransaction->receipt_no
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Service creation failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create service: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -300,7 +319,7 @@ class ServicesController extends Controller
         ]);
 
         // Load customer, serviceType, and replacements relationships
-        $query = Service::with(['customer', 'serviceType', 'replacements']);
+        $query = Service::with(['customer', 'serviceType', 'replacements', 'drReceipt']);
 
         // Handle sorting
         $sort = $request->input('sort', 'newest');
@@ -352,6 +371,10 @@ class ServicesController extends Controller
                 'id' => $service->id,
                 'customer_id' => $service->customer_id,
                 'service_type_id' => $service->service_type_id,
+                'dr_receipt_id' => $service->dr_receipt_id,
+                'drReceipt' => $service->drReceipt ? [
+                    'receipt_no' => $service->drReceipt->receipt_no
+                ] : null,
                 'customer' => $service->customer ? [
                     'id' => $service->customer->id,
                     'first_name' => $service->customer->first_name,
@@ -396,6 +419,9 @@ class ServicesController extends Controller
                     'description' => $serviceArray['description'],
                     'status' => $serviceArray['status'],
                     'total_price' => $serviceArray['total_price'],
+                    // Add for receipt_no/hidden input
+                    'dr_receipt_id' => $serviceArray['dr_receipt_id'] ?? null,
+                    'drReceipt' => $serviceArray['drReceipt'] ? (object) $serviceArray['drReceipt'] : null,
                 ];
             });
 

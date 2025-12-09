@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 trait LogsAuditTrail
 {
@@ -15,7 +16,7 @@ trait LogsAuditTrail
     protected function logAudit($action, $module, $description, $changes = null, $request = null)
     {
         try {
-            $user = auth()->user();
+            $user = Auth::user();
             $ipAddress = $request ? $request->ip() : request()->ip();
 
             $this->callStoredProcedure(
@@ -40,7 +41,7 @@ trait LogsAuditTrail
     protected function callStoredProcedure($procedureName, $params, $ipAddress = null)
     {
         try {
-            $user = auth()->user();
+            $user = Auth::user();
             $driver = DB::getDriverName();
 
             if ($driver === 'mysql') {
@@ -54,7 +55,7 @@ trait LogsAuditTrail
             // Fallback to Eloquent
             try {
                 AuditLog::create([
-                    'user_id' => auth()->user()->id ?? null,
+                    'user_id' => $user->id ?? null,
                     'action' => $params[1] ?? 'Unknown',
                     'module' => $params[2] ?? 'System',
                     'description' => $params[3] ?? '',

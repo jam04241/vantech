@@ -7,6 +7,7 @@ use App\Models\CustomerPurchaseOrder;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Product_Stocks;
+use App\Services\DRTransactionService;
 use App\Traits\LogsAuditTrail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,13 @@ use Illuminate\Support\Facades\Log;
 class CheckoutController extends Controller
 {
     use LogsAuditTrail;
+
+    protected $drService;
+
+    public function __construct(DRTransactionService $drService)
+    {
+        $this->drService = $drService;
+    }
     public function store(Request $request)
     {
         Log::info('=== CHECKOUT PROCESS STARTED ===');
@@ -49,12 +57,22 @@ class CheckoutController extends Controller
                 'items_count' => count($items)
             ]);
 
-            // Create customer purchase orders for each item
+            // Step 1: Create DR Transaction first
+            $totalSum = $request->total ?? $amount; // Get from line 87-88 equivalent (total after discount)
+            $drTransaction = $this->drService->createDRTransaction('purchase', $totalSum);
+
+            Log::info('DR Transaction created:', [
+                'receipt_no' => $drTransaction->receipt_no,
+                'total_sum' => $drTransaction->total_sum
+            ]);
+
+            // Step 2: Create customer purchase orders for each item and link to DR
             $purchaseOrderIds = [];
             foreach ($items as $index => $item) {
                 Log::info("Creating purchase order for item {$index}:", $item);
 
                 $purchaseOrder = CustomerPurchaseOrder::create([
+                    'dr_receipt_id' => $drTransaction->id, // Link to DR transaction
                     'customer_id' => $customerId,
                     'product_id' => $item['product_id'],
                     'serial_number' => $item['serial_number'],
@@ -103,6 +121,7 @@ class CheckoutController extends Controller
 
             // Store receipt data in session for receipt page
             $receiptData = [
+                'drNumber' => $drTransaction->receipt_no, // Add DR number for barcode
                 'customerName' => $customer->first_name . ' ' . $customer->last_name,
                 'customerId' => $customerId,
                 'paymentMethod' => $paymentMethod,

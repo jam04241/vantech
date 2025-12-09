@@ -112,8 +112,21 @@
                 </div>
                 <div class="w-2/5 flex flex-col items-end justify-end">
                     <img src="{{ asset('images/logo.png') }}" class="w-28 h-auto mb-2" />
-                    <h2 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">SERVICE RECEIPT
-                    </h2>
+                    <h2 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">SERVICE RECEIPT</h2>
+
+                    @php
+                        use Picqer\Barcode\BarcodeGeneratorPNG;
+                        $generator = new BarcodeGeneratorPNG();
+                        // Always use a unique service receipt number, not the acknowledgment's
+                        $serviceReceiptNo = $receiptData['serviceReceiptNo'] ?? (session('serviceReceiptNo') ?? 'NO-RECEIPT-NO');
+                        $barcode = base64_encode($generator->getBarcode($serviceReceiptNo, $generator::TYPE_CODE_128, 1, 30));
+                    @endphp
+
+                    <!-- Barcode -->
+                    <div class="mb-1">
+                        <img src="data:image/png;base64,{{ $barcode }}" alt="Barcode" class="h-11 w-auto" />
+                    </div>
+                    <p class="text-xs text-gray-600 text-right font-semibold">Receipt No: {{ $serviceReceiptNo }}</p>
                     <p class="text-xs text-gray-600 mt-1 text-right">Date: <span id="letterDate"
                             class="font-semibold"></span></p>
                 </div>

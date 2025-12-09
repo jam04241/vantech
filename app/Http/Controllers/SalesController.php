@@ -114,27 +114,25 @@ class SalesController extends Controller
     /**
      * Calculate Profit (Revenue - Total Good Cost)
      * Formula: Profit = SUM(customer_purchase_orders.total_price) - SUM(purchase_details.total_price where status='Received')
-     * Note: Only calculates profit when there are received items to ensure accurate cost basis
+     * Note: Only shows profit when revenue exceeds costs. Returns 0 if there's a loss (negative profit)
      */
     private function getProfit($startDate, $endDate)
     {
+        // Get total revenue from customer purchase orders
+        $totalRevenue = CustomerPurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
+            ->where('status', 'Success')
+            ->sum('total_price');
+
         // Get total good cost from purchase details (only Received)
         $totalGoodCost = Purchase_Details::whereBetween('order_date', [$startDate, $endDate])
             ->where('status', 'Received')
             ->sum('total_price');
 
-        // Only calculate profit if there are received items (cost basis exists)
-        if ($totalGoodCost > 0) {
-            // Get total revenue from customer purchase orders
-            $totalRevenue = CustomerPurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
-                ->where('status', 'Success')
-                ->sum('total_price');
+        // Calculate profit
+        $profit = $totalRevenue - $totalGoodCost;
 
-            return round($totalRevenue - $totalGoodCost, 2);
-        }
-
-        // Return 0 if no received items (no cost basis for profit calculation)
-        return 0;
+        // Only return profit if it's positive, otherwise return 0 (no loss displayed)
+        return $profit > 0 ? round($profit, 2) : 0;
     }
 
     /**
@@ -189,7 +187,7 @@ class SalesController extends Controller
             ->join('products', 'customer_purchase_orders.product_id', '=', 'products.id')
             ->whereBetween('customer_purchase_orders.order_date', [$startDate, $endDate])
             ->where('customer_purchase_orders.status', 'Success')
-            ->groupBy('products.id', 'products.product_name')
+            ->groupBy('products.product_name')
             ->orderBy('total_quantity', 'desc')
             ->limit(8)
             ->get()

@@ -23,6 +23,11 @@
 
         <div class="service-card bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition cursor-pointer"
             data-service-id="{{ $service->id }}">
+            <!-- Hidden receipt_no for barcode/receipt use -->
+            @php
+                $receiptNo = $service->dr_receipt_id ? optional($service->drReceipt)->receipt_no : null;
+            @endphp
+            <input type="hidden" class="service-receipt-no" value="{{ $receiptNo }}" />
             <div class="flex justify-between items-start mb-3">
                 <div class="flex-1">
                     <h3 class="font-bold text-gray-800 text-sm mb-1">

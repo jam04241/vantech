@@ -18,23 +18,39 @@ class ProductStocksController extends Controller
             'price' => 'required|numeric|min:0',
         ]);
 
-        DB::transaction(function () use ($product, $validated) {
-            $price = $validated['price'];
-            $productIds = Product::where('product_name', $product->product_name)
+        $oldPrice = $product->stock?->price ?? 0;
+        $newPrice = $validated['price'];
+        $updatedCount = 0;
+
+        DB::transaction(function () use ($product, $newPrice, &$updatedCount) {
+            $productsToUpdate = Product::where('product_name', $product->product_name)
                 ->where('brand_id', $product->brand_id)
                 ->where('category_id', $product->category_id)
-                ->pluck('id');
+                ->where('product_condition', $product->product_condition)
+                ->get();
 
-            foreach ($productIds as $productId) {
-                $stock = Product_Stocks::firstOrNew(['product_id' => $productId]);
-                if (!$stock->exists && $stock->stock_quantity === null) {
-                    $stock->stock_quantity = 1;
-                }   
-                $stock->price = $price;
-                $stock->save();
+            foreach ($productsToUpdate as $prod) {
+                if ($prod->stock) {
+                    $prod->stock->price = $newPrice;
+                    $prod->stock->save();
+                    $updatedCount++;
+                }
             }
         });
 
+        // Audit log
+        $priceAction = $oldPrice > $newPrice ? 'Decrease' : 'Increase';
+        $description = "{$priceAction} all price for {$product->product_name} = ₱{$oldPrice} => ₱{$newPrice}";
+        if (method_exists($this, 'logUpdateAudit')) {
+            $this->logUpdateAudit('UPDATE', 'Inventory', $description, ['price' => $oldPrice], ['price' => $newPrice], $request);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Price updated successfully.'
+            ]);
+        }
         return back()->with('success', 'Price updated successfully.');
     }
 }

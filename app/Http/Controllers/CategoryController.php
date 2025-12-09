@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Traits\LoadsCategoryData;
 use App\Traits\LogsAuditTrail;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
