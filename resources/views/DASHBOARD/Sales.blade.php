@@ -43,8 +43,8 @@
         <div id="errorMessage" class="hidden mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
         </div>
 
-        <!-- Key Metrics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <!-- Key Metrics Cards - First Row (3 columns) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
                 <div class="flex justify-between items-start">
                     <div>
@@ -87,7 +87,10 @@
                     </svg>
                 </div>
             </div>
+        </div>
 
+        <!-- Key Metrics Cards - Second Row (3 columns) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
                 <div class="flex justify-between items-start">
                     <div>
@@ -98,6 +101,21 @@
                     <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Discount</p>
+                        <p class="text-3xl font-bold text-gray-800 mt-2" id="discount">₱0.00</p>
+                        <p class="text-green-600 text-xs mt-2">Total Price - Total Sum</p>
+                    </div>
+                    <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
                         </path>
                     </svg>
                 </div>
@@ -139,8 +157,16 @@
         <!-- Recent Transactions Table -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold text-gray-800">Recent Purchase Product Transactions</h2>
-                <div class="flex gap-2 items-center">
+                <h2 class="text-lg font-semibold text-gray-800">Recent Purchase Transactions</h2>
+                <div class="flex gap-2 items-center flex-wrap">
+                    <!-- Date Range Filter for Transactions -->
+                    <div class="flex gap-2 items-center">
+                        <input type="date" id="transactionStartDate"
+                            class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <span class="text-gray-500">to</span>
+                        <input type="date" id="transactionEndDate"
+                            class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
                     <!-- Search Bar -->
                     <div class="relative">
                         <input type="text" id="transactionSearch" placeholder="Search transactions..."
@@ -151,15 +177,6 @@
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                    <!-- Sort Dropdown -->
-                    <select id="sortTransactions"
-                        class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <option value="date_desc">Newest First</option>
-                        <option value="date_asc">Oldest First</option>
-                        <option value="amount_desc">Highest Amount</option>
-                        <option value="amount_asc">Lowest Amount</option>
-                        <option value="customer">Customer A-Z</option>
-                    </select>
                 </div>
             </div>
 
@@ -169,12 +186,9 @@
                         <tr class="bg-gray-100 text-gray-700">
                             <th class="px-4 py-3 text-left w-1/12">Order ID</th>
                             <th class="px-4 py-3 text-center w-1/12">Receipt No</th>
-                            <th class="px-4 py-3 text-left w-2/12">Customer</th>
-                            <th class="px-4 py-3 text-left w-3/12">Product</th>
-                            <th class="px-4 py-3 text-center w-1/12">Qty</th>
+                            <th class="px-4 py-3 text-left w-3/12">Customer</th>
                             <th class="px-4 py-3 text-right w-2/12">Amount</th>
-                            <th class="px-4 py-3 text-left w-1/12">Date</th>
-                            <th class="px-4 py-3 text-left w-1/12">Status</th>
+                            <th class="px-4 py-3 text-left w-3/12">Date</th>
                         </tr>
                     </thead>
                 </table>
@@ -247,6 +261,10 @@
             document.getElementById('startDate').value = formatDate(firstDay);
             document.getElementById('endDate').value = formatDate(lastDay);
 
+            // Initialize transaction date filters with same defaults
+            document.getElementById('transactionStartDate').value = formatDate(firstDay);
+            document.getElementById('transactionEndDate').value = formatDate(lastDay);
+
             // Initialize charts with empty data
             initializeCharts();
         }
@@ -263,9 +281,10 @@
             document.getElementById('startDate').addEventListener('change', loadSalesData);
             document.getElementById('endDate').addEventListener('change', loadSalesData);
 
-            // Transaction search and sort listeners
+            // Transaction search and date range listeners
             document.getElementById('transactionSearch').addEventListener('input', filterAndDisplayTransactions);
-            document.getElementById('sortTransactions').addEventListener('change', filterAndDisplayTransactions);
+            document.getElementById('transactionStartDate').addEventListener('change', filterAndDisplayTransactions);
+            document.getElementById('transactionEndDate').addEventListener('change', filterAndDisplayTransactions);
             document.getElementById('prevPage').addEventListener('click', () => {
                 if (currentPage > 1) {
                     currentPage--;
@@ -502,6 +521,7 @@
                     total_orders: 0,
                     avg_order_value: 0,
                     revenue: 0,
+                    discount: 0,
                     profit: 0,
                     sales_trend: [],
                     top_products: [],
@@ -543,6 +563,7 @@
             document.getElementById('totalOrders').textContent = (data.total_orders || 0).toLocaleString();
             document.getElementById('avgOrderValue').textContent = formatCurrency(data.avg_order_value || 0);
             document.getElementById('revenue').textContent = formatCurrency(data.revenue || 0);
+            document.getElementById('discount').textContent = formatCurrency(data.discount || 0);
             document.getElementById('profit').textContent = formatCurrency(data.profit || 0);
         }
 
@@ -593,37 +614,31 @@
 
         function filterAndDisplayTransactions() {
             const searchTerm = document.getElementById('transactionSearch').value.toLowerCase();
-            const sortBy = document.getElementById('sortTransactions').value;
+            const transactionStartDate = document.getElementById('transactionStartDate').value;
+            const transactionEndDate = document.getElementById('transactionEndDate').value;
 
-            // Filter transactions based on search term
+            // Filter transactions based on search term and date range
             filteredTransactions = allTransactions.filter(transaction => {
                 const searchableText = [
                     transaction.id.toString(),
                     transaction.customer_name,
                     transaction.amount.toString(),
-                    transaction.items,
-                    transaction.date
+                    transaction.date,
+                    transaction.receipt_no
                 ].join(' ').toLowerCase();
 
-                return searchableText.includes(searchTerm);
-            });
+                const matchesSearch = searchableText.includes(searchTerm);
 
-            // Sort transactions
-            filteredTransactions.sort((a, b) => {
-                switch (sortBy) {
-                    case 'date_desc':
-                        return new Date(b.date) - new Date(a.date);
-                    case 'date_asc':
-                        return new Date(a.date) - new Date(b.date);
-                    case 'amount_desc':
-                        return b.amount - a.amount;
-                    case 'amount_asc':
-                        return a.amount - b.amount;
-                    case 'customer':
-                        return a.customer_name.localeCompare(b.customer_name);
-                    default:
-                        return 0;
+                // Check date range if both dates are provided
+                let matchesDateRange = true;
+                if (transactionStartDate && transactionEndDate) {
+                    const transactionDate = new Date(transaction.date);
+                    const startDate = new Date(transactionStartDate);
+                    const endDate = new Date(transactionEndDate);
+                    matchesDateRange = transactionDate >= startDate && transactionDate <= endDate;
                 }
+
+                return matchesSearch && matchesDateRange;
             });
 
             currentPage = 1; // Reset to first page when filtering
@@ -635,7 +650,7 @@
             tbody.innerHTML = '';
 
             if (filteredTransactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No transactions found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No transactions found</td></tr>';
                 updatePaginationInfo(0, 0, 0);
                 return;
             }
@@ -650,25 +665,13 @@
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-gray-50';
 
-                // Parse items to separate product name and quantity
-                const itemMatch = transaction.items.match(/^(\d+)x\s+(.+)$/);
-                const quantity = itemMatch ? itemMatch[1] : '1';
-                const productName = itemMatch ? itemMatch[2] : transaction.items;
-
                 row.innerHTML = `
-                            <td class="px-4 py-3 text-left w-1/12">#${transaction.id}</td>
-                            <td class="px-4 py-3 text-center w-1/12 font-medium">${transaction.receipt_no ?? '-'}</td>
-                            <td class="px-4 py-3 text-left w-2/12">${transaction.customer_name}</td>
-                            <td class="px-4 py-3 text-left w-3/12" title="${productName}">${productName.length > 20 ? productName.substring(0, 20) + '...' : productName}</td>
-                            <td class="px-4 py-3 text-center w-1/12 font-medium">${quantity}</td>
-                            <td class="px-4 py-3 text-right w-2/12 font-semibold">${formatCurrency(transaction.amount)}</td>
-                            <td class="px-4 py-3 text-left w-1/12">${transaction.date}</td>
-                            <td class="px-4 py-3 text-left w-1/12">
-                                <span class="px-2 py-1 text-xs rounded-full ${getStatusClass(transaction.status)}">
-                                    ${transaction.status}
-                                </span>
-                            </td>
-                        `;
+                                            <td class="px-4 py-3 text-left w-1/12">#${transaction.id}</td>
+                                            <td class="px-4 py-3 text-center w-1/12 font-medium">${transaction.receipt_no ?? '-'}</td>
+                                            <td class="px-4 py-3 text-left w-3/12">${transaction.customer_name}</td>
+                                            <td class="px-4 py-3 text-right w-2/12 font-semibold">${formatCurrency(transaction.amount)}</td>
+                                            <td class="px-4 py-3 text-left w-3/12">${transaction.date}</td>
+                                        `;
 
                 tbody.appendChild(row);
             });

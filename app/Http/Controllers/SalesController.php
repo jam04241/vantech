@@ -44,6 +44,7 @@ class SalesController extends Controller
                 'total_orders' => $this->getTotalOrders($startDate, $endDate),
                 'avg_order_value' => $this->getAverageOrderValue($startDate, $endDate),
                 'revenue' => $this->getRevenue($startDate, $endDate),
+                'discount' => $this->getTotalDiscount($startDate, $endDate),
                 'profit' => $this->getProfit($startDate, $endDate),
                 'sales_trend' => $this->getSalesTrend($startDate, $endDate),
                 'top_products' => $this->getTopProducts($startDate, $endDate),
@@ -112,16 +113,17 @@ class SalesController extends Controller
     }
 
     /**
-     * Calculate Profit (Revenue - Total Good Cost)
-     * Formula: Profit = SUM(customer_purchase_orders.total_price) - SUM(purchase_details.total_price where status='Received')
+     * Calculate Profit (Total Sum from dr_transactions - Total Good Cost)
+     * Formula: Profit = SUM(dr_transactions.total_sum) - SUM(purchase_details.total_price where status='Received')
      * Note: Only shows profit when revenue exceeds costs. Returns 0 if there's a loss (negative profit)
      */
     private function getProfit($startDate, $endDate)
     {
-        // Get total revenue from customer purchase orders
-        $totalRevenue = CustomerPurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
-            ->where('status', 'Success')
-            ->sum('total_price');
+        // Get total sum from dr transactions
+        $totalRevenue = DB::table('dr_transactions')
+            ->whereBetween('created_at', [$startDate, $endDate],)
+            ->where('type', 'purchase')
+            ->sum('total_sum');
 
         // Get total good cost from purchase details (only Received)
         $totalGoodCost = Purchase_Details::whereBetween('order_date', [$startDate, $endDate])
@@ -206,40 +208,56 @@ class SalesController extends Controller
     }
 
     /**
-     * Get recent transactions
+     * Calculate Total Discount (Total Price from customer_purchase_orders - Total Sum from dr_transactions)
+     */
+    private function getTotalDiscount($startDate, $endDate)
+    {
+        // Get total price from customer purchase orders
+        $totalPrice = CustomerPurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
+            ->where('status', 'Success')
+            ->sum('total_price');
+
+        // Get total sum from dr transactions
+        $totalSum = DB::table('dr_transactions')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('total_sum');
+
+        // Calculate discount
+        $discount = $totalPrice - $totalSum;
+
+        return $discount > 0 ? round($discount, 2) : 0;
+    }
+
+    /**
+     * Get recent transactions from dr_transactions table
      */
     private function getRecentTransactions($startDate, $endDate)
     {
-        $transactions = CustomerPurchaseOrder::select(
-            'customer_purchase_orders.id',
-            DB::raw("CONCAT(customers.first_name, ' ', customers.last_name) as customer_name"),
-            'customer_purchase_orders.total_price',
-            'customer_purchase_orders.quantity',
-            'products.product_name',
-            'customer_purchase_orders.order_date',
-            'customer_purchase_orders.status',
-            'dr_transactions.receipt_no as receipt_no'
-        )
-            ->join('customers', 'customer_purchase_orders.customer_id', '=', 'customers.id')
-            ->join('products', 'customer_purchase_orders.product_id', '=', 'products.id')
-            ->leftJoin('dr_transactions', 'customer_purchase_orders.dr_receipt_id', '=', 'dr_transactions.id')
-            ->whereBetween('customer_purchase_orders.order_date', [$startDate, $endDate])
-            ->orderBy('customer_purchase_orders.order_date', 'desc')
-            ->limit(50) // Increased limit for better pagination
+        $transactions = DB::table('dr_transactions')
+            ->select(
+                'dr_transactions.id',
+                DB::raw("CONCAT(customers.first_name, ' ', customers.last_name) as customer_name"),
+                'dr_transactions.total_sum',
+                'dr_transactions.created_at',
+                'dr_transactions.receipt_no'
+            )
+            ->leftJoin('customer_purchase_orders', 'dr_transactions.id', '=', 'customer_purchase_orders.dr_receipt_id')
+            ->leftJoin('customers', 'customer_purchase_orders.customer_id', '=', 'customers.id')
+            ->whereBetween('dr_transactions.created_at', [$startDate, $endDate])
+            ->orderBy('dr_transactions.created_at', 'desc')
+            ->limit(50)
             ->get()
             ->map(function ($transaction) {
                 return [
                     'id' => $transaction->id,
-                    'customer_name' => $transaction->customer_name,
-                    'amount' => round($transaction->total_price, 2),
-                    'quantity' => (int) $transaction->quantity,
-                    'product_name' => $transaction->product_name,
-                    'items' => $transaction->quantity . 'x ' . $transaction->product_name,
-                    'date' => Carbon::parse($transaction->order_date)->format('M d, Y'),
-                    'status' => $transaction->status,
+                    'customer_name' => $transaction->customer_name ?? '-',
+                    'amount' => round($transaction->total_sum, 2),
+                    'date' => Carbon::parse($transaction->created_at)->format('m/d/Y h:i A'),
                     'receipt_no' => $transaction->receipt_no ?? '-'
                 ];
-            });
+            })
+            ->unique('receipt_no')
+            ->values();
 
         return $transactions;
     }

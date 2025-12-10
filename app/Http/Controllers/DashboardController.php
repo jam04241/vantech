@@ -97,113 +97,121 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get top selling products from customer_purchase_orders grouped by product_name
-     * Sums quantity for same product names
+     * Get top selling products from customer_purchase_orders grouped by product_id
+     * Sums quantity for same products
+     * Cached for 5 minutes
      */
     private function getTopSellingProducts()
     {
-        Log::info('📊 Fetching top selling products...');
+        return Cache::remember('dashboard_top_products', 300, function () {
+            Log::info('📊 Fetching top selling products...');
 
-        $topProducts = CustomerPurchaseOrder::select(
-            'products.product_name',
-            'products.id as product_id',
-            DB::raw('SUM(customer_purchase_orders.quantity) as total_sold'),
-            DB::raw('MAX(product_stocks.price) as price')
-        )
-            ->join('products', 'customer_purchase_orders.product_id', '=', 'products.id')
-            ->leftJoin('product_stocks', 'products.id', '=', 'product_stocks.product_id')
-            ->where('customer_purchase_orders.status', 'Success')
-            ->groupBy('products.id', 'products.product_name')
-            ->orderBy('total_sold', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'name' => $item->product_name,
-                    'price' => '₱' . number_format($item->price ?? 0, 2),
-                    'sold' => (int) $item->total_sold
-                ];
-            });
+            $topProducts = CustomerPurchaseOrder::select(
+                'products.id',
+                'products.product_name',
+                DB::raw('SUM(customer_purchase_orders.quantity) as total_sold')
+            )
+                ->join('products', 'customer_purchase_orders.product_id', '=', 'products.id')
+                ->where('customer_purchase_orders.status', 'Success')
+                ->groupBy('products.id')
+                ->orderBy('total_sold', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'name' => $item->product_name,
+                        'sold' => (int) $item->total_sold
+                    ];
+                });
 
-        Log::info('✅ Top selling products fetched', ['count' => $topProducts->count()]);
-        return $topProducts;
+            Log::info('✅ Top selling products fetched', ['count' => $topProducts->count()]);
+            return $topProducts;
+        });
     }
 
     /**
      * Get low stock alerts
-     * Groups by product_name, sums stock_quantity, alerts if total stock <= 5
+     * Groups by product_id only (not product_name) to avoid duplicates
+     * Alerts if total stock > 0 and <= 5
+     * Cached for 5 minutes
      */
     private function getLowStockAlerts()
     {
-        Log::info('📊 Fetching low stock alerts...');
+        return Cache::remember('dashboard_low_stock_alerts', 300, function () {
+            Log::info('📊 Fetching low stock alerts...');
 
-        $lowStockItems = Product_Stocks::select(
-            'products.product_name',
-            'products.id as product_id',
-            DB::raw('SUM(product_stocks.stock_quantity) as total_stock'),
-            DB::raw('MAX(product_stocks.price) as price')
-        )
-            ->join('products', 'product_stocks.product_id', '=', 'products.id')
-            ->groupBy('products.id', 'products.product_name')
-            ->havingRaw('SUM(product_stocks.stock_quantity) <= 5')
-            ->orderBy('total_stock', 'asc')
-            ->limit(10)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'name' => $item->product_name,
-                    'left' => (int) $item->total_stock,
-                    'price' => '₱' . number_format($item->price ?? 0, 2)
-                ];
-            });
+            $lowStockItems = Product_Stocks::select(
+                'products.id',
+                'products.product_name',
+                DB::raw('SUM(product_stocks.stock_quantity) as total_stock')
+            )
+                ->join('products', 'product_stocks.product_id', '=', 'products.id')
+                ->groupBy('products.id')
+                ->havingRaw('SUM(product_stocks.stock_quantity) > 0 AND SUM(product_stocks.stock_quantity) <= 5')
+                ->orderBy('total_stock', 'asc')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'name' => $item->product_name,
+                        'left' => (int) $item->total_stock
+                    ];
+                });
 
-        Log::info('✅ Low stock alerts fetched', ['count' => $lowStockItems->count()]);
-        return $lowStockItems;
+            Log::info('✅ Low stock alerts fetched', ['count' => $lowStockItems->count()]);
+            return $lowStockItems;
+        });
     }
 
     /**
      * Get supplier status (active vs inactive)
+     * Cached for 5 minutes
      */
     private function getSupplierStatus()
     {
-        $activeSuppliers = Suppliers::where('status', 'active')->count();
-        $inactiveSuppliers = Suppliers::where('status', 'inactive')->count();
-        $totalSuppliers = $activeSuppliers + $inactiveSuppliers;
+        return Cache::remember('dashboard_supplier_status', 300, function () {
+            $activeSuppliers = Suppliers::where('status', 'active')->count();
+            $inactiveSuppliers = Suppliers::where('status', 'inactive')->count();
+            $totalSuppliers = $activeSuppliers + $inactiveSuppliers;
 
-        $percentage = $totalSuppliers > 0 ? round(($activeSuppliers / $totalSuppliers) * 100) : 0;
+            $percentage = $totalSuppliers > 0 ? round(($activeSuppliers / $totalSuppliers) * 100) : 0;
 
-        return [
-            'active' => $activeSuppliers,
-            'inactive' => $inactiveSuppliers,
-            'percentage' => $percentage
-        ];
+            return [
+                'active' => $activeSuppliers,
+                'inactive' => $inactiveSuppliers,
+                'percentage' => $percentage
+            ];
+        });
     }
 
     /**
      * Get inventory status (Brand New vs Used)
+     * Cached for 5 minutes
      */
     private function getInventoryStatus()
     {
-        // Count products by condition where stock > 0
-        $brandNewCount = Product::join('product_stocks', 'products.id', '=', 'product_stocks.product_id')
-            ->where('products.product_condition', 'Brand New')
-            ->where('product_stocks.stock_quantity', '>', 0)
-            ->distinct('products.id')
-            ->count('products.id');
+        return Cache::remember('dashboard_inventory_status', 300, function () {
+            // Count products by condition where stock > 0
+            $brandNewCount = Product::join('product_stocks', 'products.id', '=', 'product_stocks.product_id')
+                ->where('products.product_condition', 'Brand New')
+                ->where('product_stocks.stock_quantity', '>', 0)
+                ->distinct('products.id')
+                ->count('products.id');
 
-        $usedCount = Product::join('product_stocks', 'products.id', '=', 'product_stocks.product_id')
-            ->where('products.product_condition', 'Second Hand')
-            ->where('product_stocks.stock_quantity', '>', 0)
-            ->distinct('products.id')
-            ->count('products.id');
+            $usedCount = Product::join('product_stocks', 'products.id', '=', 'product_stocks.product_id')
+                ->where('products.product_condition', 'Second Hand')
+                ->where('product_stocks.stock_quantity', '>', 0)
+                ->distinct('products.id')
+                ->count('products.id');
 
-        $totalProducts = $brandNewCount + $usedCount;
-        $percentage = $totalProducts > 0 ? round(($brandNewCount / $totalProducts) * 100) : 0;
+            $totalProducts = $brandNewCount + $usedCount;
+            $percentage = $totalProducts > 0 ? round(($brandNewCount / $totalProducts) * 100) : 0;
 
-        return [
-            'brand_new' => $brandNewCount,
-            'used' => $usedCount,
-            'percentage' => $percentage
-        ];
+            return [
+                'brand_new' => $brandNewCount,
+                'used' => $usedCount,
+                'percentage' => $percentage
+            ];
+        });
     }
 }
