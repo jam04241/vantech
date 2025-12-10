@@ -168,19 +168,30 @@
 
         async function loadDashboardData() {
             try {
+                console.log('📊 Fetching dashboard data...');
                 const response = await fetch('/api/dashboard/data');
-                const result = await response.json();
 
-                if (result.success) {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ Dashboard data received:', result);
+
+                if (result.success && result.data) {
                     const data = result.data;
+                    console.log('📈 Updating dashboard with metrics:', data.metrics);
                     updateMetrics(data.metrics);
                     updateTopProducts(data.top_products);
                     updateLowStockAlerts(data.low_stock_alerts);
                     updateSupplierStatus(data.supplier_status);
                     updateInventoryStatus(data.inventory_status);
+                } else {
+                    console.warn('⚠️ Invalid response format:', result);
+                    showFallbackData();
                 }
             } catch (error) {
-                console.error('Error loading dashboard data:', error);
+                console.error('❌ Error loading dashboard data:', error);
                 // Show fallback data
                 showFallbackData();
             }
@@ -202,14 +213,14 @@
             }
 
             const html = topProducts.map(product => `
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
-                                            <div class="flex-1">
-                                                <p class="font-semibold text-gray-800 text-sm">${product.name}</p>
-                                                <p class="text-xs text-gray-500">${product.price} • ${product.sold} sold</p>
+                                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
+                                                <div class="flex-1">
+                                                    <p class="font-semibold text-gray-800 text-sm">${product.name}</p>
+                                                    <p class="text-xs text-gray-500">${product.price} • ${product.sold} sold</p>
+                                                </div>
+                                                <div class="text-lg font-bold text-indigo-600">${product.sold}</div>
                                             </div>
-                                            <div class="text-lg font-bold text-indigo-600">${product.sold}</div>
-                                        </div>
-                                    `).join('');
+                                        `).join('');
             container.innerHTML = html;
         }
 
@@ -222,14 +233,14 @@
             }
 
             const html = lowStockItems.map(item => `
-                                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-colors">
-                                            <div class="flex-1">
-                                                <p class="font-semibold text-gray-800 text-sm">${item.name}</p>
-                                                <p class="text-xs text-yellow-600">${item.price} • ${item.left} left in stock</p>
+                                            <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-colors">
+                                                <div class="flex-1">
+                                                    <p class="font-semibold text-gray-800 text-sm">${item.name}</p>
+                                                    <p class="text-xs text-yellow-600">${item.price} • ${item.left} left in stock</p>
+                                                </div>
+                                                <div class="text-lg font-bold text-yellow-600">${item.left}</div>
                                             </div>
-                                            <div class="text-lg font-bold text-yellow-600">${item.left}</div>
-                                        </div>
-                                    `).join('');
+                                        `).join('');
             container.innerHTML = html;
         }
 

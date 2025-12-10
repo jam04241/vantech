@@ -1361,6 +1361,7 @@
                     return;
                 }
 
+                let drReceiptId = null;
                 try {
                     // First, update service status to Completed
                     if (serviceId) {
@@ -1389,6 +1390,19 @@
 
                         if (!response.ok) {
                             throw new Error('Failed to update service');
+                        }
+
+                        const updatedService = await response.json();
+                        if (updatedService.service && updatedService.service.dr_receipt_id) {
+                            drReceiptId = updatedService.service.dr_receipt_id;
+                            console.log('✅ DR Receipt ID from updated service:', drReceiptId);
+                        } else {
+                            console.warn('⚠️ No DR Receipt ID in response, checking selectedServiceData');
+                            // Fallback to selectedServiceData if available
+                            if (selectedServiceData && selectedServiceData.dr_receipt_id) {
+                                drReceiptId = selectedServiceData.dr_receipt_id;
+                                console.log('✅ DR Receipt ID from selectedServiceData:', drReceiptId);
+                            }
                         }
                     }
                 } catch (error) {
@@ -1440,9 +1454,11 @@
                     actionTaken: actionTaken,
                     partReplacement: partReplacementText,
                     totalPrice: document.getElementById('totalPrice').value || '0.00',
-                    serviceReceiptNo: newReceiptNo
+                    serviceReceiptNo: newReceiptNo,
+                    drReceiptId: drReceiptId
                 };
 
+                console.log('📋 Receipt Data being sent to sessionStorage:', receiptData);
                 sessionStorage.setItem('serviceData', JSON.stringify(receiptData));
 
                 // Call audit logging endpoint

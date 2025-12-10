@@ -114,20 +114,6 @@
                     <img src="{{ asset('images/logo.png') }}" class="w-28 h-auto mb-2" />
                     <h2 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">SERVICE ACKNOWLEDGEMENT
                     </h2>
-
-                    @php
-                        use Picqer\Barcode\BarcodeGeneratorPNG;
-                        $generator = new BarcodeGeneratorPNG();
-                        // Try to get drNumber from receiptData, fallback to session, then default
-                        $drNumber = $receiptData['drNumber'] ?? (session('drNumber') ?? 'NO-RECEIPT-NO');
-                        $barcode = base64_encode($generator->getBarcode($drNumber, $generator::TYPE_CODE_128, 1, 30));
-                    @endphp
-
-                    <!-- Barcode -->
-                    <div class="mb-1">
-                        <img src="data:image/png;base64,{{ $barcode }}" alt="Barcode" class="h-11 w-auto" />
-                    </div>
-                    <p class="text-xs text-gray-600 text-right font-semibold">Receipt No: {{ $drNumber }}</p>
                     <p class="text-xs text-gray-600 mt-1 text-right">Date: <span id="letterDate"
                             class="font-semibold"></span></p>
                 </div>

@@ -114,19 +114,12 @@
                     <img src="{{ asset('images/logo.png') }}" class="w-28 h-auto mb-2" />
                     <h2 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">SERVICE RECEIPT</h2>
 
-                    @php
-                        use Picqer\Barcode\BarcodeGeneratorPNG;
-                        $generator = new BarcodeGeneratorPNG();
-                        // Always use a unique service receipt number, not the acknowledgment's
-                        $serviceReceiptNo = $receiptData['serviceReceiptNo'] ?? (session('serviceReceiptNo') ?? 'NO-RECEIPT-NO');
-                        $barcode = base64_encode($generator->getBarcode($serviceReceiptNo, $generator::TYPE_CODE_128, 1, 30));
-                    @endphp
-
-                    <!-- Barcode -->
+                    <!-- Barcode will be generated via JavaScript -->
                     <div class="mb-1">
-                        <img src="data:image/png;base64,{{ $barcode }}" alt="Barcode" class="h-11 w-auto" />
+                        <img id="barcodeImage" src="" alt="Barcode" class="h-11 w-auto" />
                     </div>
-                    <p class="text-xs text-gray-600 text-right font-semibold">Receipt No: {{ $serviceReceiptNo }}</p>
+                    <p class="text-xs text-gray-600 text-right font-semibold">Receipt No: <span
+                            id="receiptNoDisplay">NO-RECEIPT-NO</span></p>
                     <p class="text-xs text-gray-600 mt-1 text-right">Date: <span id="letterDate"
                             class="font-semibold"></span></p>
                 </div>
@@ -250,6 +243,7 @@
             const serviceData = JSON.parse(sessionStorage.getItem('serviceData') || '{}');
 
             console.log('DEBUG: Full serviceData from sessionStorage:', serviceData);
+            console.log('DEBUG: drReceiptId value:', serviceData.drReceiptId);
             console.log('DEBUG: partReplacement value:', serviceData.partReplacement);
 
             if (Object.keys(serviceData).length === 0) {
@@ -292,7 +286,68 @@
             document.getElementById('rcptActionTaken').textContent = serviceData.actionTaken || '-';
             document.getElementById('rcptPartReplacement').textContent = serviceData.partReplacement || '-';
             document.getElementById('rcptPrice').textContent = '₱' + parseFloat(serviceData.totalPrice || 0).toFixed(2);
+
+            // Fetch and display receipt number from DR transaction
+            if (serviceData.drReceiptId) {
+                console.log('🔍 Fetching DR transaction for ID:', serviceData.drReceiptId);
+                fetch(`/api/dr-transactions/${serviceData.drReceiptId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch DR transaction');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.receipt_no) {
+                            const receiptNo = data.receipt_no;
+                            console.log('✅ Receipt No retrieved:', receiptNo);
+                            document.getElementById('receiptNoDisplay').textContent = receiptNo;
+
+                            // Generate barcode using JsBarcode library
+                            generateBarcode(receiptNo);
+                        } else {
+                            console.warn('⚠️ No receipt_no in response');
+                            generateBarcode('NO-RECEIPT-NO');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ Error fetching DR transaction:', error);
+                        generateBarcode('NO-RECEIPT-NO');
+                    });
+            } else {
+                console.warn('⚠️ No drReceiptId in serviceData');
+                generateBarcode('NO-RECEIPT-NO');
+            }
         });
+
+        /**
+         * Generate barcode using JsBarcode library
+         */
+        function generateBarcode(receiptNo) {
+            // Load JsBarcode library dynamically if not already loaded
+            if (typeof JsBarcode === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js';
+                script.onload = function () {
+                    JsBarcode('#barcodeImage', receiptNo, {
+                        format: 'CODE128',
+                        width: 2,
+                        height: 50,
+                        displayValue: false
+                    });
+                    console.log('✅ Barcode generated for:', receiptNo);
+                };
+                document.head.appendChild(script);
+            } else {
+                JsBarcode('#barcodeImage', receiptNo, {
+                    format: 'CODE128',
+                    width: 2,
+                    height: 50,
+                    displayValue: false
+                });
+                console.log('✅ Barcode generated for:', receiptNo);
+            }
+        }
 
         /**
          * Print receipt

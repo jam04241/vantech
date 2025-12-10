@@ -12,6 +12,7 @@ use App\Models\Suppliers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -30,8 +31,11 @@ class DashboardController extends Controller
     public function getDashboardData()
     {
         try {
+            Log::info('📊 Dashboard data request received');
+
             // Cache dashboard data for 5 minutes
             $data = Cache::remember('dashboard_data', 300, function () {
+                Log::info('🔄 Generating fresh dashboard data (cache miss)');
                 return [
                     'metrics' => $this->getKeyMetrics(),
                     'top_products' => $this->getTopSellingProducts(),
@@ -42,11 +46,17 @@ class DashboardController extends Controller
                 ];
             });
 
+            Log::info('✅ Dashboard data generated successfully', ['data_keys' => array_keys($data)]);
+
             return response()->json([
                 'success' => true,
                 'data' => $data
             ]);
         } catch (\Exception $e) {
+            Log::error('❌ Error fetching dashboard data: ' . $e->getMessage(), [
+                'exception' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching dashboard data: ' . $e->getMessage()
@@ -87,56 +97,67 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get top selling products from customer_purchase_orders grouped by product_name and price
+     * Get top selling products from customer_purchase_orders grouped by product_name
+     * Sums quantity for same product names
      */
     private function getTopSellingProducts()
     {
+        Log::info('📊 Fetching top selling products...');
+
         $topProducts = CustomerPurchaseOrder::select(
             'products.product_name',
-            'product_stocks.price',
-            DB::raw('SUM(customer_purchase_orders.quantity) as total_sold')
+            'products.id as product_id',
+            DB::raw('SUM(customer_purchase_orders.quantity) as total_sold'),
+            DB::raw('MAX(product_stocks.price) as price')
         )
             ->join('products', 'customer_purchase_orders.product_id', '=', 'products.id')
-            ->join('product_stocks', 'products.id', '=', 'product_stocks.product_id')
+            ->leftJoin('product_stocks', 'products.id', '=', 'product_stocks.product_id')
             ->where('customer_purchase_orders.status', 'Success')
-            ->groupBy('products.product_name', 'product_stocks.price')
+            ->groupBy('products.id', 'products.product_name')
             ->orderBy('total_sold', 'desc')
-            ->limit(10) // Get more items to show in scrollable view
+            ->limit(10)
             ->get()
             ->map(function ($item) {
                 return [
                     'name' => $item->product_name,
-                    'price' => '₱' . number_format($item->price, 2),
+                    'price' => '₱' . number_format($item->price ?? 0, 2),
                     'sold' => (int) $item->total_sold
                 ];
             });
 
+        Log::info('✅ Top selling products fetched', ['count' => $topProducts->count()]);
         return $topProducts;
     }
 
     /**
-     * Get low stock alerts (stock_quantity = 1)
+     * Get low stock alerts
+     * Groups by product_name, sums stock_quantity, alerts if total stock <= 5
      */
     private function getLowStockAlerts()
     {
+        Log::info('📊 Fetching low stock alerts...');
+
         $lowStockItems = Product_Stocks::select(
             'products.product_name',
-            'product_stocks.stock_quantity',
-            'product_stocks.price'
+            'products.id as product_id',
+            DB::raw('SUM(product_stocks.stock_quantity) as total_stock'),
+            DB::raw('MAX(product_stocks.price) as price')
         )
             ->join('products', 'product_stocks.product_id', '=', 'products.id')
-            ->where('product_stocks.stock_quantity', 1)
-            ->orderBy('products.product_name')
-            ->limit(10) // Get more items for scrollable view
+            ->groupBy('products.id', 'products.product_name')
+            ->havingRaw('SUM(product_stocks.stock_quantity) <= 5')
+            ->orderBy('total_stock', 'asc')
+            ->limit(10)
             ->get()
             ->map(function ($item) {
                 return [
                     'name' => $item->product_name,
-                    'left' => (int) $item->stock_quantity,
-                    'price' => '₱' . number_format($item->price, 2)
+                    'left' => (int) $item->total_stock,
+                    'price' => '₱' . number_format($item->price ?? 0, 2)
                 ];
             });
 
+        Log::info('✅ Low stock alerts fetched', ['count' => $lowStockItems->count()]);
         return $lowStockItems;
     }
 

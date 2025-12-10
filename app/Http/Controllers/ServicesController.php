@@ -31,7 +31,7 @@ class ServicesController extends Controller
     public function getserviceRecords(Request $request)
     {
         // Base query for services with relationships
-        $query = Service::with(['customer', 'serviceType'])
+        $query = Service::with(['customer', 'serviceType', 'drReceipt'])
             ->whereIn('status', ['Completed', 'Pending', 'On Hold', 'In Progress']);
 
         // Date range filtering
@@ -60,6 +60,10 @@ class ServicesController extends Controller
                     // Search service type
                     ->orWhereHas('serviceType', function ($serviceQuery) use ($search) {
                         $serviceQuery->where('name', 'like', "%{$search}%");
+                    })
+                    // Search receipt number (for completed services)
+                    ->orWhereHas('drReceipt', function ($drQuery) use ($search) {
+                        $drQuery->where('receipt_no', 'like', "%{$search}%");
                     })
                     // Search item details
                     ->orWhere('type', 'like', "%{$search}%")
@@ -143,18 +147,17 @@ class ServicesController extends Controller
     public function store(ServiceRequest $request)
     {
         try {
-            // Determine DR type based on status
-            $status = $request->input('status');
-            $drType = $status === 'Completed' ? 'service_completed' : 'acknowledgment';
-            $totalSum = $request->input('total_price', 0);
-
-            // Create DR transaction
-            $drService = app(\App\Services\DRTransactionService::class);
-            $drTransaction = $drService->createDRTransaction($drType, $totalSum);
-
-            // Merge dr_receipt_id into validated data
+            // Merge validated data
             $data = $request->validated();
-            $data['dr_receipt_id'] = $drTransaction->id;
+            $status = $request->input('status');
+
+            // Only create DR transaction if status is Completed
+            if ($status === 'Completed') {
+                $totalSum = $request->input('total_price', 0);
+                $drService = app(\App\Services\DRTransactionService::class);
+                $drTransaction = $drService->createDRTransaction('service_completed', $totalSum);
+                $data['dr_receipt_id'] = $drTransaction->id;
+            }
 
             $service = Service::create($data);
             $service->load(['customer', 'serviceType']);
@@ -165,12 +168,18 @@ class ServicesController extends Controller
             $fee = $service->serviceType ? $service->serviceType->price : 0;
             $this->logAddServiceListAudit($customerName, $serviceName, $fee, $request);
 
-            return response()->json([
+            $response = [
                 'success' => true,
                 'message' => 'Service created successfully.',
                 'service' => $service,
-                'receipt_no' => $drTransaction->receipt_no
-            ]);
+            ];
+
+            // Only include receipt_no if DR transaction was created
+            if ($status === 'Completed' && isset($drTransaction)) {
+                $response['receipt_no'] = $drTransaction->receipt_no;
+            }
+
+            return response()->json($response);
         } catch (\Exception $e) {
             Log::error('Service creation failed: ' . $e->getMessage());
             return response()->json([
@@ -222,7 +231,18 @@ class ServicesController extends Controller
      */
     public function update(ServiceRequest $request, Service $service)
     {
-        $service->update($request->validated());
+        $data = $request->validated();
+        $newStatus = $data['status'] ?? $service->status;
+
+        // If status is being changed to Completed and no DR receipt exists, create one
+        if ($newStatus === 'Completed' && !$service->dr_receipt_id) {
+            $totalSum = $data['total_price'] ?? 0;
+            $drService = app(\App\Services\DRTransactionService::class);
+            $drTransaction = $drService->createDRTransaction('service_completed', $totalSum);
+            $data['dr_receipt_id'] = $drTransaction->id;
+        }
+
+        $service->update($data);
 
         // Load relationships but exclude replacements to avoid table-not-found errors
         $service->load(['customer', 'serviceType']);
@@ -319,7 +339,7 @@ class ServicesController extends Controller
         ]);
 
         // Load customer, serviceType, and replacements relationships
-        $query = Service::with(['customer', 'serviceType', 'replacements', 'drReceipt']);
+        $query = Service::with(['customer', 'serviceType', 'replacements']);
 
         // Handle sorting
         $sort = $request->input('sort', 'newest');
@@ -372,9 +392,7 @@ class ServicesController extends Controller
                 'customer_id' => $service->customer_id,
                 'service_type_id' => $service->service_type_id,
                 'dr_receipt_id' => $service->dr_receipt_id,
-                'drReceipt' => $service->drReceipt ? [
-                    'receipt_no' => $service->drReceipt->receipt_no
-                ] : null,
+                'drReceipt' => null, // Will be loaded separately if needed
                 'customer' => $service->customer ? [
                     'id' => $service->customer->id,
                     'first_name' => $service->customer->first_name,

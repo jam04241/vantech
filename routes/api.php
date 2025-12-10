@@ -38,6 +38,15 @@ Route::middleware('web')->prefix('dr')->group(function () {
     Route::get('/next-number', [DRTransactionController::class, 'getNextDRNumber']);
 });
 
+// DR Transaction detail endpoint
+Route::middleware('web')->get('/dr-transactions/{id}', function ($id) {
+    $drTransaction = \App\Models\DRTransaction::find($id);
+    if (!$drTransaction) {
+        return response()->json(['error' => 'DR Transaction not found'], 404);
+    }
+    return response()->json($drTransaction);
+});
+
 // Test endpoints for debugging
 Route::get('/test/sales-data', function () {
     $controller = new SalesController();
