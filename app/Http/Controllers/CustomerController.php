@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests\CustomerRequest;
 use App\Models\Customer;
+use Illuminate\Support\Facades\Log;
 
 class CustomerController extends Controller
 {
@@ -102,4 +103,6 @@ class CustomerController extends Controller
 
         return response()->json($customers);
     }
+
+    public function getPurchaseTransactions() {}
 }

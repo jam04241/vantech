@@ -244,6 +244,7 @@ class SalesController extends Controller
             )
             ->leftJoin('customer_purchase_orders', 'dr_transactions.id', '=', 'customer_purchase_orders.dr_receipt_id')
             ->leftJoin('customers', 'customer_purchase_orders.customer_id', '=', 'customers.id')
+            ->where('type', 'purchase')
             ->whereBetween('dr_transactions.created_at', [$startDate, $endDate])
             ->groupBy(
                 'dr_transactions.id',

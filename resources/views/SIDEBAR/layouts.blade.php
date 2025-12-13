@@ -6,17 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard')</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- ... other head content ... -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
     {{-- Tailwind & Vite --}}
     @vite('resources/css/app.css')
     @vite('resources/js/app.js')
 
+    <!-- <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    {{--... other head content ...--}}
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     {{-- SweetAlert --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -24,7 +25,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
 
     {{-- HTMX --}}
-    <script src="https://unpkg.com/htmx.org"></script>
+    <script src="https://unpkg.com/htmx.org"></script> -->
     <style>
         .sidebar {
             transition: all 0.3s ease;
@@ -504,28 +505,28 @@
                 </div>
             </details>
 
-                <!-- Suppliers Dropdown - Available to all authenticated users -->
-                <details class="group">
-                    <summary class="dropdown-toggle">
-                        <div class="flex items-center">
-                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                                </path>
-                            </svg>
-                            Suppliers
-                        </div>
-                        <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            <!-- Suppliers Dropdown - Available to all authenticated users -->
+            <details class="group">
+                <summary class="dropdown-toggle">
+                    <div class="flex items-center">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
                         </svg>
-                    </summary>
-                    <div class="dropdown-content space-y-1">
-                        <a href="{{ route('suppliers') }}" class="dropdown-item">Supplier
-                            Manage</a>
-                        <a href="{{ route('suppliers.list') }}" class="dropdown-item">Purchase Orders</a>
+                        Suppliers
                     </div>
-                </details>
+                    <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </summary>
+                <div class="dropdown-content space-y-1">
+                    <a href="{{ route('suppliers') }}" class="dropdown-item">Supplier
+                        Manage</a>
+                    <a href="{{ route('suppliers.list') }}" class="dropdown-item">Purchase Orders</a>
+                </div>
+            </details>
 
 
             <!-- Audit Logs - Admin Only -->

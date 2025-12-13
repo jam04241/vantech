@@ -121,13 +121,35 @@
                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $index + 1 }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-900 text-left">{{ $customer->first_name }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-900 text-left">{{ $customer->last_name }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->contact_no ? 'text-left' : 'text-center' }}">{{ $customer->contact_no ?: '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->gender ? 'text-left' : 'text-center' }}">{{ $customer->gender ?: '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->street ? 'text-left' : 'text-center' }}">{{ $customer->street ?: '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->brgy ? 'text-left' : 'text-center' }}">{{ $customer->brgy ?: '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->city_province ? 'text-left' : 'text-center' }}">{{ $customer->city_province ?: '-' }}</td>
+                                <td
+                                    class="px-6 py-4 text-sm text-gray-500 {{ $customer->contact_no ? 'text-left' : 'text-center' }}">
+                                    {{ $customer->contact_no ?: '-' }}
+                                </td>
+                                <td
+                                    class="px-6 py-4 text-sm text-gray-500 {{ $customer->gender ? 'text-left' : 'text-center' }}">
+                                    {{ $customer->gender ?: '-' }}
+                                </td>
+                                <td
+                                    class="px-6 py-4 text-sm text-gray-500 {{ $customer->street ? 'text-left' : 'text-center' }}">
+                                    {{ $customer->street ?: '-' }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 {{ $customer->brgy ? 'text-left' : 'text-center' }}">
+                                    {{ $customer->brgy ?: '-' }}
+                                </td>
+                                <td
+                                    class="px-6 py-4 text-sm text-gray-500 {{ $customer->city_province ? 'text-left' : 'text-center' }}">
+                                    {{ $customer->city_province ?: '-' }}
+                                </td>
 
                                 <td class="px-6 py-4 text-center">
+                                    <button onclick="viewPurchaseTransactions({{ $customer->id }})"
+                                        class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-200">
+                                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Transactions
+                                    </button>
                                     <button onclick="editCustomer({{ $customer->id }})"
                                         class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition duration-200">
                                         <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,6 +169,126 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        {{-- Purchase Transactions Modal --}}
+        <div id="transactionModal"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 overflow-y-auto">
+            <div
+                class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-auto transform scale-95 transition-all duration-300 my-8">
+                <div class="p-8">
+                    {{-- Modal Header --}}
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold text-gray-800">Purchase Transactions</h3>
+                        <button id="closeTransactionModal"
+                            class="text-gray-400 hover:text-gray-600 transition duration-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- Customer Information --}}
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-6 border border-blue-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Full Name</p>
+                                <p id="transactionFullName" class="text-lg font-semibold text-gray-900">-</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Contact No.</p>
+                                <p id="transactionContactNo" class="text-lg font-semibold text-gray-900">-</p>
+                            </div>
+                            <div class="md:col-span-2">
+                                <p class="text-sm font-medium text-gray-600">Full Address</p>
+                                <p id="transactionFullAddress" class="text-lg font-semibold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Receipt Selection --}}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Receipt No.</label>
+                        <select id="receiptSelect"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <option value="">-- Select a receipt --</option>
+                        </select>
+                    </div>
+
+                    {{-- Transaction Details --}}
+                    <div id="transactionDetailsContainer" class="hidden">
+                        <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Date & Time</p>
+                                    <p id="transactionDateTime" class="text-lg font-semibold text-gray-900">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Receipt No.</p>
+                                    <p id="transactionReceiptNo" class="text-lg font-semibold text-gray-900">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Created By</p>
+                                </div>
+                            </div>
+
+                            {{-- Products Table --}}
+                            <div class="overflow-x-auto mb-6">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-200 text-gray-700">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left font-semibold">Product Name</th>
+                                            <th class="px-4 py-3 text-left font-semibold">Serial No.</th>
+                                            <th class="px-4 py-3 text-left font-semibold">Warranty</th>
+                                            <th class="px-4 py-3 text-right font-semibold">Unit Price</th>
+                                            <th class="px-4 py-3 text-right font-semibold">Total Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productsTableBody" class="divide-y divide-gray-200">
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {{-- Summary --}}
+                            <div class="border-t border-gray-300 pt-4 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-700 font-medium">Subtotal:</span>
+                                    <span id="subtotalAmount" class="text-gray-900 font-semibold">₱ 0.00</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-700 font-medium">Discount:</span>
+                                    <span id="discountAmount" class="text-gray-900 font-semibold text-red-600">- ₱
+                                        0.00</span>
+                                </div>
+                                <div
+                                    class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <span class="text-gray-800 font-bold">Total Price:</span>
+                                    <span id="totalAmount" class="text-blue-600 font-bold text-xl">₱ 0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- No Transactions Message --}}
+                    <div id="noTransactionsMessage" class="text-center py-8">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="text-gray-500 text-lg">No purchase transactions found for this customer</p>
+                    </div>
+
+                    {{-- Close Button --}}
+                    <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+                        <button id="closeTransactionBtn"
+                            class="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-200">
+                            Close
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -407,6 +549,131 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = isEditing ? 'Update Customer' : 'Save Customer';
             }
+        });
+
+        // Purchase Transaction Modal Functions
+        const transactionModal = document.getElementById('transactionModal');
+        const closeTransactionModal = document.getElementById('closeTransactionModal');
+        const closeTransactionBtn = document.getElementById('closeTransactionBtn');
+        const receiptSelect = document.getElementById('receiptSelect');
+        let allTransactions = [];
+
+        function openTransactionModal() {
+            transactionModal.classList.remove('hidden');
+            transactionModal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                transactionModal.querySelector('.max-w-4xl').classList.remove('scale-95');
+                transactionModal.querySelector('.max-w-4xl').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeTransactionModalFunc() {
+            transactionModal.querySelector('.max-w-4xl').classList.remove('scale-100');
+            transactionModal.querySelector('.max-w-4xl').classList.add('scale-95');
+            setTimeout(() => {
+                transactionModal.classList.add('hidden');
+                transactionModal.classList.remove('flex');
+                document.body.style.overflow = 'auto';
+                allTransactions = [];
+                receiptSelect.innerHTML = '<option value="">-- Select a receipt --</option>';
+            }, 200);
+        }
+
+        closeTransactionModal.addEventListener('click', closeTransactionModalFunc);
+        closeTransactionBtn.addEventListener('click', closeTransactionModalFunc);
+
+        transactionModal.addEventListener('click', (e) => {
+            if (e.target === transactionModal) {
+                closeTransactionModalFunc();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !transactionModal.classList.contains('hidden')) {
+                closeTransactionModalFunc();
+            }
+        });
+
+        function viewPurchaseTransactions(customerId) {
+            const customerRow = event.target.closest('tr');
+            const cells = customerRow.querySelectorAll('td');
+            const firstName = cells[1].textContent.trim();
+            const lastName = cells[2].textContent.trim();
+            const contactNo = cells[3].textContent.trim();
+            const street = cells[5].textContent.trim();
+            const barangay = cells[6].textContent.trim();
+            const city = cells[7].textContent.trim();
+
+            document.getElementById('transactionFullName').textContent = firstName + ' ' + lastName;
+            document.getElementById('transactionContactNo').textContent = contactNo;
+            document.getElementById('transactionFullAddress').textContent = (street + ' ' + barangay + ' ' + city).trim();
+
+            receiptSelect.innerHTML = '<option value="">-- Select a receipt --</option>';
+            allTransactions = [];
+
+            document.getElementById('transactionDetailsContainer').classList.add('hidden');
+            document.getElementById('noTransactionsMessage').classList.remove('hidden');
+
+            openTransactionModal();
+        }
+
+        receiptSelect.addEventListener('change', function () {
+            if (this.value === '') {
+                document.getElementById('transactionDetailsContainer').classList.add('hidden');
+                return;
+            }
+
+            const selectedTransaction = allTransactions[parseInt(this.value)];
+            if (!selectedTransaction) return;
+
+            const dateTime = new Date(selectedTransaction.created_at);
+            const formattedDate = dateTime.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const formattedTime = dateTime.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+
+            document.getElementById('transactionDateTime').textContent = `${formattedDate} ${formattedTime}`;
+            document.getElementById('transactionReceiptNo').textContent = selectedTransaction.receipt_no;
+
+            const productsTableBody = document.getElementById('productsTableBody');
+            productsTableBody.innerHTML = '';
+
+            let subtotal = 0;
+            selectedTransaction.products.forEach(product => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-100 transition';
+
+                const productNameWidth = Math.max(150, product.product_name.length * 8);
+                const serialNoWidth = Math.max(120, product.serial_no.length * 8);
+                const warrantyWidth = Math.max(100, product.warranty.length * 8);
+
+                row.innerHTML = `
+                                <td class="px-4 py-3 text-left" style="min-width: ${productNameWidth}px;">${product.product_name}</td>
+                                <td class="px-4 py-3 text-left" style="min-width: ${serialNoWidth}px;">${product.serial_no}</td>
+                                <td class="px-4 py-3 text-left" style="min-width: ${warrantyWidth}px;">${product.warranty}</td>
+                                <td class="px-4 py-3 text-right">₱ ${parseFloat(product.unit_price).toFixed(2)}</td>
+                                <td class="px-4 py-3 text-right">₱ ${parseFloat(product.total_price).toFixed(2)}</td>
+                            `;
+                productsTableBody.appendChild(row);
+                subtotal += parseFloat(product.total_price);
+            });
+
+            const discount = selectedTransaction.discount;
+            const total = selectedTransaction.total_sum;
+
+            document.getElementById('subtotalAmount').textContent = `₱ ${subtotal.toFixed(2)}`;
+            document.getElementById('discountAmount').textContent = `- ₱ ${discount.toFixed(2)}`;
+            document.getElementById('totalAmount').textContent = `₱ ${parseFloat(total).toFixed(2)}`;
+
+            document.getElementById('transactionDetailsContainer').classList.remove('hidden');
         });
 
         // Initialize statistics on page load
