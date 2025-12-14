@@ -44,6 +44,7 @@ class BrandSeeder extends Seeder
         ['brand_name' => 'NVIDIA'],
         ['brand_name' => 'NVISION'],
         ['brand_name' => 'PNY'],
+        ['brand_name' => 'Lian Li'],
         ['brand_name' => 'Redragon'],
         ['brand_name' => 'Samsung'],
         ['brand_name' => 'Seagate'],
