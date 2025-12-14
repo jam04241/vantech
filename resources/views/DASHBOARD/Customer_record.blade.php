@@ -251,20 +251,23 @@
                             </div>
 
                             {{-- Products Table --}}
-                            <div class="overflow-x-auto mb-6">
-                                <table class="w-full text-sm">
-                                    <thead class="bg-gray-200 text-gray-700">
-                                        <tr>
-                                            <th class="px-4 py-3 text-left font-semibold">Product Name</th>
-                                            <th class="px-4 py-3 text-left font-semibold">Serial No.</th>
-                                            <th class="px-4 py-3 text-left font-semibold">Warranty</th>
-                                            <th class="px-4 py-3 text-right font-semibold">Unit Price</th>
-                                            <th class="px-4 py-3 text-right font-semibold">Total Price</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="productsTableBody" class="divide-y divide-gray-200">
-                                    </tbody>
-                                </table>
+                            <div class="overflow-x-auto">
+                                <div class="max-h-64 overflow-y-auto scrollbar-hide">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-200 text-gray-700 sticky top-0 z-10">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left font-semibold">Product Name</th>
+                                                <th class="px-4 py-3 text-left font-semibold">Serial No.</th>
+                                                <th class="px-4 py-3 text-left font-semibold">Warranty</th>
+                                                <th class="px-4 py-3 text-right font-semibold">Total Price</th>
+                                                {{-- <th class="px-4 py-3 text-right font-semibold">Total Price</th> --}}
+                                            </tr>
+                                        </thead>
+                                        <tbody id="productsTableBody" class="divide-y divide-gray-200">
+                                            {{-- Products will be dynamically inserted here --}}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             {{-- Summary --}}
@@ -690,12 +693,13 @@
                 const warrantyWidth = Math.max(100, product.warranty.length * 8);
 
                 row.innerHTML = `
-                                                                        <td class="px-4 py-3 text-left" style="min-width: ${productNameWidth}px;">${product.product_name}</td>
-                                                                        <td class="px-4 py-3 text-left" style="min-width: ${serialNoWidth}px;">${product.serial_no}</td>
-                                                                        <td class="px-4 py-3 text-left" style="min-width: ${warrantyWidth}px;">${product.warranty}</td>
-                                                                        <td class="px-4 py-3 text-right">₱ ${parseFloat(product.unit_price).toFixed(2)}</td>
-                                                                        <td class="px-4 py-3 text-right">₱ ${parseFloat(product.total_price).toFixed(2)}</td>
-                                                                    `;
+                        <td class="px-4 py-3 text-left" style="min-width: ${productNameWidth}px;">${product.product_name}</td>
+                        <td class="px-4 py-3 text-left" style="min-width: ${serialNoWidth}px;">${product.serial_no}</td>
+                        <td class="px-4 py-3 text-left" style="min-width: ${warrantyWidth}px;">${product.warranty}</td>
+                        <td class="px-4 py-3 text-right">₱ ${parseFloat(product.unit_price).toFixed(2)}</td>
+                        {{-- <td class="px-4 py-3 text-right">₱ ${parseFloat(product.total_price).toFixed(2)}</td> --}}
+                    `;
+
                 productsTableBody.appendChild(row);
             });
 
