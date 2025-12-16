@@ -34,7 +34,7 @@
                         </span>
                     </td>
                     <td class="p-4">
-                        <span class="text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
+                        <span class="text-blue-800 text-xs font-bold rounded-full">
                             {{ $product->brand?->brand_name ?? 'N/A' }}
                         </span>
                     </td>

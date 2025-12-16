@@ -37,6 +37,7 @@ class DashboardController extends Controller
                     'metrics' => $this->getKeyMetrics(),
                     'top_products' => $this->getTopSellingProducts(),
                     'low_stock_alerts' => $this->getLowStockAlerts(),
+                    'no_stock_alerts' => $this->getNoStockAlerts(),
                     'supplier_status' => $this->getSupplierStatus(),
                     'inventory_status' => $this->getInventoryStatus(),
                     'last_updated' => Carbon::now()->format('Y-m-d H:i:s')
@@ -115,7 +116,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get low stock alerts (total stock per product name ≤ 5)
+     * Get low stock alerts (total stock per product name ≤ 5 and > 0)
      * Groups by product name only and aggregates all stock
      */
     private function getLowStockAlerts()
@@ -140,6 +141,34 @@ class DashboardController extends Controller
             });
 
         return $lowStockItems;
+    }
+
+    /**
+     * Get no stock alerts (total stock per product name = 0)
+     * Groups by product name only and aggregates all stock
+     */
+    private function getNoStockAlerts()
+    {
+        $noStockItems = Product_Stocks::select(
+            'products.product_name',
+            DB::raw('SUM(product_stocks.stock_quantity) as total_stock'),
+            DB::raw('AVG(product_stocks.price) as avg_price')
+        )
+            ->join('products', 'product_stocks.product_id', '=', 'products.id')
+            ->groupBy('products.product_name') // Group by name only!
+            ->havingRaw('SUM(product_stocks.stock_quantity) = 0')
+            ->orderBy('products.product_name', 'asc')
+            ->limit(10)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->product_name,
+                    'left' => (int) $item->total_stock,
+                    'price' => '₱' . number_format($item->avg_price, 2)
+                ];
+            });
+
+        return $noStockItems;
     }
 
     /**

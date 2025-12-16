@@ -4,7 +4,7 @@
     Basis: Serial number for scanning, groups items by product name in order list
     Key Feature: Multiple serials of same product increase quantity
 -->
-<div class="container w-full lg:w-1/2">
+<div class="container w-full lg:w-1">
     <!-- Success Message Container -->
     @if(session('success') && session('from_customer_add'))
         <div id="customerSuccessMessage" class="mb-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
@@ -52,8 +52,8 @@
                             <div class="col-span-3">Product</div>
                             <div class="col-span-2 text-center">Warranty</div>
                             <div class="col-span-2 text-center">Unit Price</div>
-                            <div class="col-span-3 text-right">Subtotal</div>
-                            <div class="col-span-1 text-center">Remove</div>
+                            <div class="col-span-2 text-center">Subtotal</div>
+                            <div class="col-span-2 text-center">Qty</div>
                         </div>
                         <ul id="purchaseOrderList"
                             class="divide-y divide-gray-200 max-h-56 overflow-y-auto scrollbar-hide">
@@ -158,10 +158,7 @@
                     <option value="">Select Payment Method</option>
                     <option value="Cash">Cash</option>
                     <option value="Gcash">Gcash</option>
-                    <option value="BPI">BPI</option>
-                    <option value="Credit Card">Credit Card</option>
-                    <option value="Debit Card">Debit Card</option>
-                    <option value="Others">Others</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
                 </select>
             </div>
 

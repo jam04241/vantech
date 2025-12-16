@@ -103,7 +103,7 @@ class ProductSeeder extends Seeder
         $productCounter = 1;
 
         foreach ($productTypes as $productType) {
-            for ($i = 1; $i <= 500; $i++) {
+            for ($i = 1; $i <= 10; $i++) {
                 $product = $productType;
                 $product['serial_number'] = 'SN' . str_pad($productCounter, 7, '0', STR_PAD_LEFT);
                 $product['created_at'] = now();

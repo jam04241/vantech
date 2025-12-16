@@ -293,9 +293,10 @@ class ProductController extends Controller
             $query = $this->applyProductSearch($query, $request->search);
         }
 
-        // Only show products with stock > 0
+        // Include products with stock >= 0 (allow zero-stock items to appear in the list)
+        // We still require a stock record to exist; quantity can be zero.
         $query->whereHas('stock', function ($q) {
-            $q->where('stock_quantity', '>', 0);
+            $q->where('stock_quantity', '>=', 0);
         });
 
         $productsCollection = $query->get();
@@ -335,9 +336,9 @@ class ProductController extends Controller
             ];
         })->values();
 
-        // Filter out groups with 0 quantity
+        // Filter out groups with negative quantity, but keep zero-quantity items
         $grouped = $grouped->filter(function ($product) {
-            return $product->quantity > 0;
+            return $product->quantity >= 0;
         })->values();
 
         $sort = $request->get('sort', 'name_asc');
@@ -662,8 +663,70 @@ class ProductController extends Controller
         // Default sorting by product name
         $query->orderBy('product_name', 'asc');
 
-        // Get individual products - Show all available products with pagination
-        $products = $query->paginate(50)->withQueryString();
+        // Get all matching products so we can group Brand New items and sum stock_quantity
+        $productsCollection = $query->get();
+
+        // Group products by product name, brand, category, condition, and price and SUM stock_quantity
+        // This ensures only one card per distinct product configuration in the POS grid.
+        $grouped = $productsCollection->groupBy(function ($product) {
+            return implode('|', [
+                $product->product_name,
+                $product->brand_id ?? 'null',
+                $product->category_id ?? 'null',
+                $product->product_condition,
+                $product->stock?->price ?? 0,
+            ]);
+        })->map(function ($group) {
+            $first = $group->first();
+
+            // Total available quantity from stock_quantity
+            $quantity = $group->sum(function ($product) {
+                return $product->stock ? $product->stock->stock_quantity : 0;
+            });
+
+            // If there is only one underlying product in the group, keep its serial number,
+            // otherwise treat it as a grouped entry.
+            $serialNumber = $group->count() === 1
+                ? ($first->serial_number ?? 'N/A')
+                : null;
+
+            return (object) [
+                'id' => $first->id,
+                'product_name' => $first->product_name,
+                'brand' => $first->brand,
+                'category' => $first->category,
+                'brand_id' => $first->brand_id,
+                'category_id' => $first->category_id,
+                'product_condition' => $first->product_condition,
+                'quantity' => $quantity,
+                'price' => $first->stock?->price ?? 0,
+                'serial_number' => $serialNumber,
+                'warranty_period' => $first->warranty_period,
+            ];
+        })->filter(function ($product) {
+            // Hide any groups that ended up with 0 quantity
+            return $product->quantity > 0;
+        })->values();
+
+        // Sort grouped products by product name (ascending) to match previous behaviour
+        $productsSorted = $grouped->sortBy('product_name')->values();
+
+        // Manual pagination for the grouped collection (50 per page)
+        $page = $request->get('page', 1);
+        $perPage = 50;
+        $offset = ($page - 1) * $perPage;
+        $paginatedItems = $productsSorted->slice($offset, $perPage)->values();
+
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedItems,
+            $productsSorted->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         $suppliers = Suppliers::where('status', 'active')->orderBy('supplier_name')->get();
 
@@ -730,6 +793,55 @@ class ProductController extends Controller
         ];
 
         return response()->json(['product' => $product, 'message' => 'Product found'], 200);
+    }
+
+    /**
+     * Get available serial-numbered products for a given product name
+     * Used by POS quantity controls to auto-assign additional serials
+     * Groups are based on product_name only (as requested).
+     */
+    public function getAvailableSerialsByName(Request $request)
+    {
+        $productName = $request->query('name');
+
+        if (!$productName) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product name is required'
+            ], 400);
+        }
+
+        // Exclude already-used serial numbers (comma-separated string or array)
+        $excludeSerials = $request->query('exclude_serials', []);
+        if (is_string($excludeSerials)) {
+            $excludeSerials = array_filter(explode(',', $excludeSerials));
+        }
+
+        $query = $this->getPOSProductsQuery()
+            ->where('product_name', $productName);
+
+        if (!empty($excludeSerials)) {
+            $query->whereNotIn('serial_number', $excludeSerials);
+        }
+
+        $products = $query
+            ->orderBy('serial_number')
+            ->limit(100)
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'product_name' => $product->product_name,
+                    'serial_number' => $product->serial_number,
+                    'price' => $product->stock?->price ?? 0,
+                    'warranty_period' => $product->warranty_period,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $products,
+        ]);
     }
 
     public function checkSerialNumber(Request $request)

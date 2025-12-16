@@ -30,14 +30,14 @@ class ProductStockSeeder extends Seeder
         ];
 
         // Loop through all 5000 products
-        for ($productId = 1; $productId <= 5000; $productId++) {
+        for ($productId = 1; $productId <= 100; $productId++) {
             // Determine which product type this belongs to (1-10)
             // Since we created 500 of each type in sequence:
             // Product IDs 1-500: Type 1
             // Product IDs 501-1000: Type 2
             // Product IDs 1001-1500: Type 3
             // ... and so on
-            $productType = ceil($productId / 500);
+            $productType = ceil($productId / 10);
 
             // Ensure productType doesn't exceed 10 (just in case)
             $productType = min($productType, 10);

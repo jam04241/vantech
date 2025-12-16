@@ -69,7 +69,7 @@
     </div>
 
     <!-- Dashboard Insights Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <!-- Top Selling Products -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
             <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
@@ -100,6 +100,22 @@
                 Low Stock Alert
             </h2>
             <div class="h-64 overflow-y-auto space-y-3 pr-2" id="lowStockItems">
+                <div class="text-gray-500 text-center py-8">Loading...</div>
+            </div>
+        </div>
+        <!-- No Stock Alert -->
+        <div class="bg-white rounded-xl shadow-lg border border-yellow-200 p-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
+                <div class="bg-yellow-100 p-2 rounded-lg">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z">
+                        </path>
+                    </svg>
+                </div>
+                No Stock Alert
+            </h2>
+            <div class="h-64 overflow-y-auto space-y-3 pr-2" id="noStockItems">
                 <div class="text-gray-500 text-center py-8">Loading...</div>
             </div>
         </div>
@@ -234,6 +250,7 @@
                     updateMetrics(data.metrics);
                     updateTopProducts(data.top_products);
                     updateLowStockAlerts(data.low_stock_alerts);
+                    updateNoStockAlerts(data.no_stock_alerts);
                     updateSupplierStatus(data.supplier_status);
                     updateInventoryStatus(data.inventory_status);
                     retryCount = 0; // Reset retry count on success
@@ -309,6 +326,26 @@
             container.innerHTML = html;
         }
 
+        function updateNoStockAlerts(noStockItems) {
+            const container = document.getElementById('noStockItems');
+
+            if (!noStockItems || noStockItems.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-8">No items are fully out of stock.</div>';
+                return;
+            }
+
+            const html = noStockItems.map(item => `
+                    <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 transition-colors">
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800 text-sm">${item.name}</p>
+                            <p class="text-xs text-red-600">${item.price} • Out of stock</p>
+                        </div>
+                        <div class="text-lg font-bold text-red-600">0</div>
+                    </div>
+                `).join('');
+            container.innerHTML = html;
+        }
+
         function updateSupplierStatus(supplierStatus) {
             if (!supplierStatus) return;
 
@@ -332,6 +369,7 @@
             updateMetrics({ employees: 0, customers: 0, products: 0, daily_sales: 0 });
             document.getElementById('topProducts').innerHTML = '<div class="text-gray-500 text-center py-8">Unable to load data</div>';
             document.getElementById('lowStockItems').innerHTML = '<div class="text-gray-500 text-center py-8">Unable to load data</div>';
+            document.getElementById('noStockItems').innerHTML = '<div class="text-gray-500 text-center py-8">Unable to load data</div>';
             updateSupplierStatus({ active: 0, inactive: 0, percentage: 0 });
             updateInventoryStatus({ brand_new: 0, used: 0, percentage: 0 });
         }

@@ -192,6 +192,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/products/check-serial', [ProductController::class, 'checkSerialNumber'])->name('products.check-serial');
     Route::get('/api/customers/search', [CustomerController::class, 'search'])->name('api.customers.search');
     Route::get('/api/products/search-pos', [ProductController::class, 'getProductBySerialNumber']);
+    Route::get('/api/products/available-serials', [ProductController::class, 'getAvailableSerialsByName'])->name('products.available-serials');
 
     // API: Brands
     Route::get('/api/brands', [BrandController::class, 'index']);

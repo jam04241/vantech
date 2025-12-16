@@ -1,13 +1,13 @@
 <!-- LEFT SIDE: PRODUCTS DISPLAY (4 columns) -->
 <div class="container flex-1 overflow-y-auto scrollbar-hide">
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6" id="productsGrid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-6" id="productsGrid">
         @forelse($products as $product)
             <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition product-card cursor-pointer"
                 data-category="{{ $product->category_id ?? '' }}" data-brand="{{ $product->brand_id ?? '' }}"
                 data-condition="{{ $product->product_condition ?? '' }}"
-                data-quantity="{{ $product->stock?->stock_quantity ?? 0 }}" data-price="{{ $product->stock?->price ?? 0 }}"
-                data-id="{{ $product->id }}"
-                onclick="addToCart({{ $product->id }}, '{{ addslashes($product->product_name) }}', {{ $product->stock?->price ?? 0 }}, '{{ addslashes($product->serial_number) }}', '{{ addslashes($product->brand?->brand_name ?? 'N/A') }}', '{{ addslashes($product->category?->category_name ?? 'N/A') }}', '{{ $product->product_condition }}')">
+                data-quantity="{{ $product->quantity ?? ($product->stock?->stock_quantity ?? 0) }}"
+                data-price="{{ $product->price ?? ($product->stock?->price ?? 0) }}" data-id="{{ $product->id }}"
+                onclick="addToCart({{ $product->id }}, '{{ addslashes($product->product_name) }}', {{ $product->price ?? ($product->stock?->price ?? 0) }}, '', '{{ addslashes($product->brand->brand_name ?? $product->brand_name ?? 'N/A') }}', '{{ addslashes($product->category->category_name ?? $product->category_name ?? 'N/A') }}', '{{ $product->product_condition }}')">
 
                 <div
                     class="p-4 border-b {{ $product->product_condition === 'Brand New' ? 'bg-green-50' : 'bg-orange-50' }}">
@@ -28,18 +28,16 @@
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-600 font-medium">Brand:</span>
-                            <span class="brand-name text-gray-800">{{ $product->brand?->brand_name ?? 'N/A' }}</span>
+                            <span class="brand-name text-gray-800">
+                                {{ $product->brand->brand_name ?? $product->brand_name ?? 'N/A' }}
+                            </span>
                         </div>
 
                         <div class="flex justify-between">
                             <span class="text-gray-600 font-medium">Category:</span>
-                            <span
-                                class="category-name text-gray-800">{{ $product->category?->category_name ?? 'N/A' }}</span>
-                        </div>
-
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 font-medium">Serial No:</span>
-                            <span class="serial-number text-gray-800 font-mono text-xs">{{ $product->serial_number }}</span>
+                            <span class="category-name text-gray-800">
+                                {{ $product->category->category_name ?? $product->category_name ?? 'N/A' }}
+                            </span>
                         </div>
 
                         <div class="flex justify-between">
@@ -49,7 +47,9 @@
 
                         <div class="flex justify-between">
                             <span class="text-gray-600 font-medium">Stock:</span>
-                            <span class="text-gray-800">{{ $product->stock?->stock_quantity ?? 0 }} available</span>
+                            <span class="text-gray-800">
+                                {{ $product->quantity ?? ($product->stock?->stock_quantity ?? 0) }} available
+                            </span>
                         </div>
                     </div>
                 </div>

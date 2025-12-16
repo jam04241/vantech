@@ -232,7 +232,7 @@
             serialInput.focus();
         }
 
-        // Add item to order list (basis: quantity, not serial number)
+        // Add item to order list (basis: quantity, grouped by product name)
         function addItemToOrder(product) {
             console.log('=== ADD ITEM TO ORDER ===');
             console.log('Product data received from API:', product);
@@ -286,13 +286,8 @@
             });
         }
 
-        // Update order display in both tabs (basis: quantity)
-        function updateOrderDisplay() {
-            console.log('=== UPDATE ORDER DISPLAY ===');
-            const purchaseList = document.getElementById('purchaseOrderList');
-            const emptyPurchaseMsg = document.getElementById('emptyOrderMsg');
-
-            // Group items by product name, warranty, and price
+        // Helper: group order items by product name, warranty, and price
+        function getGroupedOrderItems() {
             const groupedItems = {};
             const groupOrder = [];
 
@@ -316,6 +311,17 @@
                 groupedItems[groupKey].indices.push(index);
             });
 
+            return { groupedItems, groupOrder };
+        }
+
+        // Update order display (basis: grouped quantity)
+        function updateOrderDisplay() {
+            console.log('=== UPDATE ORDER DISPLAY ===');
+            const purchaseList = document.getElementById('purchaseOrderList');
+            const emptyPurchaseMsg = document.getElementById('emptyOrderMsg');
+
+            const { groupedItems, groupOrder } = getGroupedOrderItems();
+
             let html = '';
             let subtotal = 0;
             let sequenceNumber = 1;
@@ -338,34 +344,50 @@
                 const serialsList = group.serials.map(sn => `SN: ${sn}`).join(', ');
 
                 html += `
-                        <li class="py-3 px-3 hover:bg-gray-100 transition"
-                            data-group-key="${groupKey}"
-                            data-unit-price="${group.price}"
-                            data-quantity="${group.qty}"
-                            data-total-price="${itemSubtotal}">
-                            <div class="grid grid-cols-12 gap-1 items-center text-xs">
-                                <div class="col-span-1 text-center">
-                                    <span class="font-semibold text-gray-900">${sequenceNumber}</span>
-                                </div>
-                                <div class="col-span-3">
-                                    <p class="font-medium text-gray-900 truncate">${group.name}</p>
-                                    <p class="text-gray-500 text-xs">${serialsList}</p>
-                                </div>
-                                <div class="col-span-2 text-center">
-                                    <span class="text-gray-700 text-xs">${group.warranty}</span>
-                                </div>
-                                <div class="col-span-2 text-center">
-                                    <span class="text-gray-700 font-semibold">₱${group.price.toFixed(2)}</span>
-                                </div>
-                                <div class="col-span-3 text-right">
-                                    <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
-                                </div>
-                                <div class="col-span-1 text-center">
-                                    <button onclick="removeGroupedItems('${groupKey}')" class="text-red-500 hover:text-red-700 font-bold text-lg">−</button>
-                                </div>
-                            </div>
-                        </li>
-                    `;
+                                <li class="py-3 px-3 hover:bg-gray-100 transition"
+                                    data-group-key="${groupKey}"
+                                    data-unit-price="${group.price}"
+                                    data-quantity="${group.qty}"
+                                    data-total-price="${itemSubtotal}">
+                                    <div class="grid grid-cols-12 gap-1 items-center text-xs">
+                                        <div class="col-span-1 text-center">
+                                            <span class="font-semibold text-gray-900">${sequenceNumber}</span>
+                                        </div>
+                                        <div class="col-span-3">
+                                            <p class="font-medium text-gray-900 truncate">${group.name}</p>
+                                            <p class="text-gray-500 text-xs">${serialsList}</p>
+                                        </div>
+                                        <div class="col-span-2 text-center">
+                                            <span class="text-gray-700 text-xs">${group.warranty}</span>
+                                        </div>
+                                        <div class="col-span-2 text-center">
+                                            <span class="text-gray-700 font-semibold">₱${group.price.toFixed(2)}</span>
+                                        </div>
+                                        <div class="col-span-2 text-right">
+                                            <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
+                                        </div>
+                                        <div class="col-span-2 text-center">
+                                            <div class="flex items-center justify-center space-x-1">
+                                                <button type="button"
+                                                    class="px-2 py-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                                                    onclick="changeGroupQuantity('${groupKey}', -1)">
+                                                    −
+                                                </button>
+                                                <input type="number"
+                                                    class="w-12 text-center border border-gray-300 rounded-md text-xs py-1"
+                                                    min="0"
+                                                    value="${group.qty}"
+                                                    onchange="setGroupQuantityFromInput('${groupKey}', this)">
+                                                <button type="button"
+                                                    class="px-2 py-1 bg-green-100 text-green-600 rounded-full hover:bg-green-200"
+                                                    onclick="changeGroupQuantity('${groupKey}', 1)">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            `;
 
                 sequenceNumber++;
             });
@@ -385,18 +407,140 @@
             updatePurchaseTotal();
         }
 
-        // Remove all items in a grouped set
-        function removeGroupedItems(groupKey) {
-            const parts = groupKey.split('|');
-            const name = parts[0];
-            const warranty = parts[1];
-            const price = parseFloat(parts[2]);
+        // Change group quantity by delta (uses available serials when increasing)
+        async function changeGroupQuantity(groupKey, delta) {
+            if (!delta) return;
 
-            orderItems = orderItems.filter(item =>
-                !(item.name === name && item.warranty === warranty && item.price === price)
-            );
+            const { groupedItems } = getGroupedOrderItems();
+            const group = groupedItems[groupKey];
+            if (!group) return;
 
+            const currentQty = group.qty;
+            const targetQty = currentQty + delta;
+
+            if (targetQty < 0) {
+                return;
+            }
+
+            await setGroupQuantityInternal(groupKey, targetQty, group);
             updateOrderDisplay();
+        }
+
+        // Set group quantity from input field
+        async function setGroupQuantityFromInput(groupKey, inputElement) {
+            let value = parseInt(inputElement.value, 10);
+            if (isNaN(value) || value < 0) {
+                value = 0;
+            }
+
+            const { groupedItems } = getGroupedOrderItems();
+            const group = groupedItems[groupKey];
+            if (!group) {
+                inputElement.value = 0;
+                return;
+            }
+
+            await setGroupQuantityInternal(groupKey, value, group);
+            updateOrderDisplay();
+        }
+
+        // Core logic to adjust quantity for a grouped item
+        async function setGroupQuantityInternal(groupKey, targetQty, group) {
+            const currentQty = group.qty;
+
+            if (targetQty === currentQty) {
+                return;
+            }
+
+            if (targetQty < currentQty) {
+                // Decrease: remove items from this group
+                let toRemove = currentQty - targetQty;
+                const sortedIndices = [...group.indices].sort((a, b) => b - a);
+
+                for (const index of sortedIndices) {
+                    if (toRemove <= 0) break;
+                    orderItems.splice(index, 1);
+                    toRemove--;
+                }
+
+                return;
+            }
+
+            // Increase: need additional items (serials) from backend
+            const needed = targetQty - currentQty;
+            const excludeSerials = group.serials.join(',');
+
+            try {
+                const response = await fetch(`/api/products/available-serials?name=${encodeURIComponent(group.name)}&exclude_serials=${encodeURIComponent(excludeSerials)}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('Failed to fetch available serials:', response.status, response.statusText);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Stock Check Failed',
+                        text: 'Unable to check available stock for this product.',
+                        confirmButtonColor: '#ef4444'
+                    });
+                    return;
+                }
+
+                const data = await response.json();
+                if (!data.success || !Array.isArray(data.data)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Stock Error',
+                        text: data.message || 'Unexpected response from server.',
+                        confirmButtonColor: '#ef4444'
+                    });
+                    return;
+                }
+
+                const available = data.data;
+
+                if (available.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No More Stock',
+                        text: 'All available items for this product are already in the order or out of stock.',
+                        confirmButtonColor: '#f59e0b'
+                    });
+                    return;
+                }
+
+                const toUse = available.slice(0, needed);
+
+                if (toUse.length < needed) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Limited Stock',
+                        text: `Only ${toUse.length} additional item(s) available for this product.`,
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+
+                toUse.forEach(p => {
+                    orderItems.push({
+                        id: p.id,
+                        name: p.product_name,
+                        price: parseFloat(p.price) || 0,
+                        serialNumber: p.serial_number,
+                        warranty: p.warranty_period || '1 Year',
+                        qty: 1
+                    });
+                });
+            } catch (error) {
+                console.error('Error fetching available serials:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'Failed to contact server to update quantity.',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
         }
 
         // Remove item from order (basis: product ID)
