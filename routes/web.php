@@ -149,6 +149,16 @@ Route::middleware(['auth'])->group(function () {
             return view('DASHBOARD.service_record');
         })->name('servicerecords.index');
         Route::get('/service-records/data', [ServicesController::class, 'getserviceRecords'])->name('services.getserviceRecords');
+
+        // Service Record Route
+        Route::get('/Reports/Sales', function () {
+            return view('partials.salesReport');
+        })->name('sales.reports');
+
+        // Service Record Route
+        Route::get('/Reports/Inventory', function () {
+            return view('partials.salesInventory');
+        })->name('sales.inventory');
     });
 
     // Purchase Orders List

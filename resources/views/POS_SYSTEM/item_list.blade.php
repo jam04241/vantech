@@ -90,18 +90,18 @@
                             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Last Name *</label>
-                        <input type="text" id="lastName" name="last_name" required
+                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <input type="text" id="lastName" name="last_name"
                             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Contact Number *</label>
-                        <input type="text" id="contactNo" name="contact_no" required
+                        <label class="block text-sm font-medium text-gray-700">Contact Number</label>
+                        <input type="text" id="contactNo" name="contact_no"
                             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Gender *</label>
-                        <select id="gender" name="gender" required
+                        <label class="block text-sm font-medium text-gray-700">Gender </label>
+                        <select id="gender" name="gender"
                             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                             <option value="">Select Gender</option>
                             <option value="Male">Male</option>
@@ -344,50 +344,50 @@
                 const serialsList = group.serials.map(sn => `SN: ${sn}`).join(', ');
 
                 html += `
-                                <li class="py-3 px-3 hover:bg-gray-100 transition"
-                                    data-group-key="${groupKey}"
-                                    data-unit-price="${group.price}"
-                                    data-quantity="${group.qty}"
-                                    data-total-price="${itemSubtotal}">
-                                    <div class="grid grid-cols-12 gap-1 items-center text-xs">
-                                        <div class="col-span-1 text-center">
-                                            <span class="font-semibold text-gray-900">${sequenceNumber}</span>
-                                        </div>
-                                        <div class="col-span-3">
-                                            <p class="font-medium text-gray-900 truncate">${group.name}</p>
-                                            <p class="text-gray-500 text-xs">${serialsList}</p>
-                                        </div>
-                                        <div class="col-span-2 text-center">
-                                            <span class="text-gray-700 text-xs">${group.warranty}</span>
-                                        </div>
-                                        <div class="col-span-2 text-center">
-                                            <span class="text-gray-700 font-semibold">₱${group.price.toFixed(2)}</span>
-                                        </div>
-                                        <div class="col-span-2 text-right">
-                                            <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
-                                        </div>
-                                        <div class="col-span-2 text-center">
-                                            <div class="flex items-center justify-center space-x-1">
-                                                <button type="button"
-                                                    class="px-2 py-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                                                    onclick="changeGroupQuantity('${groupKey}', -1)">
-                                                    −
-                                                </button>
-                                                <input type="number"
-                                                    class="w-12 text-center border border-gray-300 rounded-md text-xs py-1"
-                                                    min="0"
-                                                    value="${group.qty}"
-                                                    onchange="setGroupQuantityFromInput('${groupKey}', this)">
-                                                <button type="button"
-                                                    class="px-2 py-1 bg-green-100 text-green-600 rounded-full hover:bg-green-200"
-                                                    onclick="changeGroupQuantity('${groupKey}', 1)">
-                                                    +
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                            `;
+                                                    <li class="py-3 px-3 hover:bg-gray-100 transition"
+                                                        data-group-key="${groupKey}"
+                                                        data-unit-price="${group.price}"
+                                                        data-quantity="${group.qty}"
+                                                        data-total-price="${itemSubtotal}">
+                                                        <div class="grid grid-cols-12 gap-1 items-center text-xs">
+                                                            <div class="col-span-1 text-center">
+                                                                <span class="font-semibold text-gray-900">${sequenceNumber}</span>
+                                                            </div>
+                                                            <div class="col-span-3">
+                                                                <p class="font-medium text-gray-900 truncate">${group.name}</p>
+                                                                <p class="text-gray-500 text-xs">${serialsList}</p>
+                                                            </div>
+                                                            <div class="col-span-2 text-center">
+                                                                <span class="text-gray-700 text-xs">${group.warranty}</span>
+                                                            </div>
+                                                            <div class="col-span-2 text-center">
+                                                                <span class="text-gray-700 font-semibold">₱${group.price.toFixed(2)}</span>
+                                                            </div>
+                                                            <div class="col-span-2 text-right">
+                                                                <span class="font-semibold text-gray-900">₱${itemSubtotal.toFixed(2)}</span>
+                                                            </div>
+                                                            <div class="col-span-2 text-center">
+                                                                <div class="flex items-center justify-center space-x-1">
+                                                                    <button type="button"
+                                                                        class="px-2 py-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                                                                        onclick="changeGroupQuantity('${groupKey}', -1)">
+                                                                        −
+                                                                    </button>
+                                                                    <input type="number"
+                                                                        class="w-12 text-center border border-gray-300 rounded-md text-xs py-1"
+                                                                        min="0"
+                                                                        value="${group.qty}"
+                                                                        onchange="setGroupQuantityFromInput('${groupKey}', this)">
+                                                                    <button type="button"
+                                                                        class="px-2 py-1 bg-green-100 text-green-600 rounded-full hover:bg-green-200"
+                                                                        onclick="changeGroupQuantity('${groupKey}', 1)">
+                                                                        +
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                `;
 
                 sequenceNumber++;
             });

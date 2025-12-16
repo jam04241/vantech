@@ -25,9 +25,9 @@ class CustomerRequest extends FormRequest
     {
         return [
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'gender' => 'required|string|max:255',
-            'contact_no' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'contact_no' => 'nullable|string|max:255',
             'street' => 'nullable|string|max:255',
             'brgy' => 'nullable|string|max:255',
             'city_province' => 'nullable|string|max:255',
@@ -43,8 +43,6 @@ class CustomerRequest extends FormRequest
     {
         return [
             'first_name.required' => 'First name is required.',
-            'last_name.required' => 'Last name is required.',
-            'contact_no.required' => 'Contact number is required.',
         ];
     }
 }
