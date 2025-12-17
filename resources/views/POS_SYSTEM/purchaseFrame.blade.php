@@ -206,7 +206,127 @@
 
         // Fetch next DR number on page load
         fetchNextDRNumber();
+
+        // Set up barcode scanner input - only process on Enter key
+        setupBarcodeScanner();
     });
+
+    // Rate limiting for barcode scans
+    let lastFetchTime = 0;
+    const MIN_FETCH_INTERVAL = 300;
+
+    /**
+     * Setup barcode scanner input handler
+     */
+    function setupBarcodeScanner() {
+        const productSerialInput = document.getElementById('productSerialNo');
+
+        if (productSerialInput) {
+            // Remove the input event listener and replace with keydown
+            productSerialInput.addEventListener('keydown', async function (e) {
+                // Only process when Enter key is pressed (barcode scanner sends Enter)
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
+
+                    const serialNumber = this.value.trim();
+
+                    if (!serialNumber) {
+                        this.value = '';
+                        this.focus();
+                        return;
+                    }
+
+                    // Check minimum interval between fetches
+                    const now = Date.now();
+                    if (now - lastFetchTime < MIN_FETCH_INTERVAL) {
+                        console.log('Too fast scan, ignoring');
+                        this.value = '';
+                        this.focus();
+                        return;
+                    }
+                    lastFetchTime = now;
+
+                    // Fetch product from API by serial number
+                    const product = await fetchProductFromAPI(serialNumber);
+
+                    if (!product) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Serial Number Not Found',
+                            text: 'The serial number could not be found in the database or product is out of stock.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#ef4444',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        this.value = '';
+                        this.focus();
+                        return;
+                    }
+
+                    // Check if serial number already exists in order
+                    const existingOrderItems = typeof orderItems !== 'undefined' ? orderItems : [];
+                    const isDuplicate = existingOrderItems.some(item => item.serialNumber === product.serial_number);
+
+                    if (isDuplicate) {
+                        console.warn(`Duplicate scan prevented: Serial ${product.serial_number} already in order`);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Item Already Scanned',
+                            html: `<p>Product <strong>${product.product_name}</strong><br/>Serial: <strong>${product.serial_number}</strong><br/>is already in the order</p>`,
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#f59e0b',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        this.value = '';
+                        this.focus();
+                        return;
+                    }
+
+                    // Add product to order
+                    if (typeof addItemToOrder === 'function') {
+                        try {
+                            addItemToOrder(product);
+                        } catch (error) {
+                            console.error('Error adding item to order:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error Adding Item',
+                                text: 'Failed to add item to order. Please try again.',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#ef4444',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        }
+                    } else {
+                        console.error('addItemToOrder function not found.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'System Error',
+                            text: 'Order list component not loaded. Please refresh the page.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+
+                    // Clear input
+                    this.value = '';
+                    this.focus();
+                }
+            });
+
+            // Optional: Add a hint about pressing Enter
+            productSerialInput.addEventListener('focus', function () {
+                this.placeholder = "Scan barcode and press Enter...";
+            });
+
+            productSerialInput.addEventListener('blur', function () {
+                this.placeholder = "Scan product barcode here...";
+            });
+        }
+    }
 
     /**
      * Fetch next DR number to display
@@ -226,11 +346,6 @@
             document.getElementById('drNumber').textContent = 'Error loading';
         }
     }
-
-    // Debounce timer to prevent rapid API calls
-    let scanDebounceTimer = null;
-    let lastFetchTime = 0;
-    const MIN_FETCH_INTERVAL = 300;
 
     /**
      * Fetch product from API endpoint by serial number
