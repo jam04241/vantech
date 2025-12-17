@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Reports - {{ now()->format('YmdHi') }}</title>
+    <title>Sales Reports - {{ now()->format('YmdHi') }}</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -252,30 +252,31 @@
             discount: 1000,
             total: 91300,
             displayTotalOnly: false,
-            items: [{
-                productName: 'Laptop Dell XPS 15',
-                warranty: '2 Years',
-                quantity: 2,
-                price: 45000,
-                subtotal: 90000,
-                serialNumber: 'DELLXPS123456'
-            },
-            {
-                productName: 'Wireless Mouse',
-                warranty: '1 Year',
-                quantity: 1,
-                price: 1500,
-                subtotal: 1500,
-                serialNumber: ''
-            },
-            {
-                productName: 'USB Flash Drive 64GB',
-                warranty: 'No Warranty',
-                quantity: 1,
-                price: 800,
-                subtotal: 800,
-                serialNumber: 'USB64GB789012'
-            }
+            items: [
+                {
+                    productName: 'Laptop Dell XPS 15',
+                    warranty: '2 Years',
+                    quantity: 2,
+                    price: 45000,
+                    subtotal: 90000,
+                    serialNumber: 'DELLXPS123456'
+                },
+                {
+                    productName: 'Wireless Mouse',
+                    warranty: '1 Year',
+                    quantity: 1,
+                    price: 1500,
+                    subtotal: 1500,
+                    serialNumber: ''
+                },
+                {
+                    productName: 'USB Flash Drive 64GB',
+                    warranty: 'No Warranty',
+                    quantity: 1,
+                    price: 800,
+                    subtotal: 800,
+                    serialNumber: 'USB64GB789012'
+                }
             ]
         };
 

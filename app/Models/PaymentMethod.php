@@ -13,6 +13,8 @@ class PaymentMethod extends Model
     protected $fillable = [
         'customer_purchase_order_id',
         'method_name',
+        'bank_name',
+        'reference_no',
         'payment_date',
         'amount'
     ];

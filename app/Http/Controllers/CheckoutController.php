@@ -36,6 +36,8 @@ class CheckoutController extends Controller
             $request->validate([
                 'customer_id' => 'required|exists:customers,id',
                 'payment_method' => 'required|string|max:255',
+                'bank_name' => 'nullable|string|max:255',
+                'reference_no' => 'nullable|string|max:255',
                 'amount' => 'required|numeric|min:0',
                 'items' => 'required|array|min:1',
                 'items.*.product_id' => 'required|exists:products,id',
@@ -47,12 +49,16 @@ class CheckoutController extends Controller
 
             $customerId = $request->customer_id;
             $paymentMethod = $request->payment_method;
+            $bankName = $request->bank_name;
+            $referenceNo = $request->reference_no;
             $amount = $request->amount;
             $items = $request->items;
 
             Log::info('Processing checkout for customer:', [
                 'customer_id' => $customerId,
                 'payment_method' => $paymentMethod,
+                'bank_name' => $bankName,
+                'reference_no' => $referenceNo,
                 'amount' => $amount,
                 'items_count' => count($items)
             ]);
@@ -95,12 +101,16 @@ class CheckoutController extends Controller
                 Log::info('Creating payment method linked to purchase order:', [
                     'customer_purchase_order_id' => $purchaseOrderIds[0],
                     'method_name' => $paymentMethod,
+                    'bank_name' => $bankName,
+                    'reference_no' => $referenceNo,
                     'amount' => $amount
                 ]);
 
                 PaymentMethod::create([
                     'customer_purchase_order_id' => $purchaseOrderIds[0],
                     'method_name' => $paymentMethod,
+                    'bank_name' => $bankName,
+                    'reference_no' => $referenceNo,
                     'payment_date' => now()->format('Y-m-d'),
                     'amount' => $amount
                 ]);
@@ -125,6 +135,8 @@ class CheckoutController extends Controller
                 'customerName' => $customer->first_name . ' ' . $customer->last_name,
                 'customerId' => $customerId,
                 'paymentMethod' => $paymentMethod,
+                'bankName' => $bankName ?: 'N/A',
+                'referenceNo' => $referenceNo ?: 'N/A',
                 'amount' => $amount,
                 'subtotal' => $request->subtotal ?? 0,
                 'discount' => $request->discount ?? 0,

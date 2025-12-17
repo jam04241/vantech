@@ -220,6 +220,7 @@ class SalesController extends Controller
         // Get total sum from dr transactions
         $totalSum = DB::table('dr_transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('type', 'purchase')
             ->sum('total_sum');
 
         // Calculate discount
@@ -236,11 +237,13 @@ class SalesController extends Controller
         $transactions = DB::table('dr_transactions')
             ->select(
                 'dr_transactions.id',
-                DB::raw("MAX(CONCAT(customers.first_name, ' ', customers.last_name)) as customer_name"),
+                DB::raw('MAX(customers.first_name) as first_name'),
+                DB::raw('MAX(customers.last_name) as last_name'),
                 'dr_transactions.total_sum',
                 'dr_transactions.created_at',
                 'dr_transactions.receipt_no',
-                DB::raw('SUM(customer_purchase_orders.total_price) as subtotal')
+                DB::raw('SUM(customer_purchase_orders.total_price) as subtotal'),
+                DB::raw('SUM(customer_purchase_orders.quantity) as total_qty')
             )
             ->leftJoin('customer_purchase_orders', 'dr_transactions.id', '=', 'customer_purchase_orders.dr_receipt_id')
             ->leftJoin('customers', 'customer_purchase_orders.customer_id', '=', 'customers.id')
@@ -260,12 +263,22 @@ class SalesController extends Controller
                 $totalSum = round($transaction->total_sum ?? 0, 2);
                 $discount = round($subtotal - $totalSum, 2);
 
+                // Construct customer name: show first name only if last name is not available
+                $customerName = '-';
+                if (!empty($transaction->first_name)) {
+                    $customerName = $transaction->first_name;
+                    if (!empty($transaction->last_name)) {
+                        $customerName .= ' ' . $transaction->last_name;
+                    }
+                }
+
                 return [
                     'id' => $transaction->id,
-                    'customer_name' => $transaction->customer_name ?? '-',
+                    'customer_name' => $customerName,
                     'subtotal' => $subtotal,
                     'discount' => $discount > 0 ? $discount : 0,
                     'amount' => $totalSum,
+                    'qty' => $transaction->total_qty ?? 0,
                     'date' => Carbon::parse($transaction->created_at)->format('m/d/Y h:i A'),
                     'receipt_no' => $transaction->receipt_no ?? '-'
                 ];

@@ -162,6 +162,27 @@
                 </select>
             </div>
 
+            <!-- Bank Name -->
+            <div class="mb-4" id="bankNameGroup">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+                <select id="bankName" name="bank_name"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                    required>
+                    <option value="">Select Bank</option>
+                    <option value="BPI">BPI</option>
+                    <option value="BDO">BDO</option>
+                    <option value="others">others</option>
+                </select>
+            </div>
+
+            <!-- Reference No. -->
+            <div class="mb-4 relative" id="referenceNoGroup">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Reference No.</label>
+                <input type="text" id="referenceNo" name="reference_no"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                    placeholder="Enter reference no." required autocomplete="off">
+            </div>
+
             <!-- Amount -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
@@ -195,7 +216,7 @@
 
 <!-- POS Product Lookup Script (Serial Number Search) -->
 <script>
-    // Auto-hide success message after 1.75 seconds
+        // Auto-hide success message after 1.75 seconds
     document.addEventListener('DOMContentLoaded', function () {
         const successMessage = document.getElementById('customerSuccessMessage');
         if (successMessage) {
@@ -209,6 +230,9 @@
 
         // Set up barcode scanner input - only process on Enter key
         setupBarcodeScanner();
+
+        // Set up payment method-dependent fields (bank name / reference no)
+        setupPaymentMethodFields();
     });
 
     // Rate limiting for barcode scans
@@ -345,6 +369,58 @@
             console.error('Error fetching DR number:', error);
             document.getElementById('drNumber').textContent = 'Error loading';
         }
+    }
+
+    /**
+     * Show/hide bank name and reference no. based on payment method
+     * - Bank Transfer: show Bank Name + Reference No. (both required)
+     * - Gcash: show Reference No. only (required)
+     * - Cash: hide both (not required)
+     */
+    function setupPaymentMethodFields() {
+        const paymentMethodSelect = document.getElementById('paymentMethod');
+        const bankNameGroup = document.getElementById('bankNameGroup');
+        const referenceNoGroup = document.getElementById('referenceNoGroup');
+        const bankNameSelect = document.getElementById('bankName');
+        const referenceNoInput = document.getElementById('referenceNo');
+
+        if (!paymentMethodSelect || !bankNameGroup || !referenceNoGroup || !bankNameSelect || !referenceNoInput) {
+            return;
+        }
+
+        function updatePaymentFields() {
+            const method = paymentMethodSelect.value;
+
+            // Reset visibility and required flags
+            bankNameGroup.classList.add('hidden');
+            referenceNoGroup.classList.add('hidden');
+            bankNameSelect.required = false;
+            referenceNoInput.required = false;
+
+            if (method === 'Bank Transfer') {
+                bankNameGroup.classList.remove('hidden');
+                referenceNoGroup.classList.remove('hidden');
+                bankNameSelect.required = true;
+                referenceNoInput.required = true;
+            } else if (method === 'Gcash') {
+                bankNameGroup.classList.add('hidden');
+                bankNameSelect.value = '';
+                referenceNoGroup.classList.remove('hidden');
+                referenceNoInput.required = true;
+            } else if (method === 'Cash') {
+                // Hide both and clear values for Cash
+                bankNameGroup.classList.add('hidden');
+                referenceNoGroup.classList.add('hidden');
+                bankNameSelect.value = '';
+                referenceNoInput.value = '';
+            }
+        }
+
+        // Initial state
+        updatePaymentFields();
+
+        // Update on change
+        paymentMethodSelect.addEventListener('change', updatePaymentFields);
     }
 
     /**
@@ -673,6 +749,8 @@
         const customerId = document.getElementById('formCustomerId').value;
         const paymentMethod = document.getElementById('paymentMethod').value;
         const amount = document.getElementById('amount').value;
+        const bankName = document.getElementById('bankName').value;
+        const referenceNo = document.getElementById('referenceNo').value.trim();
 
         // Validate form
         if (!customerId) {
@@ -693,6 +771,38 @@
                 confirmButtonColor: '#ef4444'
             });
             return;
+        }
+
+        // Extra validation depending on payment method
+        if (paymentMethod === 'Bank Transfer') {
+            if (!bankName) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Bank Name',
+                    text: 'Please select a bank for Bank Transfer.',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
+            if (!referenceNo) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Reference No.',
+                    text: 'Please enter a reference number for Bank Transfer.',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
+        } else if (paymentMethod === 'Gcash') {
+            if (!referenceNo) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Reference No.',
+                    text: 'Please enter a reference number for Gcash payment.',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
         }
 
         if (!amount || parseFloat(amount) <= 0) {

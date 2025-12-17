@@ -13,12 +13,14 @@ use App\Http\Controllers\ProductStocksController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\SalesController;
+use App\Http\Controllers\SalesReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ServiceReplacementController;
 use App\Http\Controllers\ServiceTypeController;
 use App\Http\Controllers\StockOutController;
 use App\Http\Controllers\AuditlogController;
+use App\Http\Controllers\InventoryReportController;
 
 use Illuminate\Support\Facades\DB;
 
@@ -150,15 +152,12 @@ Route::middleware(['auth'])->group(function () {
         })->name('servicerecords.index');
         Route::get('/service-records/data', [ServicesController::class, 'getserviceRecords'])->name('services.getserviceRecords');
 
-        // Service Record Route
-        Route::get('/Reports/Sales', function () {
-            return view('partials.salesReport');
-        })->name('sales.reports');
+        // Sales Report Routes
+        Route::get('/Reports/Sales', [SalesReportController::class, 'index'])->name('sales.reports');
+        Route::get('/api/sales/report', [SalesReportController::class, 'getSalesReportData'])->name('sales.report.data');
 
-        // Service Record Route
-        Route::get('/Reports/Inventory', function () {
-            return view('partials.salesInventory');
-        })->name('sales.inventory');
+        // Inventory Reports Route
+        Route::get('/Reports/Inventory', [InventoryReportController::class, 'index'])->name('inventory.reports');
     });
 
     // Purchase Orders List

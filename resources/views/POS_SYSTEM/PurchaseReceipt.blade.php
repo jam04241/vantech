@@ -110,10 +110,10 @@
                     <h3 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">WARRANTY RECEIPT</h3>
                     
                     @php
-use Picqer\Barcode\BarcodeGeneratorPNG;
-$generator = new BarcodeGeneratorPNG();
-$drNumber = $receiptData['drNumber'] ?? 'NO-RECEIPT-GENERATED'; // Get from receipt data or default
-$barcode = base64_encode($generator->getBarcode($drNumber, $generator::TYPE_CODE_128, 1, 30));
+                        use Picqer\Barcode\BarcodeGeneratorPNG;
+                        $generator = new BarcodeGeneratorPNG();
+                        $drNumber = $receiptData['drNumber'] ?? 'NO-RECEIPT-GENERATED'; // Get from receipt data or default
+                        $barcode = base64_encode($generator->getBarcode($drNumber, $generator::TYPE_CODE_128, 1, 30));
                     @endphp
                     
                     <!-- Barcode -->
@@ -131,12 +131,34 @@ $barcode = base64_encode($generator->getBarcode($drNumber, $generator::TYPE_CODE
             <div class="mb-6">
                 <div class="flex justify-between mb-4">
                     <div>
-                        <p class="text-sm"><span class="font-semibold">Customer:</span> <span
-                                id="receiptCustomerName">{{ $receiptData['customerName'] ?? 'N/A' }}</span></p>
-                        <p class="text-sm"><span class="font-semibold">Contact No.:</span> <span
-                                id="receiptContactNo">{{ $customerContact ?? 'N/A' }}</span></p>
-                        <p class="text-sm"><span class="font-semibold">Payment Method:</span> <span
-                                id="receiptPaymentMethod">{{ $receiptData['paymentMethod'] ?? 'N/A' }}</span></p>
+                        <p class="text-sm">
+                            <span class="font-semibold">Customer:</span>
+                            <span id="receiptCustomerName">{{ $receiptData['customerName'] ?? 'N/A' }}</span>
+                        </p>
+                        <p class="text-sm">
+                            <span class="font-semibold">Contact No.:</span>
+                            <span id="receiptContactNo">{{ $customerContact ?? 'N/A' }}</span>
+                        </p>
+                        <p class="text-sm">
+                            <span class="font-semibold">Payment Method:</span>
+                            <span id="receiptPaymentMethod">{{ $receiptData['paymentMethod'] ?? 'N/A' }}</span>
+                        </p>
+                        @php
+                            $bankName = $receiptData['bankName'] ?? null;
+                            $referenceNo = $receiptData['referenceNo'] ?? null;
+                        @endphp
+                        @if(!empty($bankName) && $bankName !== 'N/A')
+                            <p class="text-sm">
+                                <span class="font-semibold">Bank Name:</span>
+                                <span id="receiptBankName">{{ $bankName }}</span>
+                            </p>
+                        @endif
+                        @if(!empty($referenceNo) && $referenceNo !== 'N/A')
+                            <p class="text-sm">
+                                <span class="font-semibold">Reference No.:</span>
+                                <span id="receiptReferenceNo">{{ $referenceNo }}</span>
+                            </p>
+                        @endif
                     </div>
                     <div class="text-right">
                         <p class="text-sm"><span class="font-semibold">Payable to</span></p>
