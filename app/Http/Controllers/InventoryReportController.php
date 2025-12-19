@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Product_Stocks;
 use App\Models\CustomerPurchaseOrder;
+use App\Models\Category;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -17,9 +18,15 @@ class InventoryReportController extends Controller
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $categoryId = $request->input('category');
 
         // Main query from products table
         $query = Product::with(['category', 'brand']);
+
+        // Category filter
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
 
         // Search filter
         if ($search) {
@@ -97,6 +104,9 @@ class InventoryReportController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
+        // Get all categories for dropdown
+        $categories = Category::orderBy('category_name')->get();
+
         return view('DASHBOARD.inventoryReports', compact(
             'products',
             'totalProducts',
@@ -106,7 +116,8 @@ class InventoryReportController extends Controller
             'totalRevenue',
             'search',
             'startDate',
-            'endDate'
+            'endDate',
+            'categories'
         ));
     }
 }

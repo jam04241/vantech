@@ -56,7 +56,22 @@
                     {{-- Date Range Filter (Auto-submit) --}}
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                         <form method="GET" action="{{ route('inventory.reports') }}" id="dateFilterForm"
-                            class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-2">Category</label>
+                                <select name="category" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out bg-white text-sm date-filter">
+                                    <option value="">All Categories</option>
+                                    @isset($categories)
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                                {{ $category->category_name }}
+                                            </option>
+                                        @endforeach
+                                    @endisset
+                                </select>
+                            </div>
+
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-2">Start Date</label>
                                 <input type="date" name="start_date" value="{{ request('start_date') }}"
@@ -240,21 +255,21 @@
                             <div class="text-right">
                                 <p class="text-sm py-12 mb-8">Prepared by:</p>
                                 @php
-    $user = auth()->user();
-    $fullName = 'ADMIN';
-    $role = 'Administrator';
-    if ($user) {
-        $firstName = $user->first_name ?? '';
-        $middleName = $user->middle_name ?? '';
-        $lastName = $user->last_name ?? '';
+                                    $user = auth()->user();
+                                    $fullName = 'ADMIN';
+                                    $role = 'Administrator';
+                                    if ($user) {
+                                        $firstName = $user->first_name ?? '';
+                                        $middleName = $user->middle_name ?? '';
+                                        $lastName = $user->last_name ?? '';
 
-        if ($middleName) {
-            $fullName = strtoupper(trim($firstName . ' ' . $middleName . ' ' . $lastName));
-        } else {
-            $fullName = strtoupper(trim($firstName . ' ' . $lastName));
-        }
-        $role = $user->role ?? 'Administrator';
-    }
+                                        if ($middleName) {
+                                            $fullName = strtoupper(trim($firstName . ' ' . $middleName . ' ' . $lastName));
+                                        } else {
+                                            $fullName = strtoupper(trim($firstName . ' ' . $lastName));
+                                        }
+                                        $role = $user->role ?? 'Administrator';
+                                    }
                                 @endphp
                                 <p class="text-sm font-semibold mb-1">{{ $fullName }}</p> <!-- Added mb-1 -->
                                 <div class="border-t border-gray-400 w-20 mx-auto"></div> <!-- Set specific width -->
