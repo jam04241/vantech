@@ -26,6 +26,7 @@ class PaymentMethodRequest extends FormRequest
         return [
             'method_name' => 'required|string|max:255',
             'bank_name' => 'nullable|string|max:255',
+            'account_name' => 'nullable|string|max:255',
             'reference_no' => 'nullable|string|max:255',
             'payment_date' => 'required|date',
             'amount' => 'required|numeric|min:0',

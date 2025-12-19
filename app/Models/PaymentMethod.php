@@ -14,6 +14,7 @@ class PaymentMethod extends Model
         'customer_purchase_order_id',
         'method_name',
         'bank_name',
+        'account_name',
         'reference_no',
         'payment_date',
         'amount'

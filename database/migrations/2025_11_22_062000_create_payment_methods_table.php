@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('customer_purchase_order_id')->constrained('customer_purchase_orders')->onDelete('cascade');
             $table->string('method_name');
             $table->string('bank_name')->nullable();
+            $table->string('account_name')->nullable();
             $table->string('reference_no')->nullable();
             $table->date('payment_date');
             $table->decimal('amount', 10, 2);

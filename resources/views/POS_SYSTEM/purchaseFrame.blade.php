@@ -4,7 +4,7 @@
     Basis: Serial number for scanning, groups items by product name in order list
     Key Feature: Multiple serials of same product increase quantity
 -->
-<div class="container w-full lg:w-1">
+<div class="container w-full lg:w-1/4">
     <!-- Success Message Container -->
     @if(session('success') && session('from_customer_add'))
         <div id="customerSuccessMessage" class="mb-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
@@ -173,6 +173,14 @@
                     <option value="BDO">BDO</option>
                     <option value="others">others</option>
                 </select>
+            </div>
+
+            <!-- Account Name -->
+            <div class="mb-4" id="accountNameGroup">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
+                <input type="text" id="accountName" name="account_name"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                    placeholder="Enter account name" required autocomplete="off">
             </div>
 
             <!-- Reference No. -->
@@ -380,8 +388,10 @@
     function setupPaymentMethodFields() {
         const paymentMethodSelect = document.getElementById('paymentMethod');
         const bankNameGroup = document.getElementById('bankNameGroup');
+        const accountNameGroup = document.getElementById('accountNameGroup');
         const referenceNoGroup = document.getElementById('referenceNoGroup');
         const bankNameSelect = document.getElementById('bankName');
+        const accountNameInput = document.getElementById('accountName');
         const referenceNoInput = document.getElementById('referenceNo');
 
         if (!paymentMethodSelect || !bankNameGroup || !referenceNoGroup || !bankNameSelect || !referenceNoInput) {
@@ -393,25 +403,33 @@
 
             // Reset visibility and required flags
             bankNameGroup.classList.add('hidden');
+            accountNameGroup.classList.add('hidden');
             referenceNoGroup.classList.add('hidden');
             bankNameSelect.required = false;
+            accountNameInput.required = false;
             referenceNoInput.required = false;
 
             if (method === 'Bank Transfer') {
                 bankNameGroup.classList.remove('hidden');
+                accountNameGroup.classList.remove('hidden');
                 referenceNoGroup.classList.remove('hidden');
                 bankNameSelect.required = true;
+                accountNameInput.required = true;
                 referenceNoInput.required = true;
             } else if (method === 'Gcash') {
                 bankNameGroup.classList.add('hidden');
+                accountNameGroup.classList.add('hidden');
                 bankNameSelect.value = '';
+                accountNameInput.value = '';
                 referenceNoGroup.classList.remove('hidden');
                 referenceNoInput.required = true;
             } else if (method === 'Cash') {
                 // Hide both and clear values for Cash
                 bankNameGroup.classList.add('hidden');
+                accountNameGroup.classList.add('hidden');
                 referenceNoGroup.classList.add('hidden');
                 bankNameSelect.value = '';
+                accountNameInput.value = '';
                 referenceNoInput.value = '';
             }
         }

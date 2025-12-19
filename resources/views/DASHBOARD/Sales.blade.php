@@ -94,9 +94,9 @@
             <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-gray-600 text-sm font-medium">Total Revenue</p>
+                        <p class="text-gray-600 text-sm font-medium">Total Sales</p>
                         <p class="text-3xl font-bold text-gray-800 mt-2" id="revenue">₱0.00</p>
-                        <p class="text-green-600 text-xs mt-2">Revenue from your retail products</p>
+                        <p class="text-green-600 text-xs mt-2">Sales from your retail products</p>
                     </div>
                     <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

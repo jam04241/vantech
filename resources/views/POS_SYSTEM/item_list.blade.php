@@ -282,7 +282,7 @@
                 html: `<p><strong>${product.product_name}</strong> (SN: ${product.serial_number}) added to order</p>`,
                 timer: 2000,
                 showConfirmButton: false,
-                position: 'top-end'
+                position: 'center'
             });
         }
 
