@@ -4,7 +4,7 @@
     Basis: Serial number for scanning, groups items by product name in order list
     Key Feature: Multiple serials of same product increase quantity
 -->
-<div class="container w-full lg:w-1/4">
+<div class="container w-full lg:w-1/2">
     <!-- Success Message Container -->
     @if(session('success') && session('from_customer_add'))
         <div id="customerSuccessMessage" class="mb-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
@@ -224,7 +224,7 @@
 
 <!-- POS Product Lookup Script (Serial Number Search) -->
 <script>
-        // Auto-hide success message after 1.75 seconds
+    // Auto-hide success message after 1.75 seconds
     document.addEventListener('DOMContentLoaded', function () {
         const successMessage = document.getElementById('customerSuccessMessage');
         if (successMessage) {
@@ -394,7 +394,7 @@
         const accountNameInput = document.getElementById('accountName');
         const referenceNoInput = document.getElementById('referenceNo');
 
-        if (!paymentMethodSelect || !bankNameGroup || !referenceNoGroup || !bankNameSelect || !referenceNoInput) {
+        if (!paymentMethodSelect || !bankNameGroup || !referenceNoGroup || !accountNameGroup || !bankNameSelect || !referenceNoInput || !accountNameInput) {
             return;
         }
 
@@ -418,9 +418,9 @@
                 referenceNoInput.required = true;
             } else if (method === 'Gcash') {
                 bankNameGroup.classList.add('hidden');
-                accountNameGroup.classList.add('hidden');
                 bankNameSelect.value = '';
-                accountNameInput.value = '';
+                accountNameGroup.classList.remove('hidden');
+                accountNameInput.required = true;
                 referenceNoGroup.classList.remove('hidden');
                 referenceNoInput.required = true;
             } else if (method === 'Cash') {
@@ -768,6 +768,7 @@
         const paymentMethod = document.getElementById('paymentMethod').value;
         const amount = document.getElementById('amount').value;
         const bankName = document.getElementById('bankName').value;
+        const accountName = document.getElementById('accountName').value;
         const referenceNo = document.getElementById('referenceNo').value.trim();
 
         // Validate form
@@ -802,6 +803,15 @@
                 });
                 return;
             }
+            if (!accountName) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Account Name',
+                    text: 'Please enter an account name for Bank Transfer..',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
             if (!referenceNo) {
                 Swal.fire({
                     icon: 'error',
@@ -812,6 +822,15 @@
                 return;
             }
         } else if (paymentMethod === 'Gcash') {
+            if (!accountName) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Account Name',
+                    text: 'Please enter an account name for Gcash payment.',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
             if (!referenceNo) {
                 Swal.fire({
                     icon: 'error',

@@ -131,6 +131,9 @@ class CustomerController extends Controller
                         'discount' => $discount,
                         'total_price' => $drTransaction->total_sum,
                         'payment_method' => $paymentMethod ? $paymentMethod->method_name : 'N/A',
+                        'bank_name' => $paymentMethod ? $paymentMethod->bank_name : null,
+                        'account_name' => $paymentMethod ? $paymentMethod->account_name : null,
+                        'reference_no' => $paymentMethod ? $paymentMethod->reference_no : null,
                         'products' => $orders->map(function ($order) {
                             return [
                                 'product_name' => $order->product->product_name,

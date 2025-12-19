@@ -37,6 +37,7 @@ class CheckoutController extends Controller
                 'customer_id' => 'required|exists:customers,id',
                 'payment_method' => 'required|string|max:255',
                 'bank_name' => 'nullable|string|max:255',
+                'account_name' => 'nullable|string|max:255',
                 'reference_no' => 'nullable|string|max:255',
                 'amount' => 'required|numeric|min:0',
                 'items' => 'required|array|min:1',
@@ -50,6 +51,7 @@ class CheckoutController extends Controller
             $customerId = $request->customer_id;
             $paymentMethod = $request->payment_method;
             $bankName = $request->bank_name;
+            $accountName = $request->account_name;
             $referenceNo = $request->reference_no;
             $amount = $request->amount;
             $items = $request->items;
@@ -58,6 +60,7 @@ class CheckoutController extends Controller
                 'customer_id' => $customerId,
                 'payment_method' => $paymentMethod,
                 'bank_name' => $bankName,
+                'account_name' => $accountName,
                 'reference_no' => $referenceNo,
                 'amount' => $amount,
                 'items_count' => count($items)
@@ -102,6 +105,7 @@ class CheckoutController extends Controller
                     'customer_purchase_order_id' => $purchaseOrderIds[0],
                     'method_name' => $paymentMethod,
                     'bank_name' => $bankName,
+                    'account_name' => $accountName,
                     'reference_no' => $referenceNo,
                     'amount' => $amount
                 ]);
@@ -110,6 +114,7 @@ class CheckoutController extends Controller
                     'customer_purchase_order_id' => $purchaseOrderIds[0],
                     'method_name' => $paymentMethod,
                     'bank_name' => $bankName,
+                    'account_name' => $accountName,
                     'reference_no' => $referenceNo,
                     'payment_date' => now()->format('Y-m-d'),
                     'amount' => $amount
@@ -136,6 +141,7 @@ class CheckoutController extends Controller
                 'customerId' => $customerId,
                 'paymentMethod' => $paymentMethod,
                 'bankName' => $bankName ?: 'N/A',
+                'accountName' => $accountName ?: 'N/A',
                 'referenceNo' => $referenceNo ?: 'N/A',
                 'amount' => $amount,
                 'subtotal' => $request->subtotal ?? 0,
