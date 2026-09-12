@@ -263,8 +263,9 @@ class SalesController extends Controller
                 $totalSum = round($transaction->total_sum ?? 0, 2);
                 $discount = round($subtotal - $totalSum, 2);
 
-                // Construct customer name: show first name only if last name is not available
-                $customerName = '-';
+                // Construct customer name: show first name only if last name is
+                // not available. A sale with no customer is a walk-in.
+                $customerName = \App\Models\CustomerPurchaseOrder::WALK_IN_LABEL;
                 if (!empty($transaction->first_name)) {
                     $customerName = $transaction->first_name;
                     if (!empty($transaction->last_name)) {

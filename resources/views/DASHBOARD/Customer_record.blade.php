@@ -793,7 +793,7 @@
                     ${product.serial_no}
                 </td>
                 <td class="px-4 py-3 text-left w-1/5">
-                    ${product.warranty}
+                    ${product.warranty || 'No Warranty'}
                 </td>
                 <td class="px-4 py-3 text-left whitespace-nowrap w-1/5">
                     ₱ ${parseFloat(product.unit_price).toFixed(2)}

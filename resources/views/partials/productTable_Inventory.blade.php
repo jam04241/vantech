@@ -30,7 +30,7 @@
                     <td class="p-4 font-mono text-sm">{{ $product->serial_number ?? 'N/A' }}</td>
                     <td class="p-4">
                         <span class="text-green-800 text-xs px-2 py-1 font-bold rounded-full">
-                            {{ $product->warranty_period ?? 'N/A' }}
+                            {{ $product->warranty_label }}
                         </span>
                     </td>
                     <td class="p-4">

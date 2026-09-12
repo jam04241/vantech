@@ -138,15 +138,27 @@
             <!-- Items container for dynamic items -->
             <div id="formItemsContainer"></div>
 
-            <!-- Customer Name -->
+            <!-- Customer Name (optional: walk-in buyers may not give one) -->
             <div class="mb-4 relative">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Customer Name</label>
+                <div class="flex items-center justify-between mb-2">
+                    <label for="customerName" class="block text-sm font-medium text-gray-700">
+                        Customer Name
+                        <span class="font-normal text-gray-500">(optional)</span>
+                    </label>
+                    <button type="button" id="clearCustomerBtn" onclick="clearSelectedCustomer()"
+                        class="hidden text-xs text-indigo-600 hover:text-indigo-800 underline">
+                        Clear
+                    </button>
+                </div>
                 <input type="text" id="customerName" name="customerName"
                     class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                    placeholder="Enter customer name" required autocomplete="off">
+                    placeholder="Leave blank for walk-in" autocomplete="off">
                 <div id="customerSuggestions"
                     class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10 hidden">
                 </div>
+                <p id="customerHint" class="mt-1 text-xs text-gray-500">
+                    Leave blank to record this as a walk-in sale.
+                </p>
             </div>
 
             <!-- Payment Method -->
@@ -689,6 +701,10 @@
             clearTimeout(customerSearchDebounceTimer);
             const query = e.target.value.trim();
 
+            // Editing the text invalidates any previous selection. Without this
+            // the sale would still be filed under the customer picked earlier.
+            setSelectedCustomerId('');
+
             if (query.length < 1) {
                 customerSuggestionsContainer.classList.add('hidden');
                 return;
@@ -739,24 +755,54 @@
     }
 
     /**
+     * Record (or clear) the chosen customer and keep the UI in step.
+     *
+     * An empty id means a walk-in sale.
+     */
+    function setSelectedCustomerId(customerId) {
+        document.getElementById('formCustomerId').value = customerId || '';
+
+        const clearBtn = document.getElementById('clearCustomerBtn');
+        const hint = document.getElementById('customerHint');
+
+        if (customerId) {
+            clearBtn?.classList.remove('hidden');
+            if (hint) {
+                hint.textContent = 'Saved customer selected.';
+                hint.className = 'mt-1 text-xs text-green-600';
+            }
+        } else {
+            clearBtn?.classList.add('hidden');
+            if (hint) {
+                hint.textContent = 'Leave blank to record this as a walk-in sale.';
+                hint.className = 'mt-1 text-xs text-gray-500';
+            }
+        }
+
+        if (typeof orderItems !== 'undefined') {
+            orderItems.forEach(item => {
+                item.customerId = customerId || null;
+            });
+        }
+    }
+
+    /**
+     * Drop the selected customer so the sale is recorded as a walk-in.
+     */
+    function clearSelectedCustomer() {
+        document.getElementById('customerName').value = '';
+        document.getElementById('customerSuggestions').classList.add('hidden');
+        setSelectedCustomerId('');
+        document.getElementById('customerName').focus();
+    }
+
+    /**
      * Select customer from suggestions
      */
     function selectCustomer(firstName, lastName, customerId) {
-        document.getElementById('customerName').value = `${firstName} ${lastName}`;
-        document.getElementById('formCustomerId').value = customerId;
+        document.getElementById('customerName').value = `${firstName} ${lastName || ''}`.trim();
         document.getElementById('customerSuggestions').classList.add('hidden');
-
-        console.log('Customer selected:', {
-            name: `${firstName} ${lastName}`,
-            id: customerId
-        });
-
-        // Store customer ID in all order items (for reference)
-        if (typeof orderItems !== 'undefined') {
-            orderItems.forEach(item => {
-                item.customerId = customerId;
-            });
-        }
+        setSelectedCustomerId(customerId);
     }
 
     /**
@@ -771,13 +817,17 @@
         const accountName = document.getElementById('accountName').value;
         const referenceNo = document.getElementById('referenceNo').value.trim();
 
-        // Validate form
-        if (!customerId) {
+        // A blank name is a walk-in sale and is allowed. What is not allowed is
+        // a typed name that was never matched to a customer: that name would be
+        // silently thrown away, so ask the cashier to resolve it.
+        if (!customerId && customerName.trim() !== '') {
             Swal.fire({
-                icon: 'error',
-                title: 'Missing Customer',
-                text: 'Please select a customer from the suggestions.',
-                confirmButtonColor: '#ef4444'
+                icon: 'warning',
+                title: 'Customer Not Selected',
+                html: `<p>"<strong>${customerName.trim()}</strong>" is not a saved customer yet.</p>
+                       <p class="mt-2 text-sm">Pick the customer from the suggestion list, add them first,
+                       or clear the field to continue as a walk-in sale.</p>`,
+                confirmButtonColor: '#f59e0b'
             });
             return;
         }
@@ -869,7 +919,7 @@
             title: 'Confirm Purchase',
             html: `
                 <div class="text-left">
-                    <p class="font-semibold">Customer: ${customerName}</p>
+                    <p class="font-semibold">Customer: ${customerId ? customerName : 'Walk-in (no name)'}</p>
                     <p>Payment Method: ${paymentMethod}</p>
                     <p>Amount: ₱${parseFloat(amount).toFixed(2)}</p>
                     <p class="text-sm text-gray-600 mt-2">This will:</p>

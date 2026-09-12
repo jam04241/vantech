@@ -138,7 +138,7 @@ class CustomerController extends Controller
                             return [
                                 'product_name' => $order->product->product_name,
                                 'serial_no' => $order->serial_number,
-                                'warranty' => $order->product->warranty_period,
+                                'warranty' => $order->product?->warranty_label ?? \App\Models\Product::NO_WARRANTY,
                                 'unit_price' => $order->unit_price,
                                 'total_price' => $order->total_price
                             ];

@@ -162,9 +162,12 @@
                 const cardCategory = card.getAttribute('data-category');
                 const cardBrand = card.getAttribute('data-brand');
                 const cardCondition = card.getAttribute('data-condition');
-                const productName = card.querySelector('h3').textContent.toLowerCase();
-                const brandName = card.querySelector('p:nth-of-type(1)').textContent.toLowerCase();
-                const typeName = card.querySelector('p:nth-of-type(2)').textContent.toLowerCase();
+                // The product card renders brand and category in .brand-name /
+                // .category-name spans. Looking for <p> elements matched nothing and
+                // threw on every keystroke, which broke POS search and filtering.
+                const productName = (card.querySelector('h3')?.textContent || '').toLowerCase();
+                const brandName = (card.querySelector('.brand-name')?.textContent || '').toLowerCase();
+                const typeName = (card.querySelector('.category-name')?.textContent || '').toLowerCase();
 
                 const categoryMatch = categoryFilter === '' || categoryFilter === 'all' || cardCategory === categoryFilter;
                 const brandMatch = brandFilter === '' || brandFilter === 'all' || cardBrand === brandFilter;
@@ -176,8 +179,8 @@
 
             // Sort products
             filteredCards.sort((a, b) => {
-                const aName = a.querySelector('h3').textContent;
-                const bName = b.querySelector('h3').textContent;
+                const aName = a.querySelector('h3')?.textContent || '';
+                const bName = b.querySelector('h3')?.textContent || '';
                 const aPrice = parseFloat(a.getAttribute('data-price')) || 0;
                 const bPrice = parseFloat(b.getAttribute('data-price')) || 0;
                 const aQty = parseInt(a.getAttribute('data-quantity')) || 0;
@@ -254,7 +257,7 @@
                     name: product.product_name,
                     price: parseFloat(product.price) || 0,
                     serialNumber: product.serial_number,
-                    warranty: product.warranty_period || '1 Year',
+                    warranty: product.warranty_period || 'No Warranty',
                     qty: 1
                 };
 
@@ -528,7 +531,7 @@
                         name: p.product_name,
                         price: parseFloat(p.price) || 0,
                         serialNumber: p.serial_number,
-                        warranty: p.warranty_period || '1 Year',
+                        warranty: p.warranty_period || 'No Warranty',
                         qty: 1
                     });
                 });

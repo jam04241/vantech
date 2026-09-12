@@ -42,7 +42,7 @@
 
                         <div class="flex justify-between">
                             <span class="text-gray-600 font-medium">Warranty:</span>
-                            <span class="warranty-info text-gray-800">{{ $product->warranty_period ?? 'N/A' }}</span>
+                            <span class="warranty-info text-gray-800">{{ \App\Models\Product::normalizeWarranty($product->warranty_period) }}</span>
                         </div>
 
                         <div class="flex justify-between">

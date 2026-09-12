@@ -570,12 +570,24 @@
 
             <!-- Staff Management - Admin Only -->
             @if(Auth::user() && Auth::user()->role === 'admin')
+                @php
+                    // Employees register themselves, so surface anything awaiting
+                    // the owner's approval right in the nav.
+                    $pendingStaffCount = \App\Models\User::where('status', \App\Models\User::STATUS_PENDING)->count();
+                @endphp
                 <a href="{{ route('staff.record') }}" class="sidebar-item">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M5.121 17.804A7 7 0 0112 14a7 7 0 016.879 3.804M12 12a5 5 0 100-10 5 5 0 000 10z" />
                     </svg>
                     Staff
+                    @if($pendingStaffCount > 0)
+                        <span
+                            class="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white bg-amber-500 rounded-full"
+                            title="{{ $pendingStaffCount }} registration(s) awaiting approval">
+                            {{ $pendingStaffCount }}
+                        </span>
+                    @endif
                 </a>
             @elseif(Auth::user() && Auth::user()->role === 'staff')
                 <button onclick="showAdminVerificationModal('{{ route('staff.record') }}')"

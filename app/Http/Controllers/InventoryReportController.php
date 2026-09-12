@@ -62,12 +62,15 @@ class InventoryReportController extends Controller
                 $soldQuery->whereBetween('order_date', [$startDate, $endDate]);
             }
 
-            $totalSold = $soldQuery->count();
+            // Sum the units sold, not the number of order lines: a single line can
+            // carry a quantity greater than one.
+            $totalSold = (int) $soldQuery->sum('quantity');
 
-            // Count availability: number of stock records with stock_quantity = 1
-            $availableStock = Product_Stocks::whereIn('product_id', $productIds)
-                ->where('stock_quantity', 1)
-                ->count();
+            // Sum the units on hand. This previously counted only stock rows whose
+            // quantity was exactly 1, so any product holding 2 or more units was
+            // reported as having none in stock.
+            $availableStock = (int) Product_Stocks::whereIn('product_id', $productIds)
+                ->sum('stock_quantity');
 
             // Get price from first product's stock
             $price = Product_Stocks::where('product_id', $firstItem->id)->value('price') ?? 0;

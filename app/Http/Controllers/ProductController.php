@@ -391,87 +391,6 @@ class ProductController extends Controller
         return view('DASHBOARD.inventory_list', $data);
     }
 
-    /**
-     * Update product price with different logic for Brand New vs Second Hand
-     */
-    public function updatePrice(Request $request, $id)
-    {
-        $request->validate([
-            'price' => 'required|numeric|min:0'
-        ]);
-
-        try {
-            $product = Product::with('stock')->findOrFail($id);
-            $newPrice = $request->price;
-            $oldPrice = $product->stock?->price ?? 0;
-
-            DB::transaction(function () use ($product, $newPrice, $id) {
-                if ($product->product_condition === 'Brand New') {
-                    // For Brand New: update price for ALL products with same name, brand, category, and condition
-                    $productsToUpdate = Product::where('product_name', $product->product_name)
-                        ->where('brand_id', $product->brand_id)
-                        ->where('category_id', $product->category_id)
-                        ->where('product_condition', 'Brand New')
-                        ->get();
-
-                    foreach ($productsToUpdate as $prod) {
-                        if ($prod->stock) {
-                            $prod->stock->price = $newPrice;
-                            $prod->stock->save();
-                        }
-                    }
-
-                    $message = 'Price updated for ' . $productsToUpdate->count() . ' Brand New products.';
-                } else {
-                    // For Second Hand: update ALL products with same name, brand, category, condition, AND current price
-                    $currentPrice = $product->stock->price;
-                    $productsToUpdate = Product::where('product_name', $product->product_name)
-                        ->where('brand_id', $product->brand_id)
-                        ->where('category_id', $product->category_id)
-                        ->where('product_condition', 'Second Hand')
-                        ->whereHas('stock', function ($query) use ($currentPrice) {
-                            $query->where('price', $currentPrice);
-                        })
-                        ->get();
-
-                    foreach ($productsToUpdate as $prod) {
-                        if ($prod->stock) {
-                            $prod->stock->price = $newPrice;
-                            $prod->stock->save();
-                        }
-                    }
-
-                    $message = 'Price updated for ' . $productsToUpdate->count() . ' Second Hand products with the same price.';
-                }
-            });
-
-            // Log the price update
-            $priceAction = $oldPrice > $newPrice ? 'Decrease' : 'Increase';
-            $description = "{$priceAction} all price for {$product->product_name} = ₱{$oldPrice} => ₱{$newPrice}";
-            $this->logUpdateAudit('UPDATE', 'Inventory', $description, ['price' => $oldPrice], ['price' => $newPrice], $request);
-
-            // Return JSON for AJAX requests
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Price updated successfully.'
-                ]);
-            }
-
-            return redirect()->route('inventory.list')
-                ->with('success', 'Price updated successfully.');
-        } catch (\Exception $e) {
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Failed to update price: ' . $e->getMessage()
-                ], 500);
-            }
-            return redirect()->route('inventory.list')
-                ->with('error', 'Failed to update price: ' . $e->getMessage());
-        }
-    }
-
     public function update(ProductRequest $request, Product $product)
     {
         $data = $request->validated();
@@ -500,7 +419,9 @@ class ProductController extends Controller
                 $productData = collect($data)->except(['price', 'product_condition'])->toArray();
                 $productData['serial_number'] = $productData['serial_number'] ?? ($product->serial_number ?? 'N/A');
 
-                // Determine product condition based on supplier_id
+                // Condition follows the supplier: the add form requires a supplier for
+                // Brand New stock and clears it for Second Hand, and the edit modal's
+                // Company dropdown offers "Second Hand" as its empty option.
                 $productData['product_condition'] = (empty($productData['supplier_id']) || $productData['supplier_id'] === null)
                     ? 'Second Hand'
                     : 'Brand New';

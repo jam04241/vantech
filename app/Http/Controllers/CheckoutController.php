@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
 {
@@ -34,7 +35,8 @@ class CheckoutController extends Controller
         try {
             // Validate required fields
             $request->validate([
-                'customer_id' => 'required|exists:customers,id',
+                // Optional: walk-in buyers often do not give a name.
+                'customer_id' => 'nullable|exists:customers,id',
                 'payment_method' => 'required|string|max:255',
                 'bank_name' => 'nullable|string|max:255',
                 'account_name' => 'nullable|string|max:255',
@@ -95,8 +97,13 @@ class CheckoutController extends Controller
                 $purchaseOrderIds[] = $purchaseOrder->id;
                 Log::info("Purchase order created with ID: {$purchaseOrder->id}");
 
-                // Mark product as sold by setting stock to 0
-                $this->markProductAsSold($item['product_id'], $item['serial_number']);
+                // Deduct the sold units from stock. Throws if the item is already
+                // sold or short, which rolls the whole checkout back.
+                $this->markProductAsSold(
+                    $item['product_id'],
+                    $item['serial_number'],
+                    (int) $item['quantity']
+                );
             }
 
             // Create payment method linked to the first purchase order
@@ -126,8 +133,8 @@ class CheckoutController extends Controller
             DB::commit();
             Log::info('=== CHECKOUT PROCESS COMPLETED SUCCESSFULLY ===');
 
-            // Get customer for audit logging
-            $customer = Customer::find($customerId);
+            // May be null for a walk-in sale.
+            $customer = $customerId ? Customer::find($customerId) : null;
             $totalQuantity = collect($items)->sum('quantity');
             $totalPrice = $amount;
 
@@ -137,7 +144,7 @@ class CheckoutController extends Controller
             // Store receipt data in session for receipt page
             $receiptData = [
                 'drNumber' => $drTransaction->receipt_no, // Add DR number for barcode
-                'customerName' => $customer->first_name . ' ' . $customer->last_name,
+                'customerName' => CustomerPurchaseOrder::customerLabel($customer),
                 'customerId' => $customerId,
                 'paymentMethod' => $paymentMethod,
                 'bankName' => $bankName ?: 'N/A',
@@ -160,6 +167,12 @@ class CheckoutController extends Controller
                 'message' => 'Purchase completed successfully!',
                 'redirect_url' => route('pos.purchasereceipt')
             ]);
+        } catch (ValidationException $e) {
+            // A rejected field is the caller's mistake, not a server fault.
+            // Let Laravel return a 422 with per-field messages instead of
+            // flattening it into a 500 labelled "Checkout failed".
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Checkout failed:', [
@@ -185,12 +198,13 @@ class CheckoutController extends Controller
             return redirect()->route('pos.itemlist')->with('error', 'No receipt data found. Please complete a purchase first.');
         }
 
-        // Get customer contact info if available
+        // Get customer contact info if available. A walk-in sale has no
+        // customer id at all, so this stays 'N/A'.
         $customerContact = 'N/A';
-        if (isset($receiptData['customerId'])) {
+        if (!empty($receiptData['customerId'])) {
             $customer = Customer::find($receiptData['customerId']);
             if ($customer) {
-                $customerContact = $customer->contact_no;
+                $customerContact = $customer->contact_no ?: 'N/A';
             }
         }
 
@@ -215,22 +229,61 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Mark product as sold by setting its stock to 0
+     * Deduct sold units from a product's stock.
+     *
+     * Previously this zeroed the stock row outright, so selling one unit wiped out
+     * every remaining unit of that product. It also never checked availability,
+     * which let the same serial be sold twice from two terminals at once.
+     *
+     * @throws \Exception when the serial does not match, or stock is insufficient.
      */
-    private function markProductAsSold($productId, $serialNumber)
+    private function markProductAsSold($productId, $serialNumber, int $quantity)
     {
         Log::info("Marking product as sold:", [
             'product_id' => $productId,
-            'serial_number' => $serialNumber
+            'serial_number' => $serialNumber,
+            'quantity' => $quantity,
         ]);
 
-        // Update product stock to 0 (sold)
-        $stock = Product_Stocks::where('product_id', $productId)->first();
-        if ($stock) {
-            $stock->stock_quantity = 0;
-            $stock->save();
-            Log::info("Product stock set to 0 for product ID: {$productId}");
+        $product = Product::find($productId);
+
+        if (!$product) {
+            throw new \Exception("Product #{$productId} no longer exists.");
         }
+
+        // Guard against a cart line pointing at the wrong product: stock is tracked
+        // per serial, so a mismatch would deduct from someone else's item.
+        if ($serialNumber !== '' && $product->serial_number !== $serialNumber) {
+            throw new \Exception(
+                "Serial number {$serialNumber} does not belong to {$product->product_name}."
+            );
+        }
+
+        // Lock the stock row so two concurrent checkouts cannot both pass the
+        // availability check and oversell the same item.
+        $stock = Product_Stocks::where('product_id', $productId)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$stock) {
+            throw new \Exception("No stock record exists for {$product->product_name}.");
+        }
+
+        if ($stock->stock_quantity < $quantity) {
+            throw new \Exception(
+                "{$product->product_name} (SN: {$product->serial_number}) only has "
+                . "{$stock->stock_quantity} left but {$quantity} were requested."
+            );
+        }
+
+        $stock->stock_quantity -= $quantity;
+        $stock->save();
+
+        Log::info("Stock deducted", [
+            'product_id' => $productId,
+            'deducted' => $quantity,
+            'remaining' => $stock->stock_quantity,
+        ]);
     }
 
     /**
@@ -246,7 +299,7 @@ class CheckoutController extends Controller
                 $receiptItems[] = [
                     'productName' => $product->product_name,
                     'price' => $item['unit_price'],
-                    'warranty' => $product->warranty_period ?? '1 Year',
+                    'warranty' => $product->warranty_label,
                     'quantity' => $item['quantity'],
                     'subtotal' => $item['total_price'],
                     'serialNumber' => $item['serial_number']

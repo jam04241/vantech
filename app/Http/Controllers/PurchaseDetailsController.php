@@ -17,7 +17,9 @@ class PurchaseDetailsController extends Controller
 {
     public function create()
     {
-        $suppliers = Suppliers::where('status', 'Active')->get();
+        // The status enum stores lowercase values; 'Active' only matched by luck
+        // of MySQL's case-insensitive collation.
+        $suppliers = Suppliers::where('status', 'active')->get();
         $bundles = Bundles::all();
         $products = Product::all();
 

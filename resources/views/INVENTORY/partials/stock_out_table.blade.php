@@ -28,7 +28,7 @@
                         {{ $product->customerPurchaseOrders->first()?->drTransaction?->receipt_no ?? '-' }}
                     </td>
                     <td class="px-4 py-3 text-gray-600">
-                        {{ $product->warranty_period ?? '-' }}
+                        {{ $product->warranty_label }}
                     </td>
                     <td class="px-4 py-3 text-gray-600">
                         {{ $product->brand?->brand_name ?? '-' }}

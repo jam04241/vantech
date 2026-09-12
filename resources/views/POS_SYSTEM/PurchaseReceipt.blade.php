@@ -186,12 +186,13 @@ $groupedItems = [];
 
 if (isset($receiptData['items']) && count($receiptData['items']) > 0) {
     foreach ($receiptData['items'] as $item) {
-        $groupKey = $item['productName'] . '|' . ($item['warranty'] ?? 'N/A') . '|' . $item['price'];
+        $warrantyLabel = ($item['warranty'] ?? '') ?: 'No Warranty';
+        $groupKey = $item['productName'] . '|' . $warrantyLabel . '|' . $item['price'];
 
         if (!isset($groupedItems[$groupKey])) {
             $groupedItems[$groupKey] = [
                 'productName' => $item['productName'],
-                'warranty' => $item['warranty'] ?? 'N/A',
+                'warranty' => $warrantyLabel,
                 'price' => $item['price'],
                 'quantity' => 0,
                 'subtotal' => 0,

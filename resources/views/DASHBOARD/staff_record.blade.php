@@ -4,14 +4,59 @@
 
 @section('content')
     <div class="bg-white border rounded-lg p-6 shadow-sm">
-        {{-- Header Section with Search and Add Button --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            {{-- Search Bar --}}
-            <div class="flex-1 max-w-md">
+
+        {{-- Page Title --}}
+        <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Staff Management</h2>
+                <p class="text-gray-600 mt-1">
+                    Review staff who registered, activate their accounts, and keep their records up to date.
+                </p>
+            </div>
+
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+                <span class="text-sm font-medium text-indigo-600">
+                    <span class="font-bold">{{ $employees->total() }}</span> staff shown
+                </span>
+            </div>
+        </div>
+
+        {{-- Pending applications need the owner's attention, so lead with them --}}
+        @if ($pendingCount > 0)
+            <div class="flex items-start gap-3 p-4 mb-6 bg-amber-50 border border-amber-300 rounded-lg">
+                <svg class="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-2.99l-6.93-12a2 2 0 00-3.48 0l-6.93 12A2 2 0 005.07 19z" />
+                </svg>
+                <div class="flex-1">
+                    <p class="font-semibold text-amber-900">
+                        {{ $pendingCount }} {{ Str::plural('registration', $pendingCount) }} waiting for approval
+                    </p>
+                    <p class="text-sm text-amber-800 mt-0.5">
+                        These employees cannot log in until you activate their account.
+                    </p>
+                </div>
+                <a href="{{ route('staff.record', ['status' => 'pending']) }}"
+                    class="px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition whitespace-nowrap">
+                    Review now
+                </a>
+            </div>
+        @endif
+
+        {{-- Search and filters. Server-side so they apply across every page, not
+             just the rows currently rendered. --}}
+        <form method="GET" action="{{ route('staff.record') }}" id="filterForm"
+            class="flex flex-col lg:flex-row lg:items-end gap-4 mb-6">
+            <div class="flex-1 min-w-0">
+                <label for="searchInput" class="block text-xs font-medium text-gray-700 mb-2">Search</label>
                 <div class="relative">
-                    <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
-                        placeholder="Search employees by name, role, address..."
-                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 shadow-sm"
+                    <input type="text" id="searchInput" name="search" value="{{ $searchQuery }}"
+                        placeholder="Name, username, role, address or phone..."
+                        class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-sm"
                         aria-label="Search employees">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -19,9 +64,9 @@
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    @if(request('search'))
-                        <a href="{{ route('staff.index') }}"
-                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition duration-200"
+                    @if ($searchQuery)
+                        <a href="{{ route('staff.record', array_filter(['status' => $statusFilter, 'role' => $roleFilter])) }}"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition"
                             title="Clear search">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -32,62 +77,43 @@
                 </div>
             </div>
 
-            {{-- Add Employee Button --}}
-            <a href="{{ route('add.employee') }}"
-                class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-200 shadow-lg font-medium hover:shadow-xl transform hover:-translate-y-0.5"
-                aria-label="Add a new employee">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add New Employee
-            </a>
-        </div>
-
-        <div class="border-t border-gray-200 my-6"></div>
-
-        {{-- Page Title --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start mb-6">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">Staff Management</h2>
-                <p class="text-gray-600 mt-1">Manage your staff and their information</p>
-            </div>
-        </div>
-
-        {{-- Filter Section --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            {{-- Filter by Role --}}
-            <div>
-                <label class="block text-xs font-medium text-gray-700 mb-2">Role</label>
-                <select id="roleFilter"
-                    class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
-                    <option value="">All Roles</option>
-                    <option value="Staff">Staff</option>
-                    <option value="Technical">Technical</option>
-                    <option value="Cashier">Cashier</option>
-                    <option value="Assistant">Assistant</option>
+                <label for="roleFilter" class="block text-xs font-medium text-gray-700 mb-2">Position</label>
+                <select id="roleFilter" name="role" onchange="document.getElementById('filterForm').submit()"
+                    class="px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                    <option value="">All Positions</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role }}" @selected($roleFilter === $role)>{{ $role }}</option>
+                    @endforeach
                 </select>
             </div>
 
-            {{-- Results Info --}}
-            <div class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
-                <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
-                <span class="text-sm font-medium text-indigo-600">
-                    <span class="font-bold">{{ $employees->total() }}</span> total employees
-                </span>
+            <div>
+                <label for="statusFilter" class="block text-xs font-medium text-gray-700 mb-2">Account Status</label>
+                <select id="statusFilter" name="status" onchange="document.getElementById('filterForm').submit()"
+                    class="px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                    <option value="">All Statuses</option>
+                    <option value="pending" @selected($statusFilter === 'pending')>Pending Approval ({{ $pendingCount }})</option>
+                    <option value="active" @selected($statusFilter === 'active')>Active ({{ $activeCount }})</option>
+                    <option value="inactive" @selected($statusFilter === 'inactive')>Deactivated ({{ $inactiveCount }})</option>
+                    <option value="no_account" @selected($statusFilter === 'no_account')>No Account</option>
+                </select>
             </div>
-        </div>
+
+            <button type="submit"
+                class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition font-medium">
+                Apply
+            </button>
+        </form>
 
         {{-- Success/Error Messages --}}
-        @if(session('success'))
+        @if (session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
                 {{ session('success') }}
             </div>
         @endif
 
-        @if(session('error'))
+        @if (session('error'))
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
                 {{ session('error') }}
             </div>
@@ -105,10 +131,10 @@
                                 Address</th>
                             <th class="px-6 py-4 text-left font-semibold text-gray-700 text-sm uppercase tracking-wide">
                                 Contact</th>
-                            <th class="px-6 py-4 text-left font-semibold text-gray-700 text-sm uppercase tracking-wide">Role
-                            </th>
                             <th class="px-6 py-4 text-left font-semibold text-gray-700 text-sm uppercase tracking-wide">
-                                Gender</th>
+                                Position</th>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700 text-sm uppercase tracking-wide">
+                                Account</th>
                             <th class="px-6 py-4 text-left font-semibold text-gray-700 text-sm uppercase tracking-wide">
                                 Actions</th>
                         </tr>
@@ -116,7 +142,13 @@
 
                     <tbody id="employeesTable" class="divide-y divide-gray-200">
                         @forelse($employees as $employee)
-                            <tr class="hover:bg-gray-50 transition" data-employee-id="{{ $employee->id }}">
+                            @php
+                                $account = $employee->user;
+                                $status = $employee->account_status;
+                                $isSelf = $account && $account->id === auth()->id();
+                            @endphp
+                            <tr class="hover:bg-gray-50 transition {{ $status === 'pending' ? 'bg-amber-50/50' : '' }}"
+                                data-employee-id="{{ $employee->id }}">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div
@@ -124,64 +156,148 @@
                                             {{ strtoupper(substr($employee->first_name, 0, 1) . substr($employee->last_name, 0, 1)) }}
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ $employee->first_name }}
-                                                {{ $employee->last_name }}
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ $employee->full_name }}
                                             </div>
-                                            <div class="text-sm text-gray-500">{{ $employee->email ?? '' }}</div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ $account ? '@' . $account->username : 'No login account' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
 
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ $employee->street }}</div>
-                                    <div class="text-sm text-gray-600">{{ $employee->barangay }}, {{ $employee->city }}</div>
+                                <td class="px-6 py-4">
+                                    @if ($employee->address)
+                                        <div class="text-sm text-gray-900">{{ $employee->street }}</div>
+                                        <div class="text-sm text-gray-600">
+                                            {{ collect([$employee->barangay, $employee->city])->filter()->join(', ') }}
+                                        </div>
+                                    @else
+                                        <span class="text-sm text-gray-400 italic">Not set yet</span>
+                                    @endif
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">{{ $employee->phone_number }}</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">{{ ucfirst($employee->gender) }}</div>
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="px-3 py-1 inline-flex text-xs font-semibold rounded-full
-                                                                {{ $employee->role == 'Staff' ? 'bg-purple-100 text-purple-800' : ($employee->role == 'Technical' ? 'bg-pink-100 text-pink-800' : ($employee->role == 'Cashier' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800')) }}">
-                                        {{ $employee->role }}
-                                    </span>
+                                    @if ($employee->role)
+                                        <span
+                                            class="px-3 py-1 inline-flex text-xs font-semibold rounded-full
+                                            {{ $employee->role == 'Staff'
+                                                ? 'bg-purple-100 text-purple-800'
+                                                : ($employee->role == 'Technical'
+                                                    ? 'bg-pink-100 text-pink-800'
+                                                    : ($employee->role == 'Cashier'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : 'bg-orange-100 text-orange-800')) }}">
+                                            {{ $employee->role }}
+                                        </span>
+                                    @else
+                                        <span
+                                            class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-gray-100 text-gray-500 border border-dashed border-gray-400">
+                                            Unassigned
+                                        </span>
+                                    @endif
                                 </td>
 
+                                {{-- Account state --}}
                                 <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $badge = match ($status) {
+                                            'pending' => 'bg-amber-100 text-amber-800 border-amber-300',
+                                            'active' => 'bg-green-100 text-green-800 border-green-300',
+                                            'inactive' => 'bg-red-100 text-red-800 border-red-300',
+                                            default => 'bg-gray-100 text-gray-600 border-gray-300',
+                                        };
+                                    @endphp
                                     <span
-                                        class="px-3 py-1 inline-flex text-xs font-semibold rounded-full
-                                                                {{ strtolower($employee->gender) == 'male' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800' }}">
-                                        {{ ucfirst($employee->gender) }}
+                                        class="px-3 py-1 inline-flex items-center gap-1.5 text-xs font-semibold rounded-full border {{ $badge }}">
+                                        <span
+                                            class="w-1.5 h-1.5 rounded-full
+                                            {{ $status === 'active' ? 'bg-green-600' : ($status === 'pending' ? 'bg-amber-600' : ($status === 'inactive' ? 'bg-red-600' : 'bg-gray-400')) }}"></span>
+                                        {{ $employee->account_status_label }}
                                     </span>
+                                    @if ($account?->approved_at && $status === 'active')
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            Since {{ $account->approved_at->format('M d, Y') }}
+                                        </div>
+                                    @endif
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button onclick="openEditModal({{ $employee->id }})"
-                                        class="inline-flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition duration-200">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        Edit
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="openEditModal({{ $employee->id }})"
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Edit
+                                        </button>
+
+                                        @if (!$account)
+                                            <span class="text-xs text-gray-400 italic px-2">No account</span>
+                                        @elseif ($isSelf)
+                                            <span class="text-xs text-gray-400 italic px-2">This is you</span>
+                                        @elseif ($status === 'active')
+                                            <form method="POST" action="{{ route('staff.deactivate', $employee) }}"
+                                                class="js-account-action" data-action="deactivate"
+                                                data-name="{{ $employee->full_name }}">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                                        stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                    </svg>
+                                                    Deactivate
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form method="POST" action="{{ route('staff.activate', $employee) }}"
+                                                class="js-account-action" data-action="activate"
+                                                data-name="{{ $employee->full_name }}">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                                        stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    {{ $status === 'pending' ? 'Approve' : 'Reactivate' }}
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                                     <div class="flex flex-col items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-4"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                                         </svg>
-                                        <p class="text-lg font-medium text-gray-600 mb-2">No employees found</p>
-                                        <p class="text-gray-500 mb-4">Get started by adding your first employee.</p>
-                                        <a href="{{ route('add.employee') }}"
-                                            class="text-indigo-600 hover:text-indigo-700 font-medium">Add New Employee</a>
+                                        <p class="text-lg font-medium text-gray-600 mb-2">No staff found</p>
+                                        <p class="text-gray-500">
+                                            @if ($searchQuery || $statusFilter || $roleFilter)
+                                                Try clearing your search or filters.
+                                            @else
+                                                Staff appear here once they register through the employee
+                                                registration page.
+                                            @endif
+                                        </p>
                                     </div>
                                 </td>
                             </tr>
@@ -191,10 +307,11 @@
             </div>
 
             {{-- Pagination --}}
-            @if($employees->hasPages())
+            @if ($employees->hasPages())
                 <div class="flex justify-between items-center mt-6 pt-6 border-t border-gray-200 px-6 py-4">
                     <div class="text-sm text-gray-600">
-                        Showing {{ $employees->firstItem() }} to {{ $employees->lastItem() }} of {{ $employees->total() }}
+                        Showing {{ $employees->firstItem() }} to {{ $employees->lastItem() }} of
+                        {{ $employees->total() }}
                         results
                     </div>
 
@@ -265,7 +382,7 @@
 
     <!-- Hidden form template for employee data -->
     <div id="employeeData" class="hidden">
-        @foreach($employees as $employee)
+        @foreach ($employees as $employee)
             <div class="employee-template" data-id="{{ $employee->id }}" data-first-name="{{ $employee->first_name }}"
                 data-last-name="{{ $employee->last_name }}" data-street="{{ $employee->street }}"
                 data-barangay="{{ $employee->barangay }}" data-city="{{ $employee->city }}"
@@ -276,31 +393,36 @@
     </div>
 
     <script>
-        // Simple client-side search & filter
-        const searchInput = document.getElementById('searchInput');
-        const roleFilter = document.getElementById('roleFilter');
+        // Activating or switching off a login is not undoable from the staff
+        // member's side, so confirm before submitting.
+        document.querySelectorAll('.js-account-action').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                if (form.dataset.confirmed === 'yes') return;
 
-        if (searchInput) searchInput.addEventListener('input', filterEmployees);
-        if (roleFilter) roleFilter.addEventListener('change', filterEmployees);
+                e.preventDefault();
 
-        function filterEmployees() {
-            const search = searchInput.value.toLowerCase();
-            const role = roleFilter.value;
-            const rows = document.querySelectorAll('#employeesTable tr');
+                const isDeactivate = form.dataset.action === 'deactivate';
+                const name = form.dataset.name;
 
-            rows.forEach(row => {
-                if (row.cells.length === 1) return; // skip empty row message
-
-                const name = row.cells[0].textContent.toLowerCase();
-                const address = row.cells[1].textContent.toLowerCase();
-                const rowRole = row.cells[3].textContent.trim();
-
-                const matchesSearch = name.includes(search) || address.includes(search);
-                const matchesRole = !role || rowRole === role;
-
-                row.style.display = (matchesSearch && matchesRole) ? '' : 'none';
+                Swal.fire({
+                    icon: isDeactivate ? 'warning' : 'question',
+                    title: isDeactivate ? 'Deactivate this account?' : 'Activate this account?',
+                    html: isDeactivate
+                        ? `<p><strong>${name}</strong> will be signed out and will not be able to log in again until you reactivate them.</p>`
+                        : `<p><strong>${name}</strong> will be able to log in to the system straight away.</p>`,
+                    showCancelButton: true,
+                    confirmButtonText: isDeactivate ? 'Yes, deactivate' : 'Yes, activate',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: isDeactivate ? '#dc2626' : '#16a34a',
+                    cancelButtonColor: '#6b7280',
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        form.dataset.confirmed = 'yes';
+                        form.submit();
+                    }
+                });
             });
-        }
+        });
 
         // Modal functions
         function openEditModal(employeeId) {
@@ -333,44 +455,53 @@
                                 <div class="grid md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="edit_first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                                        <input type="text" id="edit_first_name" name="first_name" value="${employeeData.first_name || ''}" 
+                                        <input type="text" id="edit_first_name" name="first_name" value="${employeeData.first_name || ''}"
                                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
                                     </div>
 
                                     <div>
                                         <label for="edit_last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                                        <input type="text" id="edit_last_name" name="last_name" value="${employeeData.last_name || ''}" 
+                                        <input type="text" id="edit_last_name" name="last_name" value="${employeeData.last_name || ''}"
                                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
                                     </div>
                                 </div>
 
                                 <div class="space-y-4">
-                                    <h4 class="text-sm font-semibold text-gray-800 border-b border-gray-200 pb-2">Address Information</h4>
+                                    <div class="flex items-baseline justify-between border-b border-gray-200 pb-2">
+                                        <h4 class="text-sm font-semibold text-gray-800">Address Information</h4>
+                                        <span class="text-xs text-gray-500">Optional</span>
+                                    </div>
                                     <div class="grid md:grid-cols-3 gap-4">
                                         <div>
-                                            <label for="edit_street" class="block text-sm font-medium text-gray-700 mb-1">Street *</label>
-                                            <input type="text" id="edit_street" name="street" value="${employeeData.street || ''}" 
-                                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                            <label for="edit_street" class="block text-sm font-medium text-gray-700 mb-1">Street</label>
+                                            <input type="text" id="edit_street" name="street" value="${employeeData.street || ''}"
+                                                placeholder="Not set"
+                                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                         </div>
 
                                         <div>
-                                            <label for="edit_barangay" class="block text-sm font-medium text-gray-700 mb-1">Barangay *</label>
-                                            <input type="text" id="edit_barangay" name="barangay" value="${employeeData.barangay || ''}" 
-                                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                            <label for="edit_barangay" class="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
+                                            <input type="text" id="edit_barangay" name="barangay" value="${employeeData.barangay || ''}"
+                                                placeholder="Not set"
+                                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                         </div>
 
                                         <div>
-                                            <label for="edit_city" class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                                            <input type="text" id="edit_city" name="city" value="${employeeData.city || ''}" 
-                                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                            <label for="edit_city" class="block text-sm font-medium text-gray-700 mb-1">City / Province</label>
+                                            <input type="text" id="edit_city" name="city" value="${employeeData.city || ''}"
+                                                placeholder="Not set"
+                                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                         </div>
                                     </div>
+                                    <p class="text-xs text-gray-500">
+                                        Leave any part blank if it is not known. The employee can fill it in themselves.
+                                    </p>
                                 </div>
 
                                 <div class="grid md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="edit_phone_number" class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-                                        <input type="tel" id="edit_phone_number" name="phone_number" value="${employeeData.phone_number || ''}" 
+                                        <input type="tel" id="edit_phone_number" name="phone_number" value="${employeeData.phone_number || ''}"
                                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
                                     </div>
 
@@ -378,14 +509,14 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
                                         <div class="flex gap-4">
                                             <label class="inline-flex items-center">
-                                                <input type="radio" name="gender" value="male" 
-                                                    ${employeeData.gender === 'male' ? 'checked' : ''} 
+                                                <input type="radio" name="gender" value="male"
+                                                    ${employeeData.gender === 'male' ? 'checked' : ''}
                                                     class="text-indigo-600 focus:ring-indigo-500">
                                                 <span class="ml-2 text-gray-700">Male</span>
                                             </label>
                                             <label class="inline-flex items-center">
-                                                <input type="radio" name="gender" value="female" 
-                                                    ${employeeData.gender === 'female' ? 'checked' : ''} 
+                                                <input type="radio" name="gender" value="female"
+                                                    ${employeeData.gender === 'female' ? 'checked' : ''}
                                                     class="text-indigo-600 focus:ring-indigo-500">
                                                 <span class="ml-2 text-gray-700">Female</span>
                                             </label>
@@ -394,9 +525,9 @@
                                 </div>
 
                                 <div>
-                                    <label for="edit_role" class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                                    <label for="edit_role" class="block text-sm font-medium text-gray-700 mb-1">Position *</label>
                                     <select id="edit_role" name="role" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                        <option value="">Select Role</option>
+                                        <option value="">Select Position</option>
                                         <option value="Staff" ${employeeData.role === 'Staff' ? 'selected' : ''}>Staff</option>
                                         <option value="Assistant" ${employeeData.role === 'Assistant' ? 'selected' : ''}>Assistant</option>
                                         <option value="Technical" ${employeeData.role === 'Technical' ? 'selected' : ''}>Technical</option>

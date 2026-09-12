@@ -96,8 +96,9 @@ class SalesReportController extends Controller
                 $totalSum = round($transaction->total_sum ?? 0, 2);
                 $discount = round($subtotal - $totalSum, 2);
 
-                // Construct customer name: show first name only if last name is not available
-                $customerName = '-';
+                // Construct customer name: show first name only if last name is
+                // not available. A sale with no customer is a walk-in.
+                $customerName = CustomerPurchaseOrder::WALK_IN_LABEL;
                 if (!empty($transaction->first_name)) {
                     $customerName = $transaction->first_name;
                     if (!empty($transaction->last_name)) {
@@ -200,18 +201,33 @@ class SalesReportController extends Controller
      */
     private function getTopCustomers($startDate, $endDate)
     {
-        $topCustomers = DB::table('dr_transactions')
+        // Walk-in sales carry no customer_id, so the join below leaves them out
+        // of this ranking on purpose - there is nobody to attribute them to.
+        //
+        // Collapse each DR transaction to one row per customer first. Joining
+        // dr_transactions straight to its purchase order lines repeated total_sum
+        // once per line, inflating both spend and transaction counts for any
+        // receipt holding more than one item.
+        $transactionsPerCustomer = DB::table('dr_transactions')
+            ->select(
+                'customer_purchase_orders.customer_id',
+                'dr_transactions.id as dr_id',
+                DB::raw('MAX(dr_transactions.total_sum) as total_sum')
+            )
+            ->join('customer_purchase_orders', 'dr_transactions.id', '=', 'customer_purchase_orders.dr_receipt_id')
+            ->where('dr_transactions.type', 'purchase')
+            ->whereBetween('dr_transactions.created_at', [$startDate, $endDate])
+            ->groupBy('customer_purchase_orders.customer_id', 'dr_transactions.id');
+
+        $topCustomers = DB::query()
+            ->fromSub($transactionsPerCustomer, 'per_transaction')
             ->select(
                 DB::raw('MAX(customers.first_name) as first_name'),
                 DB::raw('MAX(customers.last_name) as last_name'),
-                DB::raw('SUM(dr_transactions.total_sum) as total_spent'),
-                DB::raw('COUNT(dr_transactions.id) as transaction_count')
+                DB::raw('SUM(per_transaction.total_sum) as total_spent'),
+                DB::raw('COUNT(per_transaction.dr_id) as transaction_count')
             )
-            ->leftJoin('customer_purchase_orders', 'dr_transactions.id', '=', 'customer_purchase_orders.dr_receipt_id')
-            ->leftJoin('customers', 'customer_purchase_orders.customer_id', '=', 'customers.id')
-            ->where('dr_transactions.type', 'purchase')
-            ->whereBetween('dr_transactions.created_at', [$startDate, $endDate])
-            ->whereNotNull('customers.id')
+            ->join('customers', 'per_transaction.customer_id', '=', 'customers.id')
             ->groupBy('customers.id')
             ->orderBy('total_spent', 'desc')
             ->limit(10)

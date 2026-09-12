@@ -95,15 +95,15 @@ trait LogsAuditTrail
      */
     protected function logSaleAudit($module, $customer, $totalQuantity, $totalPrice, $request = null)
     {
-        // Get customer full name from relationship
-        $customerName = $customer->first_name . ' ' . $customer->last_name;
+        // $customer is null for a walk-in sale, where no name was given.
+        $customerName = \App\Models\CustomerPurchaseOrder::customerLabel($customer);
 
         // Create description: "Sold {quantity} items to {customer_name} (Total: {total_price})"
         $description = "Sold {$totalQuantity} items to {$customerName} (Total: {$totalPrice})";
 
         // Create changes data with sale details
         $changes = [
-            'customer_id' => $customer->id,
+            'customer_id' => $customer?->id,
             'customer_name' => $customerName,
             'quantity' => $totalQuantity,
             'total_price' => $totalPrice

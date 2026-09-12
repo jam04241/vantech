@@ -34,19 +34,34 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $request->session()->regenerate();
+        // Check the credentials before the account state so a wrong password never
+        // reveals whether that username exists or what state it is in.
+        $user = User::where('username', $credentials['username'])->first();
 
-            // Log login to audit logs
-            $this->logLogin($user, $request);
-
-            return redirect()->intended(route('dashboard'));
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return back()->withErrors([
+                'username' => 'The provided credentials do not match our records.',
+            ])->onlyInput('username');
         }
 
-        return back()->withErrors([
-            'username' => 'The provided credentials do not match our records.',
-        ])->onlyInput('username');
+        // Self-registered accounts stay pending until the owner approves them,
+        // and the owner can switch an account off at any time.
+        if (!$user->isActive()) {
+            return back()->withErrors([
+                'username' => $user->loginBlockedReason(),
+            ])->onlyInput('username');
+        }
+
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
+
+        // Used by logLogout() to report session length.
+        $request->session()->put('login_time', now());
+
+        // Log login to audit logs
+        $this->logLogin($user, $request);
+
+        return redirect()->intended(route('dashboard'));
     }
 
     /**

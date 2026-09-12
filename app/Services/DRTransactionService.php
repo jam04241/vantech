@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DRTransaction;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 class DRTransactionService
@@ -15,27 +16,33 @@ class DRTransactionService
     {
         $year = date('Y');
 
-        // Get the last DR number for current year
-        $lastDR = DRTransaction::where('receipt_no', 'LIKE', "$year-%")
-            ->orderBy('receipt_no', 'desc')
-            ->first();
+        return $this->formatDRNumber($year, $this->nextDRNumber($year));
+    }
 
-        if ($lastDR) {
-            // Extract the increment part (everything after the dash)
-            $parts = explode('-', $lastDR->receipt_no);
-            $lastNumber = (int) $parts[1];
-            $newNumber = $lastNumber + 1;
-        } else {
-            // First DR for this year
-            $newNumber = 1;
-        }
+    /**
+     * Next increment for the given year.
+     *
+     * Takes the highest increment numerically rather than by string order. Sorting
+     * receipt_no as text ranked "2025-99999" above "2025-100000", so the counter
+     * would restart at 100000 and collide with the unique index once the shop
+     * passed its 99,999th receipt in a year.
+     */
+    private function nextDRNumber(string $year): int
+    {
+        $lastNumber = (int) DRTransaction::where('receipt_no', 'LIKE', "$year-%")
+            ->max(DB::raw('CAST(SUBSTRING(receipt_no, ' . (strlen($year) + 2) . ') AS UNSIGNED)'));
 
-        // Format with minimum 5 digits, but grows dynamically beyond 99999
-        // 1-99999: zero-padded to 5 digits (00001-99999)
-        // 100000+: natural length (100000, 100001, etc.)
-        $paddedNumber = str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+        return $lastNumber + 1;
+    }
 
-        return sprintf('%s-%s', $year, $paddedNumber);
+    /**
+     * Format with minimum 5 digits, but grows dynamically beyond 99999.
+     * 1-99999: zero-padded to 5 digits (00001-99999)
+     * 100000+: natural length (100000, 100001, etc.)
+     */
+    private function formatDRNumber(string $year, int $number): string
+    {
+        return sprintf('%s-%s', $year, str_pad((string) $number, 5, '0', STR_PAD_LEFT));
     }
 
     /**
@@ -43,12 +50,36 @@ class DRTransactionService
      */
     public function createDRTransaction(string $type, float $totalSum): DRTransaction
     {
-        $receiptNo = $this->generateDRNumber();
+        // receipt_no is uniquely indexed, so two terminals checking out at the same
+        // instant can generate the same number and one insert will fail. Step the
+        // counter forward and retry instead of failing the sale.
+        //
+        // The counter is advanced locally rather than re-read: this runs inside the
+        // caller's open transaction, whose snapshot will not show the competing row
+        // that was just committed, so re-reading would return the same number again.
+        $year = date('Y');
+        $number = $this->nextDRNumber($year);
 
-        return DRTransaction::create([
-            'receipt_no' => $receiptNo,
-            'type' => $type,
-            'total_sum' => $totalSum
-        ]);
+        for ($attempt = 1; ; $attempt++, $number++) {
+            try {
+                return DRTransaction::create([
+                    'receipt_no' => $this->formatDRNumber($year, $number),
+                    'type' => $type,
+                    'total_sum' => $totalSum
+                ]);
+            } catch (QueryException $e) {
+                if ($attempt >= 10 || !$this->isDuplicateReceiptNo($e)) {
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    /**
+     * Whether a query failure was caused by the receipt_no unique index.
+     */
+    private function isDuplicateReceiptNo(QueryException $e): bool
+    {
+        return $e->getCode() === '23000' && str_contains($e->getMessage(), 'receipt_no');
     }
 }

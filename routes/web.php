@@ -21,6 +21,8 @@ use App\Http\Controllers\ServiceTypeController;
 use App\Http\Controllers\StockOutController;
 use App\Http\Controllers\AuditlogController;
 use App\Http\Controllers\InventoryReportController;
+use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\StaffAccountController;
 
 use Illuminate\Support\Facades\DB;
 
@@ -37,12 +39,19 @@ use Illuminate\Support\Facades\DB;
 // ============= AUTHENTICATION ROUTES (PUBLIC) =============
 Route::get('/LOGIN_FORM', [AuthController::class, 'create'])->name('login');
 Route::post('/LOGIN_FORM', [AuthController::class, 'store'])->name('login.store');
+
+// Employee self-registration. Creates a staff record plus a login account that
+// stays pending until the owner activates it, so this is safe to leave public.
+Route::get('/register', [RegistrationController::class, 'create'])->name('register');
+Route::post('/register', [RegistrationController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('register.store');
 Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 Route::post('/verify-admin-password', [AuthController::class, 'verifyAdminPassword'])->name('verify.admin.password');
 
 
 // ============= PROTECTED ROUTES (AUTHENTICATED USERS ONLY) =============
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'account.active'])->group(function () {
     // Root redirect
     Route::get('/', function () {
         return redirect()->route('dashboard');
@@ -167,15 +176,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/purchase/statistics', [PurchaseDetailsController::class, 'statistics'])->name('purchase.statistics');
     Route::put('/purchase/{id}/cancel', [PurchaseDetailsController::class, 'cancel'])->name('purchase.cancel');
 
-    // Employee Routes
+    // ============= STAFF RECORDS (OWNER ONLY) =============
+    // Staff are not created here any more: they register themselves and the
+    // owner activates them. Only viewing, editing and activation remain.
+    Route::middleware(['admin.only'])->group(function () {
+        Route::get('/staff/Records', [EmployeeController::class, 'show'])->name('staff.record');
+        Route::get('/employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
+        Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
 
-    Route::get('/staff/AddEmployee', function () {
-        return view('Employee.addEmployee');
-    })->name('add.employee');
-    Route::get('/staff/Records', [EmployeeController::class, 'show'])->name('staff.record');
-    Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
-    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
-    Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+        // Account activation / deactivation
+        Route::put('/staff/{employee}/activate', [StaffAccountController::class, 'activate'])->name('staff.activate');
+        Route::put('/staff/{employee}/deactivate', [StaffAccountController::class, 'deactivate'])->name('staff.deactivate');
+    });
 
     // ROUTE FOR DATABASE
     // Brand routes
@@ -191,7 +203,8 @@ Route::middleware(['auth'])->group(function () {
     // Product routes
 
     Route::get('/product/add', [ProductController::class, 'create'])->name('product.add');
-    Route::get('/products', [ProductController::class, 'index'])->name('products');
+    // ProductController has no index(); the inventory listing is show().
+    Route::get('/products', [ProductController::class, 'show'])->name('products');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::put('/products/{product}/price', [ProductStocksController::class, 'updatePrice'])->name('products.update_price');
@@ -271,10 +284,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/customers', [CustomerController::class, 'store'])->name('customer.store');
     Route::get('/CustomerRecords', [CustomerController::class, 'index'])->name('customer.records');
-    Route::get('/customers/{id}', [CustomerController::class, 'show'])->name('customers.show');
-    Route::put('/customers/{id}', [CustomerController::class, 'update'])->name('customers.update');
+    // Literal segments must be registered before the {id} wildcard, otherwise
+    // /customers/search resolves to show('search') and the search never runs.
     Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
     Route::get('/customers/{customerId}/purchase-transactions', [CustomerController::class, 'getPurchaseTransactions'])->name('customers.purchase-transactions');
+    Route::get('/customers/{id}', [CustomerController::class, 'show'])->whereNumber('id')->name('customers.show');
+    Route::put('/customers/{id}', [CustomerController::class, 'update'])->whereNumber('id')->name('customers.update');
 
 
 

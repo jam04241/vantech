@@ -230,8 +230,22 @@
                             @endif
                         </form>
 
+                        <!-- Registration Link -->
+                        <div class="mt-6 pt-6 border-t border-gray-600/50 text-center">
+                            <p class="text-sm text-gray-300 drop-shadow font-sans">
+                                New employee?
+                                <a href="{{ route('register') }}"
+                                    class="text-blue-300 hover:text-blue-200 font-semibold underline transition duration-200">
+                                    Register here
+                                </a>
+                            </p>
+                            <p class="mt-1 text-xs text-gray-400 drop-shadow font-sans">
+                                New accounts must be activated by the owner before first login.
+                            </p>
+                        </div>
+
                         <!-- Footer Note -->
-                        <div class="mt-8 text-center">
+                        <div class="mt-6 text-center">
                             <p class="text-sm text-gray-400 drop-shadow font-sans">
                                 Secure employee access portal • Vantech Computers
                             </p>

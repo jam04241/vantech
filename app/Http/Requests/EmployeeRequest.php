@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class EmployeeRequest extends FormRequest
 {
@@ -11,16 +13,23 @@ class EmployeeRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Rules for the owner's edit form.
+     *
+     * Address is supplied by the applicant at registration and is nullable, so
+     * the owner is not forced to retype it to save an unrelated change.
+     * Position stays required: assigning it is the owner's job.
+     */
     public function rules()
     {
         return [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'street' => 'required|string|max:255',
-            'barangay' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
+            'street' => 'nullable|string|max:255',
+            'barangay' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
             'phone_number' => 'required|string|max:20',
-            'role' => 'required|in:Staff,Assistant,Technical,Cashier',
+            'role' => ['required', Rule::in(Employee::ROLES)],
             'gender' => 'required|in:male,female',
         ];
     }
@@ -30,12 +39,10 @@ class EmployeeRequest extends FormRequest
         return [
            'first_name.required' => 'First name is required',
             'last_name.required' => 'Last name is required',
-            'street.required' => 'Street address is required',
-            'barangay.required' => 'Barangay is required',
-            'city.required' => 'City is required',
             'phone_number.required' => 'Phone number is required',
             'gender.required' => 'Gender is required',
-            'role.required' => 'Role is required',
+            'role.required' => 'Please assign a position to this employee.',
+            'role.in' => 'The selected position is invalid.',
         ];
     }
 }
