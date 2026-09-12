@@ -2,6 +2,327 @@
 Laravel Docker Setup Commands
 ======================================
 
+======================================================================
+🆕 FIRST-TIME SETUP — fresh clone from GitHub into WSL + Docker
+======================================================================
+
+Follow this once, top to bottom, on a machine that has never run this
+project. Daily commands are further down the file.
+
+Repository: https://github.com/jam04241/vantech.git
+
+
+## ⚠️ Why the code must live INSIDE WSL (not on C: or J:)
+
+WSL can reach your Windows drives at /mnt/c, /mnt/j and so on, but those
+paths cross a translation layer (9p). Every file read pays a penalty, and
+Laravel + Composer + Vite read thousands of small files.
+
+    ~/projects/vantech      (Linux filesystem)  -> fast
+    /mnt/j/Vantech/...      (Windows filesystem) -> often 10-20x slower
+
+Symptoms of getting this wrong: `composer install` crawling, pages taking
+seconds to load, `npm run dev` rebuilding slowly, file-change watchers
+missing edits.
+
+So: clone into your Linux home directory. You can still open and edit the
+files from Windows — see "Editing from Windows" near the end.
+
+
+## 0. Prerequisites (Windows side, once)
+
+Open PowerShell as Administrator:
+
+```powershell
+# Install WSL2 + Ubuntu (reboot if prompted)
+wsl --install -d Ubuntu
+
+# Confirm the distro is running WSL version 2
+wsl -l -v
+```
+
+Then install Docker Desktop and turn on WSL integration:
+
+    Docker Desktop -> Settings -> Resources -> WSL Integration
+      [x] Enable integration with my default WSL distro
+      [x] Ubuntu
+
+Apply & Restart. From now on, work in the Ubuntu terminal, not PowerShell.
+
+Verify inside Ubuntu:
+
+```bash
+docker --version           # should print a version
+docker compose version     # should print a version
+docker run --rm hello-world
+```
+
+If docker is "command not found" here, WSL integration is not enabled.
+
+
+## 1. Choose a folder on the Linux side
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+pwd        # expect /home/<you>/projects  -- NOT /mnt/anything
+```
+
+
+## 2. Clone the repository
+
+```bash
+git clone https://github.com/jam04241/vantech.git
+cd vantech
+```
+
+Keep line endings sane on this side (the repo uses `* text=auto`):
+
+```bash
+git config --global core.autocrlf input
+```
+
+
+## 3. Create your .env
+
+`.env` is gitignored, so a fresh clone has none. `.env.docker` is the
+Docker-ready template — it already points at the `mysql` and `redis`
+service names and sets APP_PORT=8000.
+
+```bash
+cp .env.docker .env
+```
+
+
+## 4. Install PHP dependencies FIRST  ← the step people miss
+
+`compose.yaml` builds the app image from:
+
+    ./vendor/laravel/sail/runtimes/8.2/Dockerfile
+
+`/vendor` is gitignored, so on a fresh clone that file does not exist yet
+and `docker compose up` fails with "no such file or directory". Composer
+has to run before the first build.
+
+Use a throwaway Composer container (nothing is installed on your machine):
+
+```bash
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php82-composer:latest \
+    composer install --ignore-platform-reqs
+```
+
+WARNING: do NOT add `--no-dev` here. `laravel/sail` is a require-dev
+package, and compose.yaml depends on two files that only exist when dev
+packages are installed:
+
+    vendor/laravel/sail/runtimes/8.2/Dockerfile                    (app build context)
+    vendor/laravel/sail/database/mysql/create-testing-database.sh  (mysql init mount)
+
+Installing with --no-dev leaves both missing and `docker compose up` fails.
+
+Confirm both exist before moving on:
+
+```bash
+ls vendor/laravel/sail/runtimes/8.2/Dockerfile
+ls vendor/laravel/sail/database/mysql/create-testing-database.sh
+```
+
+
+## 5. Match the container user to your WSL user
+
+Stops the container from writing root-owned files into your project.
+
+```bash
+id -u    # usually 1000
+id -g    # usually 1000
+```
+
+If either is not 1000, edit `.env` and set:
+
+```env
+WWWUSER=<your id -u>
+WWWGROUP=<your id -g>
+```
+
+
+## 6. Build and start the containers
+
+```bash
+docker compose up -d --build
+```
+
+First build pulls PHP 8.2, MySQL 8.0 and Redis — expect several minutes.
+Later starts take seconds.
+
+```bash
+docker compose ps      # laravel.test, mysql, redis should all be Up
+```
+
+
+## 7. Application key
+
+`.env.docker` ships with a working APP_KEY, so this is optional. Generate
+your own if you prefer:
+
+```bash
+docker compose exec laravel.test php artisan key:generate
+```
+
+
+## 8. Wait for MySQL, then create the schema
+
+MySQL takes a few seconds to accept connections on a cold start. Migrating
+too early gives "Connection refused".
+
+```bash
+# Wait until this prints "mysqld is alive"
+docker compose exec mysql mysqladmin ping -ppassword
+
+# Create tables and seed the admin accounts
+docker compose exec laravel.test php artisan migrate --seed
+```
+
+`migrate --seed` creates the owner logins you sign in with:
+
+    username: admin        password: @Supersecret123
+    username: vantech123   password: password123
+
+Both are created active. Staff accounts are NOT seeded — employees
+register themselves at /register and an owner activates them.
+
+
+## 9. Front-end assets
+
+Node runs on the WSL side, not in the container.
+
+```bash
+# Install Node if you do not have it
+sudo apt update && sudo apt install -y nodejs npm
+
+npm install
+npm run build        # one-off production build
+```
+
+For active development use the Vite dev server instead of `build`:
+
+```bash
+npm run dev          # serves on http://localhost:5173, leave running
+```
+
+
+## 10. Open the app
+
+    http://localhost:8000
+
+Log in with one of the seeded accounts from step 8.
+
+
+## ✅ Setup verification
+
+```bash
+docker compose ps                                             # 3 services Up
+docker compose exec laravel.test php artisan --version        # Laravel version
+docker compose exec laravel.test php artisan migrate:status   # all "Ran"
+docker compose exec mysql mysqladmin ping -ppassword          # mysqld is alive
+curl -I http://localhost:8000                                 # HTTP 200 or 302
+```
+
+
+## 🖥️ Editing from Windows
+
+The code lives in WSL but Windows can still reach it.
+
+```bash
+# From the project folder in WSL, open it in Windows Explorer
+explorer.exe .
+
+# Or open VS Code attached to WSL (installs the remote server once)
+code .
+```
+
+Explorer path:
+
+    \\wsl$\Ubuntu\home\<your-user>\projects\vantech
+
+IMPORTANT: open the project through `code .` from inside WSL, or via the
+`\\wsl$\...` path. Do NOT copy it to J:\ and edit there — you lose the
+speed you just gained, and you end up with two diverging copies.
+
+
+## 🔁 Daily use after setup
+
+```bash
+cd ~/projects/vantech
+docker compose up -d      # start
+docker compose down       # stop (database survives)
+```
+
+Your database lives in the named volume `sail-mysql`. `docker compose down`
+keeps it. `docker compose down -v` DELETES it — you would have to re-run
+`migrate --seed` afterwards.
+
+
+## 🆘 First-run problems
+
+**"no such file or directory: ./vendor/laravel/sail/runtimes/8.2"**
+Either step 4 was skipped, or Composer ran with `--no-dev`. `laravel/sail`
+is a dev dependency and compose.yaml builds from files inside it. Re-run the
+Composer container from step 4 WITHOUT `--no-dev`, then `up -d --build`.
+Same cause if MySQL complains about a missing `create-testing-database.sh`
+mount.
+
+**`docker: command not found` inside Ubuntu**
+Docker Desktop WSL integration is off. See step 0.
+
+**Port 8000 already in use**
+```bash
+# Find the offender inside WSL
+sudo ss -lptn 'sport = :8000'
+```
+Or move the app: edit `.env`, change `APP_PORT=8000` to `APP_PORT=8001`, then
+```bash
+docker compose down && docker compose up -d
+```
+Port 3307 (MySQL) and 6379 (Redis) can clash with a Windows-side MySQL or
+Redis; change FORWARD_DB_PORT / FORWARD_REDIS_PORT in .env the same way.
+
+**SQLSTATE[HY000] [2002] Connection refused**
+MySQL is still booting. Wait for `mysqladmin ping` to answer, then retry.
+Also confirm `.env` has `DB_HOST=mysql` (the service name), not 127.0.0.1.
+
+**Permission denied writing to storage/ or bootstrap/cache**
+The entrypoint normally fixes this on boot. To force it:
+```bash
+docker compose exec laravel.test chmod -R 775 storage bootstrap/cache
+docker compose exec laravel.test chown -R www-data:www-data storage bootstrap/cache
+```
+If it keeps coming back, your WWWUSER/WWWGROUP do not match `id -u`/`id -g`
+(step 5). Fix .env, then `docker compose up -d --build`.
+
+**Everything is slow**
+Check where you are: `pwd`. If it starts with `/mnt/`, you cloned onto a
+Windows drive. Re-clone under `~/projects` and start again from step 2.
+
+**Blank page / missing CSS**
+Assets were never built. Run `npm install && npm run build` (step 9).
+
+**Locked out — no account can log in**
+Re-run the user seeder; it is safe to run repeatedly and restores the
+admin logins to active:
+```bash
+docker compose exec laravel.test php artisan db:seed --class=UserSeeder
+```
+
+
+
+======================================================================
+📖 COMMAND REFERENCE (after setup is done)
+======================================================================
+
 # Docker Commands Reference for Laravel
 
 ## 🚀 Starting & Stopping
