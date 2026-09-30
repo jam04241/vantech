@@ -8,6 +8,7 @@ use App\Models\DRTransaction;
 use App\Models\Product;
 use App\Models\Purchase_Details;
 use App\Models\CustomerPurchaseOrder;
+use App\Models\WarrantyClaim;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -68,6 +69,8 @@ class SalesReportController extends Controller
      */
     private function getRecentTransactions($startDate, $endDate)
     {
+        $sold = CustomerPurchaseOrder::STATUS_SUCCESS;
+
         $transactions = DB::table('dr_transactions')
             ->select(
                 'dr_transactions.id',
@@ -76,11 +79,15 @@ class SalesReportController extends Controller
                 'dr_transactions.total_sum',
                 'dr_transactions.created_at',
                 'dr_transactions.receipt_no',
-                DB::raw('SUM(customer_purchase_orders.total_price) as subtotal'),
-                DB::raw('SUM(customer_purchase_orders.quantity) as total_qty')
+                // Items returned under warranty no longer count on the receipt.
+                DB::raw("SUM(CASE WHEN customer_purchase_orders.status = '{$sold}' THEN customer_purchase_orders.total_price ELSE 0 END) as subtotal"),
+                DB::raw("SUM(CASE WHEN customer_purchase_orders.status = '{$sold}' THEN customer_purchase_orders.quantity ELSE 0 END) as total_qty"),
+                DB::raw('MAX(COALESCE(claims.removed_amount, 0)) as warranty_amount'),
+                DB::raw('MAX(COALESCE(claims.claimed_items, 0)) as warranty_items')
             )
             ->leftJoin('customer_purchase_orders', 'dr_transactions.id', '=', 'customer_purchase_orders.dr_receipt_id')
             ->leftJoin('customers', 'customer_purchase_orders.customer_id', '=', 'customers.id')
+            ->leftJoinSub(WarrantyClaim::removedPerReceipt(), 'claims', 'claims.dr_receipt_id', '=', 'dr_transactions.id')
             ->where('type', 'purchase')
             ->whereBetween('dr_transactions.created_at', [$startDate, $endDate])
             ->groupBy(
@@ -93,7 +100,7 @@ class SalesReportController extends Controller
             ->get()
             ->map(function ($transaction) {
                 $subtotal = round($transaction->subtotal ?? 0, 2);
-                $totalSum = round($transaction->total_sum ?? 0, 2);
+                $totalSum = round(($transaction->total_sum ?? 0) - $transaction->warranty_amount, 2);
                 $discount = round($subtotal - $totalSum, 2);
 
                 // Construct customer name: show first name only if last name is
@@ -114,7 +121,9 @@ class SalesReportController extends Controller
                     'amount' => $totalSum,
                     'qty' => $transaction->total_qty ?? 0,
                     'date' => Carbon::parse($transaction->created_at)->format('m/d/Y h:i A'),
-                    'receipt_no' => $transaction->receipt_no ?? '-'
+                    'receipt_no' => $transaction->receipt_no ?? '-',
+                    'warranty_items' => (int) $transaction->warranty_items,
+                    'warranty_amount' => round($transaction->warranty_amount, 2),
                 ];
             });
 
@@ -126,14 +135,23 @@ class SalesReportController extends Controller
      */
     private function getSalesSummary($startDate, $endDate)
     {
+        // Receipt totals, less items that came back broken under warranty
         $revenue = DB::table('dr_transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('type', 'purchase')
-            ->sum('total_sum');
+            ->sum('total_sum')
+            - WarrantyClaim::salesRemovedBetween($startDate, $endDate);
 
+        // A receipt whose every item came back under warranty is no longer an order.
         $totalOrders = DB::table('dr_transactions')
             ->where('type', 'purchase')
             ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereExists(function ($lines) {
+                $lines->select(DB::raw(1))
+                    ->from('customer_purchase_orders')
+                    ->whereColumn('customer_purchase_orders.dr_receipt_id', 'dr_transactions.id')
+                    ->where('customer_purchase_orders.status', CustomerPurchaseOrder::STATUS_SUCCESS);
+            })
             ->count();
 
         $avgOrderValue = $totalOrders > 0 ? $revenue / $totalOrders : 0;
@@ -156,11 +174,12 @@ class SalesReportController extends Controller
             ->where('status', 'Success')
             ->sum('total_price');
 
-        // Get total sum from dr transactions
+        // Get total sum from dr transactions, less items returned under warranty
         $totalSum = DB::table('dr_transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('type', 'purchase')
-            ->sum('total_sum');
+            ->sum('total_sum')
+            - WarrantyClaim::salesRemovedBetween($startDate, $endDate);
 
         // Calculate discount
         $discount = $totalPrice - $totalSum;
@@ -208,13 +227,18 @@ class SalesReportController extends Controller
         // dr_transactions straight to its purchase order lines repeated total_sum
         // once per line, inflating both spend and transaction counts for any
         // receipt holding more than one item.
+        //
+        // Items returned under warranty are left out: their lines are skipped
+        // and what was paid for them comes off the receipt total.
         $transactionsPerCustomer = DB::table('dr_transactions')
             ->select(
                 'customer_purchase_orders.customer_id',
                 'dr_transactions.id as dr_id',
-                DB::raw('MAX(dr_transactions.total_sum) as total_sum')
+                DB::raw('MAX(dr_transactions.total_sum) - MAX(COALESCE(claims.removed_amount, 0)) as total_sum')
             )
             ->join('customer_purchase_orders', 'dr_transactions.id', '=', 'customer_purchase_orders.dr_receipt_id')
+            ->leftJoinSub(WarrantyClaim::removedPerReceipt(), 'claims', 'claims.dr_receipt_id', '=', 'dr_transactions.id')
+            ->where('customer_purchase_orders.status', CustomerPurchaseOrder::STATUS_SUCCESS)
             ->where('dr_transactions.type', 'purchase')
             ->whereBetween('dr_transactions.created_at', [$startDate, $endDate])
             ->groupBy('customer_purchase_orders.customer_id', 'dr_transactions.id');

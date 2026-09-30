@@ -55,8 +55,10 @@ class InventoryReportController extends Controller
             // Get all product IDs for this product name and condition
             $productIds = $group->pluck('id');
 
-            // Count sold from customer_purchase_orders grouped by product_name
-            $soldQuery = CustomerPurchaseOrder::whereIn('product_id', $productIds);
+            // Count sold from customer_purchase_orders grouped by product_name.
+            // Items returned broken under warranty no longer count as sold.
+            $soldQuery = CustomerPurchaseOrder::whereIn('product_id', $productIds)
+                ->where('status', CustomerPurchaseOrder::STATUS_SUCCESS);
 
             if ($startDate && $endDate) {
                 $soldQuery->whereBetween('order_date', [$startDate, $endDate]);

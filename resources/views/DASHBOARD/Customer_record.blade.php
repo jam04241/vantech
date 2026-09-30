@@ -794,6 +794,7 @@
                 </td>
                 <td class="px-4 py-3 text-left w-1/5">
                     ${product.warranty || 'No Warranty'}
+                    ${product.warranty_claim_date ? `<div class="mt-1"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Warranty claim &middot; ${product.warranty_claim_date}</span></div>` : ''}
                 </td>
                 <td class="px-4 py-3 text-left whitespace-nowrap w-1/5">
                     ₱ ${parseFloat(product.unit_price).toFixed(2)}

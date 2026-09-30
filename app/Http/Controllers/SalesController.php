@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Product_Stocks;
 use App\Models\Purchase_Details;
 use App\Models\CustomerPurchaseOrder;
+use App\Models\WarrantyClaim;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -49,6 +50,7 @@ class SalesController extends Controller
                 'sales_trend' => $this->getSalesTrend($startDate, $endDate),
                 'top_products' => $this->getTopProducts($startDate, $endDate),
                 'recent_transactions' => $this->getRecentTransactions($startDate, $endDate),
+                'warranty' => $this->getWarrantyDeductions($startDate, $endDate),
                 'date_range' => [
                     'start' => $startDate->format('Y-m-d'),
                     'end' => $endDate->format('Y-m-d')
@@ -77,6 +79,9 @@ class SalesController extends Controller
         $totalGoodCost = Purchase_Details::whereBetween('order_date', [$startDate, $endDate])
             ->where('status', 'Received')
             ->sum('total_price');
+
+        // Items returned broken under warranty take their good cost with them.
+        $totalGoodCost -= WarrantyClaim::goodCostRemovedBetween($startDate, $endDate);
 
         return round($totalGoodCost ?? 0, 2);
     }
@@ -119,16 +124,15 @@ class SalesController extends Controller
      */
     private function getProfit($startDate, $endDate)
     {
-        // Get total sum from dr transactions
+        // Get total sum from dr transactions, less items returned under warranty
         $totalRevenue = DB::table('dr_transactions')
             ->whereBetween('created_at', [$startDate, $endDate],)
             ->where('type', 'purchase')
-            ->sum('total_sum');
+            ->sum('total_sum')
+            - WarrantyClaim::salesRemovedBetween($startDate, $endDate);
 
-        // Get total good cost from purchase details (only Received)
-        $totalGoodCost = Purchase_Details::whereBetween('order_date', [$startDate, $endDate])
-            ->where('status', 'Received')
-            ->sum('total_price');
+        // Get total good cost (Received purchase details, less warranty returns)
+        $totalGoodCost = $this->getTotalSales($startDate, $endDate);
 
         // Calculate profit
         $profit = $totalRevenue - $totalGoodCost;
@@ -217,11 +221,12 @@ class SalesController extends Controller
             ->where('status', 'Success')
             ->sum('total_price');
 
-        // Get total sum from dr transactions
+        // Get total sum from dr transactions, less items returned under warranty
         $totalSum = DB::table('dr_transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('type', 'purchase')
-            ->sum('total_sum');
+            ->sum('total_sum')
+            - WarrantyClaim::salesRemovedBetween($startDate, $endDate);
 
         // Calculate discount
         $discount = $totalPrice - $totalSum;
@@ -230,10 +235,28 @@ class SalesController extends Controller
     }
 
     /**
+     * What warranty claims took out of this period's Total Sales and Total Good Cost.
+     */
+    private function getWarrantyDeductions($startDate, $endDate)
+    {
+        // Same basis as the Total Sales card: line prices on the sale date.
+        $claimedLines = CustomerPurchaseOrder::whereBetween('order_date', [$startDate, $endDate])
+            ->where('status', CustomerPurchaseOrder::STATUS_WARRANTY_CLAIM);
+
+        return [
+            'items' => (clone $claimedLines)->count(),
+            'sales_removed' => round((clone $claimedLines)->sum('total_price'), 2),
+            'good_cost_removed' => WarrantyClaim::goodCostRemovedBetween($startDate, $endDate),
+        ];
+    }
+
+    /**
      * Get recent transactions from dr_transactions table
      */
     private function getRecentTransactions($startDate, $endDate)
     {
+        $sold = CustomerPurchaseOrder::STATUS_SUCCESS;
+
         $transactions = DB::table('dr_transactions')
             ->select(
                 'dr_transactions.id',
@@ -242,11 +265,15 @@ class SalesController extends Controller
                 'dr_transactions.total_sum',
                 'dr_transactions.created_at',
                 'dr_transactions.receipt_no',
-                DB::raw('SUM(customer_purchase_orders.total_price) as subtotal'),
-                DB::raw('SUM(customer_purchase_orders.quantity) as total_qty')
+                // Items returned under warranty no longer count on the receipt.
+                DB::raw("SUM(CASE WHEN customer_purchase_orders.status = '{$sold}' THEN customer_purchase_orders.total_price ELSE 0 END) as subtotal"),
+                DB::raw("SUM(CASE WHEN customer_purchase_orders.status = '{$sold}' THEN customer_purchase_orders.quantity ELSE 0 END) as total_qty"),
+                DB::raw('MAX(COALESCE(claims.removed_amount, 0)) as warranty_amount'),
+                DB::raw('MAX(COALESCE(claims.claimed_items, 0)) as warranty_items')
             )
             ->leftJoin('customer_purchase_orders', 'dr_transactions.id', '=', 'customer_purchase_orders.dr_receipt_id')
             ->leftJoin('customers', 'customer_purchase_orders.customer_id', '=', 'customers.id')
+            ->leftJoinSub(WarrantyClaim::removedPerReceipt(), 'claims', 'claims.dr_receipt_id', '=', 'dr_transactions.id')
             ->where('type', 'purchase')
             ->whereBetween('dr_transactions.created_at', [$startDate, $endDate])
             ->groupBy(
@@ -260,7 +287,7 @@ class SalesController extends Controller
             ->get()
             ->map(function ($transaction) {
                 $subtotal = round($transaction->subtotal ?? 0, 2);
-                $totalSum = round($transaction->total_sum ?? 0, 2);
+                $totalSum = round(($transaction->total_sum ?? 0) - $transaction->warranty_amount, 2);
                 $discount = round($subtotal - $totalSum, 2);
 
                 // Construct customer name: show first name only if last name is
@@ -281,13 +308,15 @@ class SalesController extends Controller
                     'amount' => $totalSum,
                     'qty' => $transaction->total_qty ?? 0,
                     'date' => Carbon::parse($transaction->created_at)->format('m/d/Y h:i A'),
-                    'receipt_no' => $transaction->receipt_no ?? '-'
+                    'receipt_no' => $transaction->receipt_no ?? '-',
+                    'warranty_items' => (int) $transaction->warranty_items,
+                    'warranty_amount' => round($transaction->warranty_amount, 2),
                 ];
             });
 
         return $transactions;
     }
-    /**     
+    /**
      * Get sales summary by date range (quick endpoint)
      */
     public function getSalesSummary(Request $request)

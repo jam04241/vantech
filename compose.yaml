@@ -1,17 +1,19 @@
+# The app and the Vite dev server run the same Sail image (PHP 8.2 + Node).
+x-sail-build: &sail-build
+  context: ./vendor/laravel/sail/runtimes/8.2
+  dockerfile: Dockerfile
+  args:
+    WWWGROUP: "${WWWGROUP:-1000}"
+    WWWUSER: "${WWWUSER:-1000}"
+
 services:
   laravel.test:
-    build:
-      context: ./vendor/laravel/sail/runtimes/8.2
-      dockerfile: Dockerfile
-      args:
-        WWWGROUP: "${WWWGROUP:-1000}"
-        WWWUSER: "${WWWUSER:-1000}"
+    build: *sail-build
     image: "sail-8.2/app"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
       - "${APP_PORT:-80}:80"
-      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
     environment:
       WWWUSER: "${WWWUSER:-1000}"
       WWWGROUP: "${WWWGROUP:-1000}"
@@ -30,6 +32,28 @@ services:
       - mysql
       - redis
     entrypoint: ["/bin/bash", "/usr/local/bin/fix-permissions.sh"]
+
+  # Vite dev server (npm run dev): builds Tailwind CSS and reloads the browser
+  # when a view, CSS or JS file changes. Starts with every `docker compose up`.
+  vite:
+    build: *sail-build
+    image: "sail-8.2/app"
+    init: true
+    command: ["bash", "docker/vite/dev-server.sh"]
+    ports:
+      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+    environment:
+      WWWUSER: "${WWWUSER:-1000}"
+      WWWGROUP: "${WWWGROUP:-1000}"
+      LARAVEL_SAIL: 1
+      # A Windows drive (J:\...) sends no file-change events into Docker, so
+      # Vite polls for edits. On WSL set CHOKIDAR_USEPOLLING=false in .env.
+      CHOKIDAR_USEPOLLING: "${CHOKIDAR_USEPOLLING:-true}"
+      CHOKIDAR_INTERVAL: "${CHOKIDAR_INTERVAL:-1000}"
+    volumes:
+      - ".:/var/www/html"
+    networks:
+      - sail
 
   mysql:
     image: "mysql:8.0"

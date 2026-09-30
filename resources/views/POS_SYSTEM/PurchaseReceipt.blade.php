@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $receiptData['customerName'] ?? 'N/A' }} Warranty Receipt</title>
+    <title>{{ $receiptData['customerName'] ?? 'N/A' }} Warranty Invoice</title>
     {{-- Tailwind & Vite --}}
     @vite('resources/css/app.css')
     @vite('resources/js/app.js')
@@ -107,7 +107,7 @@
                 </div>
                 <div class="w-2/5 flex flex-col items-end justify-end">
                     <img src="{{ asset('images/logo.png') }}" class="w-28 h-auto mb-2" />
-                    <h3 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">WARRANTY RECEIPT</h3>
+                    <h3 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">WARRANTY INVOICE</h3>
                     
                     @php
                         use Picqer\Barcode\BarcodeGeneratorPNG;
@@ -121,7 +121,7 @@
                         <img src="data:image/png;base64,{{ $barcode }}" alt="Barcode" class="h-11 w-auto" />
                     </div>
                     
-                    <p class="text-xs text-gray-600 text-right font-semibold">Sales Invoice: {{ $drNumber }}</p>
+                    <p class="text-xs text-gray-600 text-right font-semibold">Warranty Invoice: {{ $drNumber }}</p>
                     <p class="text-xs text-gray-600 mt-1 text-right">Date & Time: <span
                             class="font-semibold">{{ now()->format('m/d/Y h:i A') }}</span></p>
                 </div>

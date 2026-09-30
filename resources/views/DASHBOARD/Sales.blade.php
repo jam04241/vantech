@@ -51,6 +51,7 @@
                         <p class="text-gray-600 text-sm font-medium">Total Good Cost</p>
                         <p class="text-3xl font-bold text-gray-800 mt-2" id="totalGoodCost">₱0.00</p>
                         <p class="text-green-600 text-xs mt-2">Cost for purchase order from Supplier</p>
+                        <p class="text-red-600 text-xs mt-1 hidden" id="goodCostWarrantyNote"></p>
                     </div>
                     <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -97,6 +98,7 @@
                         <p class="text-gray-600 text-sm font-medium">Total Sales</p>
                         <p class="text-3xl font-bold text-gray-800 mt-2" id="revenue">₱0.00</p>
                         <p class="text-green-600 text-xs mt-2">Sales from your retail products</p>
+                        <p class="text-red-600 text-xs mt-1 hidden" id="salesWarrantyNote"></p>
                     </div>
                     <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -567,6 +569,19 @@
             document.getElementById('revenue').textContent = formatCurrency(data.revenue || 0);
             document.getElementById('discount').textContent = formatCurrency(data.discount || 0);
             document.getElementById('profit').textContent = formatCurrency(data.profit || 0);
+
+            // Show what warranty returns took out of these figures, if anything.
+            const warranty = data.warranty || {};
+            const items = warranty.items || 0;
+            const label = `${items} warranty return${items === 1 ? '' : 's'}`;
+            setWarrantyNote('salesWarrantyNote', items, `-${formatCurrency(warranty.sales_removed || 0)} from ${label}`);
+            setWarrantyNote('goodCostWarrantyNote', items, `-${formatCurrency(warranty.good_cost_removed || 0)} from ${label}`);
+        }
+
+        function setWarrantyNote(id, items, text) {
+            const note = document.getElementById(id);
+            note.textContent = text;
+            note.classList.toggle('hidden', items === 0);
         }
 
         function updateSalesTrendChart(salesTrend) {
@@ -671,7 +686,10 @@
 
                 row.innerHTML = `
                                             <td class="px-4 py-3 text-left w-1/12">#${transaction.id}</td>
-                                            <td class="px-4 py-3 text-center w-1/12 font-medium">${transaction.receipt_no ?? '-'}</td>
+                                            <td class="px-4 py-3 text-center w-1/12 font-medium">
+                                                ${transaction.receipt_no ?? '-'}
+                                                ${transaction.warranty_items > 0 ? `<div class="text-xs font-normal text-red-600">${transaction.warranty_items} warranty return${transaction.warranty_items === 1 ? '' : 's'}</div>` : ''}
+                                            </td>
                                             <td class="px-4 py-3 text-left w-2/12">${transaction.customer_name}</td>
                                             <td class="px-4 py-3 text-right w-2/12">${formatCurrency(transaction.subtotal || 0)}</td>
                                             <td class="px-4 py-3 text-right w-2/12">${formatCurrency(transaction.discount || 0)}</td>

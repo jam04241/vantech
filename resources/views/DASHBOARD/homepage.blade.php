@@ -58,6 +58,7 @@
                     <p class="text-gray-500 text-sm font-medium">Today's Sales</p>
                     <h1 class="text-3xl font-bold text-gray-800 mt-2" id="todaysSales">₱0.00</h1>
                     <p class="text-green-600 text-xs mt-2">Daily revenue</p>
+                    <p class="text-red-600 text-xs mt-1 hidden" id="todaysWarrantyReturns"></p>
                 </div>
                 <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -284,6 +285,12 @@
             document.getElementById('customerCount').textContent = metrics.customers;
             document.getElementById('productCount').textContent = metrics.products;
             document.getElementById('todaysSales').textContent = '₱' + new Intl.NumberFormat('en-PH').format(metrics.daily_sales);
+
+            // Today's sales already exclude items returned broken under warranty.
+            const returns = metrics.daily_warranty_returns || 0;
+            const returnsNote = document.getElementById('todaysWarrantyReturns');
+            returnsNote.textContent = '-₱' + new Intl.NumberFormat('en-PH').format(returns) + ' warranty returns';
+            returnsNote.classList.toggle('hidden', returns === 0);
         }
 
         function updateTopProducts(topProducts) {

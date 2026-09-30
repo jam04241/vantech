@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerPurchaseOrder;
 use App\Models\Product;
-use App\Models\Product_Stocks;
 use Illuminate\Http\Request;
 
 class StockOutController extends Controller
@@ -14,10 +14,26 @@ class StockOutController extends Controller
     public function index(Request $request)
     {
         // Get all products where stock_quantity = 0 (sold out)
-        $query = Product::with(['brand', 'category', 'stock', 'customerPurchaseOrders.drTransaction'])
+        $query = Product::with([
+            'brand',
+            'category',
+            'stock',
+            'customerPurchaseOrders.drTransaction',
+            'customerPurchaseOrders.customer',
+            'customerPurchaseOrders.warrantyClaim.recordedBy',
+        ])
             ->whereHas('stock', function ($q) {
                 $q->where('stock_quantity', 0);
             });
+
+        // Sold items vs items returned broken under warranty
+        $status = $request->get('status', '');
+        $claimed = fn ($lines) => $lines->where('status', CustomerPurchaseOrder::STATUS_WARRANTY_CLAIM);
+        if ($status === 'claimed') {
+            $query->whereHas('customerPurchaseOrders', $claimed);
+        } elseif ($status === 'sold') {
+            $query->whereDoesntHave('customerPurchaseOrders', $claimed);
+        }
 
         // Apply search across multiple columns
         if ($request->filled('search')) {
@@ -51,21 +67,13 @@ class StockOutController extends Controller
         // Get pagination (7 items per page)
         $products = $query->paginate(7)->withQueryString();
 
-        // Get totals
-        $totalStockOuts = Product_Stocks::where('stock_quantity', 0)->count();
-        $totalSoldProducts = Product::with('stock')
-            ->whereHas('stock', function ($q) {
-                $q->where('stock_quantity', 0);
-            })->count();
-
-        $data = [
+        $data = array_merge(WarrantyClaimController::stockOutStats(), [
             'products' => $products,
-            'totalStockOuts' => $totalStockOuts,
-            'totalSoldProducts' => $totalSoldProducts,
             'currentSort' => $sort,
+            'currentStatus' => $status,
             'searchQuery' => $request->get('search', ''),
             'selectedDate' => $request->get('date', ''),
-        ];
+        ]);
 
         // If HTMX request, return only the table partial
         if ($request->header('HX-Request')) {

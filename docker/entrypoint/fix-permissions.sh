@@ -3,23 +3,20 @@ set -e
 
 echo "🔧 Fixing Laravel permissions..."
 
-# Fix ownership and permissions for storage
-chown -R www-data:www-data /var/www/html/storage
-chmod -R 775 /var/www/html/storage
+# PHP runs as the "sail" user (UID/GID = WWWUSER/WWWGROUP, set by start-container),
+# so give it the writable folders. Under WSL this also keeps them owned by you.
+APP_UID="${WWWUSER:-1000}"
+APP_GID="${WWWGROUP:-1000}"
 
-# Fix ownership and permissions for bootstrap/cache
-chown -R www-data:www-data /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/bootstrap/cache
-
-# Ensure log file exists and is writable
+# Ensure framework directories and the log file exist
+mkdir -p /var/www/html/storage/framework/{sessions,views,cache} \
+         /var/www/html/storage/logs \
+         /var/www/html/bootstrap/cache
 touch /var/www/html/storage/logs/laravel.log
-chown www-data:www-data /var/www/html/storage/logs/laravel.log
-chmod 666 /var/www/html/storage/logs/laravel.log
 
-# Fix framework directories
-mkdir -p /var/www/html/storage/framework/{sessions,views,cache}
-chown -R www-data:www-data /var/www/html/storage/framework
-chmod -R 775 /var/www/html/storage/framework
+# On a Windows drive (J:\...) ownership isn't enforced; a refused chown is harmless there
+chown -R "$APP_UID:$APP_GID" /var/www/html/storage /var/www/html/bootstrap/cache || true
+chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache || true
 
 echo "✅ Permissions fixed successfully!"
 

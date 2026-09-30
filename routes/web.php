@@ -23,6 +23,7 @@ use App\Http\Controllers\AuditlogController;
 use App\Http\Controllers\InventoryReportController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\StaffAccountController;
+use App\Http\Controllers\WarrantyClaimController;
 
 use Illuminate\Support\Facades\DB;
 
@@ -263,6 +264,15 @@ Route::middleware(['auth', 'account.active'])->group(function () {
 
     // Stock-Out Records (products with stock_quantity = 0)
     Route::get('/inventory/stock-out', [StockOutController::class, 'index'])->name('inventory.stock-out');
+
+    // Warranty claims: a sold item that came back broken while still under warranty.
+    // Recording one takes the sale out of the dashboard and sales figures; undoing is owner only.
+    Route::post('/inventory/stock-out/{purchaseOrder}/warranty-claim', [WarrantyClaimController::class, 'store'])
+        ->whereNumber('purchaseOrder')
+        ->name('warranty-claims.store');
+    Route::delete('/inventory/stock-out/warranty-claims/{warrantyClaim}', [WarrantyClaimController::class, 'destroy'])
+        ->whereNumber('warrantyClaim')
+        ->name('warranty-claims.destroy');
 
     // Brand History and Category History fetch
     Route::get('/brandcategory/brands', [CategoryController::class, 'brandHistory'])->name('brandcategory.brands');

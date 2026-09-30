@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Product_Stocks;
@@ -101,5 +102,34 @@ class Product extends Model
     public function getWarrantyLabelAttribute(): string
     {
         return self::normalizeWarranty($this->warranty_period);
+    }
+
+    /**
+     * Last day the warranty covers this item when sold on $soldOn.
+     *
+     * Returns null when the item has no warranty or the period isn't in the
+     * "<number> day(s)/week(s)/month(s)/year(s)" form the product forms use.
+     * Months and years never spill into the next month (Jan 31 + 1 month is
+     * Feb 28/29, not early March).
+     */
+    public function warrantyExpiresOn($soldOn): ?Carbon
+    {
+        if (!$this->hasWarranty()) {
+            return null;
+        }
+
+        if (!preg_match('/^(\d+)\s*(day|week|month|year)s?$/i', trim($this->warranty_label), $matches)) {
+            return null;
+        }
+
+        $amount = (int) $matches[1];
+        $start = Carbon::parse($soldOn)->startOfDay();
+
+        return match (strtolower($matches[2])) {
+            'day' => $start->addDays($amount),
+            'week' => $start->addWeeks($amount),
+            'month' => $start->addMonthsNoOverflow($amount),
+            'year' => $start->addYearsNoOverflow($amount),
+        };
     }
 }

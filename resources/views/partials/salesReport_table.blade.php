@@ -109,14 +109,14 @@
                     <div class="w-28 h-28 bg-gray-200 mb-2 flex items-center justify-center">
                         <span class="text-gray-500">LOGO</span>
                     </div>
-                    <h3 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">WARRANTY RECEIPT</h3>
+                    <h3 class="text-lg font-bold text-blue-700 text-right whitespace-nowrap">WARRANTY INVOICE</h3>
 
                     <!-- Barcode placeholder -->
                     <div class="mb-1 bg-gray-200 h-11 w-40 flex items-center justify-center">
                         <span class="text-xs">BARCODE PLACEHOLDER</span>
                     </div>
 
-                    <p class="text-xs text-gray-600 text-right font-semibold">Sales Invoice: <span
+                    <p class="text-xs text-gray-600 text-right font-semibold">Warranty Invoice: <span
                             id="drNumber">DR-001-2024</span></p>
                     <p class="text-xs text-gray-600 mt-1 text-right">Date & Time: <span id="receiptDateTime"
                             class="font-semibold">05/15/2024 02:30 PM</span></p>

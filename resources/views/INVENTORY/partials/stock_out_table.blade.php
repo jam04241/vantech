@@ -1,4 +1,8 @@
 {{-- Stock-Out Table Partial --}}
+@inject('warrantyClaims', 'App\Services\WarrantyClaimService')
+@php
+    $isOwner = auth()->user()?->role === 'admin';
+@endphp
 <div class="overflow-x-auto">
     <table class="w-full text-sm">
         <thead>
@@ -11,11 +15,23 @@
                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Brand</th>
                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Category</th>
                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Date & Time</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 no-print">Action</th>
             </tr>
         </thead>
         <tbody>
             @forelse($products as $product)
-                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                @php
+                    // The sale that emptied this item's stock, if it went through the POS.
+                    $sale = $product->customerPurchaseOrders->sortByDesc('id')->first();
+                    $sale?->setRelation('product', $product);
+                    $claim = $sale?->warrantyClaim;
+                    $expiresOn = $sale ? $product->warrantyExpiresOn($sale->order_date) : null;
+                    $blockedReason = $sale
+                        ? $warrantyClaims->ineligibilityReason($sale)
+                        : 'No POS sale was recorded for this item.';
+                @endphp
+                <tr class="border-b border-gray-200 hover:bg-gray-50 transition {{ $claim ? 'bg-red-50/40' : '' }}">
                     <td class="px-4 py-3 text-gray-600 font-medium text-center">
                         {{ $products->firstItem() + $loop->iteration - 1 }}</td>
                     <td class="px-4 py-3 text-gray-800 font-medium">
@@ -25,10 +41,16 @@
                         {{ $product->serial_number ?? '-' }}
                     </td>
                     <td class="px-4 py-3 text-gray-600">
-                        {{ $product->customerPurchaseOrders->first()?->drTransaction?->receipt_no ?? '-' }}
+                        {{ $sale?->drTransaction?->receipt_no ?? '-' }}
                     </td>
                     <td class="px-4 py-3 text-gray-600">
                         {{ $product->warranty_label }}
+                        @if($expiresOn)
+                            <div class="text-xs whitespace-nowrap {{ $expiresOn->isPast() && !$expiresOn->isToday() ? 'text-red-600' : 'text-gray-500' }}">
+                                {{ $expiresOn->isPast() && !$expiresOn->isToday() ? 'Expired' : 'Until' }}
+                                {{ $expiresOn->format('M d, Y') }}
+                            </div>
+                        @endif
                     </td>
                     <td class="px-4 py-3 text-gray-600">
                         {{ $product->brand?->brand_name ?? '-' }}
@@ -39,10 +61,76 @@
                     <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
                         {{ $product->created_at->format('M. d Y h:i:s A')  }}
                     </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        @if($claim)
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Warranty Claim
+                            </span>
+                            <div class="text-xs text-gray-500 mt-1">{{ $claim->claim_date->format('M d, Y') }}</div>
+                        @elseif($sale)
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Sold
+                            </span>
+                        @else
+                            <span class="text-xs text-gray-400">-</span>
+                        @endif
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap no-print">
+                        @if($claim)
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="viewWarrantyClaim(this)"
+                                    data-product="{{ $product->product_name }}"
+                                    data-serial="{{ $product->serial_number }}"
+                                    data-receipt="{{ $sale->drTransaction?->receipt_no ?? '-' }}"
+                                    data-claim-date="{{ $claim->claim_date->format('M d, Y') }}"
+                                    data-reason="{{ $claim->reason }}"
+                                    data-sales-amount="{{ number_format((float) $claim->sales_amount, 2) }}"
+                                    data-good-cost="{{ number_format((float) $claim->good_cost, 2) }}"
+                                    data-recorded-by="{{ trim(($claim->recordedBy?->first_name ?? '') . ' ' . ($claim->recordedBy?->last_name ?? '')) ?: 'N/A' }}"
+                                    class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
+                                    View Claim
+                                </button>
+                                @if($isOwner)
+                                    <button type="button" onclick="undoWarrantyClaim(this)"
+                                        data-url="{{ route('warranty-claims.destroy', $claim) }}"
+                                        data-product="{{ $product->product_name }}"
+                                        data-serial="{{ $product->serial_number }}"
+                                        class="text-xs font-medium text-gray-500 hover:text-gray-800">
+                                        Undo
+                                    </button>
+                                @endif
+                            </div>
+                        @elseif(!$blockedReason)
+                            <button type="button" onclick="openWarrantyClaim(this)"
+                                data-url="{{ route('warranty-claims.store', $sale) }}"
+                                data-product="{{ $product->product_name }}"
+                                data-serial="{{ $product->serial_number }}"
+                                data-receipt="{{ $sale->drTransaction?->receipt_no ?? '-' }}"
+                                data-customer="{{ $sale->customer_name }}"
+                                data-sold="{{ \Carbon\Carbon::parse($sale->order_date)->format('M d, Y') }}"
+                                data-expires="{{ $expiresOn->format('M d, Y') }}"
+                                data-sales-amount="{{ number_format($warrantyClaims->salesAmountFor($sale), 2) }}"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-100 text-orange-800 hover:bg-orange-200 transition">
+                                Warranty Claim
+                            </button>
+                        @else
+                            <span class="text-xs text-gray-400" title="{{ $blockedReason }}">
+                                @if(!$sale)
+                                    -
+                                @elseif(!$product->hasWarranty())
+                                    No warranty
+                                @elseif($expiresOn && today()->gt($expiresOn))
+                                    Warranty expired
+                                @else
+                                    Not claimable
+                                @endif
+                            </span>
+                        @endif
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                    <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                         <div class="flex flex-col items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-300" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">

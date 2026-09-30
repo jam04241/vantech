@@ -112,7 +112,7 @@ class CustomerController extends Controller
             $customer = Customer::findOrFail($customerId);
 
             $receipts = CustomerPurchaseOrder::where('customer_id', $customerId)
-                ->with(['drTransaction', 'product', 'paymentMethod'])
+                ->with(['drTransaction', 'product', 'paymentMethod', 'warrantyClaim'])
                 ->get()
                 ->groupBy(function ($order) {
                     return $order->drTransaction->receipt_no;
@@ -140,7 +140,9 @@ class CustomerController extends Controller
                                 'serial_no' => $order->serial_number,
                                 'warranty' => $order->product?->warranty_label ?? \App\Models\Product::NO_WARRANTY,
                                 'unit_price' => $order->unit_price,
-                                'total_price' => $order->total_price
+                                'total_price' => $order->total_price,
+                                // Returned broken under warranty; shown for the record.
+                                'warranty_claim_date' => $order->warrantyClaim?->claim_date?->format('M d, Y'),
                             ];
                         })->values()
                     ];

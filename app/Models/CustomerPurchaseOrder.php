@@ -17,6 +17,17 @@ class CustomerPurchaseOrder extends Model
      */
     public const WALK_IN_LABEL = 'Walk-in Customer';
 
+    /**
+     * A completed sale. Only these lines count in sales figures.
+     */
+    public const STATUS_SUCCESS = 'Success';
+
+    /**
+     * A sold item that came back broken under warranty. The line stays on its
+     * receipt for the record, but no longer counts as a sale.
+     */
+    public const STATUS_WARRANTY_CLAIM = 'Warranty Claim';
+
     protected $table = 'customer_purchase_orders';
 
     protected $fillable = [
@@ -49,6 +60,11 @@ class CustomerPurchaseOrder extends Model
     public function paymentMethod()
     {
         return $this->hasOne(PaymentMethod::class);
+    }
+
+    public function warrantyClaim()
+    {
+        return $this->hasOne(WarrantyClaim::class, 'customer_purchase_order_id');
     }
 
     /**

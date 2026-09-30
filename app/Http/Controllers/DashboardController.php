@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Product_Stocks;
 use App\Models\CustomerPurchaseOrder;
 use App\Models\Suppliers;
+use App\Models\WarrantyClaim;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -73,17 +74,21 @@ class DashboardController extends Controller
             ->distinct('product_id')
             ->count('product_id');
 
-        // Daily sales (today's total from dr_transactions where type = 'purchase')
+        // Daily sales (today's total from dr_transactions where type = 'purchase'),
+        // less what was paid for items on those receipts that came back broken
+        // under warranty.
         $dailySales = DB::table('dr_transactions')
             ->whereDate('created_at', Carbon::today())
             ->where('type', 'purchase')
             ->sum('total_sum');
+        $dailyWarrantyReturns = WarrantyClaim::salesRemovedBetween(Carbon::today(), Carbon::today()->endOfDay());
 
         return [
             'employees' => $employeeCount,
             'customers' => $customerCount,
             'products' => $productCount,
-            'daily_sales' => round($dailySales ?? 0, 2)
+            'daily_sales' => round(($dailySales ?? 0) - $dailyWarrantyReturns, 2),
+            'daily_warranty_returns' => $dailyWarrantyReturns,
         ];
     }
 

@@ -427,6 +427,7 @@
                 row.innerHTML = `
                                                                                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                                                     ${transaction.receipt_no || '-'}
+                                                                                                    ${transaction.warranty_items > 0 ? `<div class="text-xs font-normal text-red-600">${transaction.warranty_items} warranty return${transaction.warranty_items === 1 ? '' : 's'}</div>` : ''}
                                                                                                 </td>
                                                                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                                                                     ${transaction.customer_name}
